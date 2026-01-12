@@ -1,0 +1,374 @@
+; ============================================================================
+; BUBBLE BOBBLE - Sprite Display and Animation System
+; ============================================================================
+; File: bb-sprites-display.s
+; Address Range: $E3A7-$E553 (430 bytes)
+;
+; This module handles:
+; - Sprite animation updates
+; - High score display
+; - Screen buffer copying
+; - Player sprite positioning
+; - Sprite pointer setup
+; ============================================================================
+
+; Forward references to external routines defined in bb-master.s
+; D_3FB0, D_AC09, D_AC0A already defined in bb-master.s
+
+; ============================================================================
+; UPDATE_SPRITE_ANIMATIONS ($E3A7)
+; ============================================================================
+; Main sprite animation update routine
+; Called from main game loop to update sprite animations and display
+;
+; This routine updates high score display by:
+; 1. Reading score digits from $0400-$0405
+; 2. Converting to hex digits and displaying them
+; 3. Comparing and updating high score if needed
+; ============================================================================
+; D_E3A7 defined in bb-master.s
+update_sprite_animations:
+        lda     $30                     ; Get screen page
+        eor     #$04                    ; Toggle between pages
+        sta     $41                     ; Store high byte of pointer
+        lda     #$E9                    ; Low byte for first display
+        sta     $40
+        ldx     #$00
+        jsr     display_score_digits
+        inc     $41                     ; Move to next screen area
+        inc     $41
+        lda     #$01
+        sta     $40
+        jsr     display_score_digits
+        lda     #$04
+        sta     $43
+        lda     #$00                    ; Pointer to score data
+        ldy     #$00
+        jsr     check_high_score
+        lda     #$03
+        ldy     #$01
+        jsr     check_high_score
+        inc     $41
+        lda     #$41
+        sta     $40
+
+; ============================================================================
+; DISPLAY_SCORE_DIGITS ($E3D9)
+; ============================================================================
+; Converts 6 hex digits from $0400+X to screen characters
+; Input: X = offset into $0400
+;        $40/$41 = screen destination pointer
+; ============================================================================
+display_score_digits:
+        ldy     #$00
+        sty     $42
+L_E3DD:
+        lda     $0400,x                 ; Get score byte
+        lsr     a                       ; Shift high nibble down
+        lsr     a
+        lsr     a
+        lsr     a
+        jsr     D_3FB0                  ; Display high digit
+        lda     $0400,x
+        and     #$0F                    ; Mask low nibble
+        jsr     D_3FB0                  ; Display low digit
+        inx
+        cpy     #$06                    ; Done 6 digits?
+        bne     L_E3DD
+        rts
+
+; ============================================================================
+; CHECK_HIGH_SCORE ($E3F5)
+; ============================================================================
+; Compares current score with high score and updates if higher
+; Input: A = pointer low byte
+;        Y = offset for player (0=P1, 1=P2)
+;        $43 = score comparison mode
+; ============================================================================
+check_high_score:
+        sta     $42                     ; Store score pointer
+        sty     $3C                     ; Store player offset
+        ldy     #$00
+L_E3FB:
+        lda     ($42),y                 ; Get score byte
+        cmp     $0406,y                 ; Compare with stored high score
+        beq     L_E405                  ; Equal, check next byte
+        bcs     L_E40B                  ; Current > stored, update
+        rts                             ; Current < stored, no update
+L_E405:
+        iny
+        cpy     #$03                    ; Compare 3 bytes
+        bne     L_E3FB
+        nop
+L_E40B:
+        ldy     #$02                    ; Copy new high score
+L_E40D:
+        lda     ($42),y
+        sta     $0406,y
+        dey
+        bpl     L_E40D
+        ldy     $3C
+        lda     $0409,y                 ; Get player name/data
+        sta     $040B
+        rts
+
+; ============================================================================
+; Unused/debug code fragment
+; ============================================================================
+        .byte   $D0, $04, $24, $42, $10, $04, $C6, $42
+        .byte   $91, $40, $C8, $60
+
+; ============================================================================
+; DISPLAY_TEXT_STRING ($E42A)
+; ============================================================================
+; Displays a text string to screen with special control codes
+; Input: X/Y = pointer to text string (stored in $0D/$0E)
+;
+; Control codes:
+;   $00      = End of string
+;   $01-$0F  = Direct character code (stored in $0F)
+;   $10-$1E  = Character code - $20 (ASCII-like)
+;   $1F xx yy= Set screen position (xx=offset, yy=page)
+;   $20+     = Character code - $20
+; ============================================================================
+; D_E42A defined in bb-master.s
+display_text_string:
+        stx     $0D                     ; Store pointer low
+        sty     $0E                     ; Store pointer high
+        ldy     #$00
+L_E430:
+        lda     ($0D),y                 ; Get next character
+        cmp     #$10
+        bcs     L_E43A                  ; >= $10, process normal char
+        sta     $0F                     ; < $10, store directly
+        bcc     L_E491                  ; Advance to next char
+L_E43A:
+        bne     L_E43D                  ; Non-zero, continue
+        rts                             ; $00 = end of string
+L_E43D:
+        cmp     #$1F
+        bne     L_E46F                  ; Not $1F, normal character
+        
+        ; $1F = Set cursor position command
+L_E441:
+        iny
+        lda     ($0D),y                 ; Get X offset
+        tax
+        iny
+        lda     ($0D),y                 ; Get page number
+        stx     L_E451                  ; Self-modifying: store offset
+        asl     a                       ; Page * 2
+        tax
+        lda     D_AC09,x                ; Get screen address low
+        adc     #$0C                    ; Immediate byte from self-mod code
+L_E451  = * - 1                         ; Label points to ADC operand
+        sta     L_E473                  ; Store in three locations
+        sta     L_E476
+        sta     L_E47B
+        lda     D_AC0A,x                ; Get screen address high
+        adc     #$50                    ; Add base page
+        sta     L_E474
+        adc     #$04                    ; Color RAM offset
+        sta     L_E477
+        adc     #$84                    ; Another offset
+        sta     L_E47C
+        bcc     L_E491
+        
+        ; Normal character output (>= $20)
+L_E46F:
+        sec
+        sbc     #$20                    ; Convert ASCII to screen code
+        sta     $51D3                   ; STA (self-modified address)
+L_E473  = * - 2                         ; Points to low byte of address ($D3)
+L_E474  = * - 1                         ; Points to high byte of address ($51)
+        sta     $55D3                   ; STA (self-modified address)
+L_E476  = * - 2                         ; Points to low byte of address ($D3)
+L_E477  = * - 1                         ; Points to high byte of address ($55)
+        lda     $0F                     ; Get stored character/color
+        sta     $D9D3                   ; STA (self-modified address)
+L_E47B  = * - 2                         ; Points to low byte of address ($D3)
+L_E47C  = * - 1                         ; Points to high byte of address ($D9)
+        inc     L_E473                  ; Advance screen pointers
+        inc     L_E476
+        inc     L_E47B
+        bne     L_E491
+        inc     L_E474                  ; Increment high bytes if needed
+        inc     L_E477
+        inc     L_E47C
+L_E491:
+        iny                             ; Next character
+        bne     L_E430
+
+; ============================================================================
+; WAIT_ONE_FRAME ($E494)
+; ============================================================================
+; Waits for exactly one frame by monitoring the frame counter
+; The IRQ handler increments $08 (ENDCHR) every frame
+; This is the fundamental timing routine used throughout the game
+; ============================================================================
+; D_E494 defined in bb-master.s
+wait_one_frame:
+        lda     $08                     ; Get current frame counter
+L_E496:
+        cmp     $08                     ; Compare with current value
+        beq     L_E496                  ; Loop until it changes
+        rts
+
+; ============================================================================
+; COPY_SCREEN_BUFFERS ($E49B)
+; ============================================================================
+; Copies 4 pages of screen data from $5000-$5400 to both:
+; - Display buffer at $8B00-$8E00
+; - Working buffer at $5400-$5700
+; Used for double-buffering screen updates
+; ============================================================================
+; D_E49B defined in bb-master.s
+copy_screen_buffers:
+        ldx     #$00
+L_E49D:
+        lda     $5000,x                 ; Screen data page 0
+        sta     $8B00,x                 ; Copy to display
+        sta     $5400,x                 ; Copy to working
+        lda     $5100,x                 ; Screen data page 1
+        sta     $8C00,x
+        sta     $5500,x
+        lda     $5200,x                 ; Screen data page 2
+        sta     $8D00,x
+        sta     $5600,x
+        lda     $5300,x                 ; Screen data page 3
+        sta     $8E00,x
+        sta     $5700,x
+        inx
+        bne     L_E49D
+        rts
+
+; ============================================================================
+; COPY_CHARSET_DATA ($E4C5)
+; ============================================================================
+; Copies 16 bytes of character set data from $40D0 to $48D0
+; Then sets up screen with two specific characters ($1A, $1B)
+; ============================================================================
+copy_charset_data:
+        ldx     #$0F
+L_E4C7:
+        lda     $40D0,x
+        sta     $48D0,x
+        dex
+        bpl     L_E4C7
+        ldy     #$1A                    ; Character code
+        sty     $5400                   ; Store at screen position
+        iny
+        sty     $5401                   ; Store next character
+        rts
+
+; ============================================================================
+; SETUP_PLAYER_SPRITES ($E4DA)
+; ============================================================================
+; Sets up sprite display mode and calls positioning routine
+; Enables sprite rendering by setting up JSR at $E539
+; ============================================================================
+setup_player_sprites:
+        lda     #$A9                    ; LDA immediate opcode
+        sta     L_E539                  ; Modify code to enable sprites
+        
+; ============================================================================
+; UPDATE_PLAYER_SPRITE_POSITIONS ($E4DF)
+; ============================================================================
+; Updates VIC-II sprite registers with player positions
+; Handles both players (up to 4 sprites each: 2x2 multicolor sprites)
+; ============================================================================
+update_player_sprite_positions:
+        jsr     wait_one_frame          ; Wait one frame
+        ldx     #$10                    ; Clear sprite registers
+        lda     #$00
+L_E4E6:
+        sta     $D000,x                 ; Clear sprite X/Y positions
+        dex
+        bpl     L_E4E6
+        ldx     #$01                    ; Player index (1=P1, 0=P2)
+        
+L_E4EE:
+        ldy     $0200,x                 ; Get sprite index for player
+        lda     $B2,x                   ; Check player state
+        beq     L_E527                  ; Player inactive, skip
+        
+        ; Position player sprites (4 sprites = 2x2 multicolor)
+        lda     $BA,x                   ; Player X position
+        sec
+        sbc     #$0A                    ; Adjust for sprite offset
+        sta     $D000,y                 ; Sprite 0 X
+        sta     $D004,y                 ; Sprite 2 X
+        adc     #$17                    ; Offset for right sprites
+        sta     $D002,y                 ; Sprite 1 X
+        sta     $D006,y                 ; Sprite 3 X
+        bcc     L_E513
+        
+        ; Handle X MSB (for X > 255)
+        lda     $D010                   ; VIC sprite X MSB register
+        ora     L_E552,x                ; OR with sprite mask
+        sta     $D010
+        
+L_E513:
+        lda     $C2,x                   ; Player Y position
+        sec
+        sbc     #$08                    ; Adjust for sprite offset
+        sta     $D001,y                 ; Sprite 0 Y
+        sta     $D003,y                 ; Sprite 1 Y
+        clc
+        adc     #$15                    ; Offset for bottom sprites
+        sta     $D005,y                 ; Sprite 2 Y
+        sta     $D007,y                 ; Sprite 3 Y
+        
+L_E527:
+        dex                             ; Next player
+        bpl     L_E4EE
+        
+        ; Set sprite colors
+        ldx     #$03
+L_E52C:
+        lda     #$05                    ; Green
+        sta     $D027,x                 ; Sprites 0-3 color
+        lda     #$03                    ; Cyan
+        sta     $D02B,x                 ; Sprites 4-7 color
+        dex
+        bpl     L_E52C
+        
+; ============================================================================
+; Sprite display control point
+; Modified by code at $E4DA - changes RTS to JSR
+; ============================================================================
+L_E539:
+        rts                             ; May be modified to LDA #$xx
+
+        .byte   $D4                     ; Unused byte
+
+; ============================================================================
+; SET_SPRITE_POINTERS ($E53B)
+; ============================================================================
+; Sets sprite pointers in screen memory
+; Input: A = base sprite pointer value
+; Sets up 8 sprites (4 at $53F8-$53FB, 4 at $57F8-$57FB)
+; ============================================================================
+set_sprite_pointers:
+        ldx     #$03
+L_E53D:
+        sta     $53F8,x                 ; Sprite pointers screen 1
+        sta     $57F8,x                 ; Sprite pointers screen 2
+        clc
+        adc     #$04                    ; Advance 4 sprite frames
+        sta     $53FC,x                 ; Next set of pointers
+        sta     $57FC,x
+        sbc     #$04                    ; Restore base value
+        dex
+        bpl     L_E53D
+        rts
+
+; ============================================================================
+; Data table for sprite X MSB masks
+; ============================================================================
+L_E552:
+        .byte   $0A, $A0
+
+; ============================================================================
+; End of bb-sprites-display.s
+; ============================================================================

@@ -1,0 +1,13 @@
+# Build artifacts
+build/*.o
+build/*.prg
+build/*.lst
+build/*.map
+src/*.o
+
+# Editor backups
+*~
+*.swp
+
+# macOS
+.DS_Store
