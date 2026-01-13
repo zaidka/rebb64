@@ -616,33 +616,33 @@ D_EC2C      = $EC2C     ; Alternate movement table load
 D_EC3C      = $EC3C     ; Platform collision check after climb
 D_EC7C      = $EC7C     ; Exit climbing state
 D_EC87      = $EC87     ; Continue processing after descent
-D_ECDF      = $ECDF     ; Movement handler bit 0
+; D_ECDF now defined as label in entity-movement.s
 
 ; $EDxx - Entity input handlers
-D_ED12      = $ED12     ; Handle right input
-D_ED18      = $ED18     ; Handle left input
-D_ED1E      = $ED1E     ; Movement handler bit 1
-D_ED3B      = $ED3B     ; Normal entity handler
-L_EDC7      = $EDC7     ; Abort spawn / return point
-D_EDCD      = $EDCD     ; Update entity position
+; D_ED12 now defined as label in entity-movement.s
+; D_ED18 now defined as label in entity-movement.s
+; D_ED1E now defined as label in entity-movement.s
+; D_ED3B now defined as label in entity-movement.s
+; L_EDC7 now defined as label in entity-ai.s
+; D_EDCD now defined as label in entity-ai.s
 
 ; $EExx - Entity movement continued
-L_EE49      = $EE49     ; Exit point for attack logic
-D_EE4A      = $EE4A     ; State handler
-D_EE62      = $EE62     ; Jump handler
+; L_EE49 now defined as label in entity-ai.s
+; D_EE4A now defined as label in entity-ai.s
+; D_EE62 now defined as label in entity-ai.s
 D_EEB4      = $EEB4     ; Entity movement handler
-D_EEC8      = $EEC8     ; Position update after movement
-D_EEDF      = $EEDF     ; Leftward movement handler
+; D_EEC8 now defined as label in entity-ai.s
+; D_EEDF now defined as label in entity-ai.s
 D_EEEB      = $EEEB     ; Check platforms for left movement
 
 ; $EFxx - Entity physics
 D_EF15      = $EF15     ; Self-modified RTS
-D_EF1E      = $EF1E     ; Rightward movement handler
+; D_EF1E now defined as label in entity-ai.s
 D_EF3B      = $EF3B     ; Right movement platform check
-D_EF4C      = $EF4C     ; Inverted vertical movement
+; D_EF4C now defined as label in entity-ai.s
 D_EFA0      = $EFA0     ; Normal vertical movement
 L_EFBC      = $EFBC     ; Next section start (platform check)
-D_EFEA      = $EFEA     ; Freed state handler
+; D_EFEA now defined as label in entity-physics-cont.s
 D_A9C6      = $A9C6     ; Projectile state array 1
 D_A9D8      = $A9D8     ; Projectile state array 2
 D_A9FC      = $A9FC     ; Projectile state array 3
@@ -682,7 +682,7 @@ L_F846      = $F846     ; Forward reference within sound code flow
 D_F477      = $F477     ; Initialize sound tables
 D_F4BD      = $F4BD     ; Sound init routine
 D_F53C      = $F53C     ; Sound update routine (called every frame)
-D_F887      = $F887     ; Music/mode initialization routine
+; D_F887 now defined as label in sound-engine.s
 
 ; --- Music & Sound Data Forward References ---
 ; These labels are defined in bb-music-sound-data.s and referenced by sound engine
@@ -798,7 +798,7 @@ D_A79A      = $A79A     ; Item score value table
 
 ; --- Super Bonus Forward References ---
 ; D_2A3F, D_2AA2 are defined in bb-super-bonus.s
-L_069B      = $069B     ; Clear entities routine
+; L_069B now defined as label in master.s
 D_4700      = $4700     ; Special item type data
 D_4710      = $4710     ; Special item X positions
 D_4720      = $4720     ; Special item Y positions
@@ -1344,10 +1344,12 @@ L0690:
 L0692:
         lda     SUBFLG                  ; Get level number
         cmp     #$63                    ; Is it level 99?
-        bne     L069B                   ; If not, continue
+        bne     L_069B                  ; If not, continue
         jmp     D_7AE3                  ; Jump to special handler
 
-L069B:
+; L_069B / clear_screen_buffers - Clear screen buffers routine
+L_069B:
+clear_screen_buffers:
         ldx     #$00                    ; Clear index
         txa                             ; A = 0
 L069E:

@@ -501,7 +501,9 @@ D_F85C:
     .byte $b9, $28, $f3, $29, $81, $f0, $e7, $10; $f872
     .byte $06, $20, $59, $f6, $4c, $fb, $f7, $20; $f87a
     .byte $67, $f6, $4c, $fb, $f7; $f882
-; D_F887: (label defined in bb-master.s)
+
+; D_F887: Music/mode initialization routine
+D_F887:
     sta  TIME                   ; 85 9e        $f887
     sty  $9f                    ; 84 9f        $f889
     lda  #$00                   ; a9 00        $f88b

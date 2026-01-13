@@ -14,15 +14,16 @@
 ; - Vertical movement (jumping/falling with screen wrapping)
 ;===============================================================================
 
-; Continuation from projectile spawn - jumped here when spawn aborted
-; Entry at L_EDC7 (jumped from projectile spawn routine)
+; L_EDC7: Continuation from projectile spawn - jumped here when spawn aborted
+L_EDC7:
     ldy  $02                    ; Restore Y register
     lda  #$FF                   ; Set value to $FF
     bmi  L_EDC3                 ; Always taken - jump back to projectile setup
 
-; Main entity position update routine - D_EDCD
+; D_EDCD: Update entity position - main entity update routine
 ; Called from multiple places to update entity state
 ; X register holds entity index
+D_EDCD:
     lda  D_8818,x               ; Load animation frame data
     bpl  L_EE49                 ; If positive, skip attack logic
     
@@ -109,11 +110,13 @@ L_EE31:
     lda  #$09                   ; Projectile state value
     sta  D_A9FC,y               ; Store in projectile state array
     
-    ; L_EE49
+; L_EE49: Exit point for attack logic
+L_EE49:
     rts
 
-; Simple animation toggle - D_EE4A
+; D_EE4A: State handler - simple animation toggle
 ; Flips animation frame between 0 and 1 every 2 calls
+D_EE4A:
     inc  D_8610,x               ; Increment animation counter
     lda  D_8610,x               ; Load counter
     cmp  #$02                   ; Reached 2?
@@ -129,8 +132,9 @@ L_EE31:
 L_EE61:
     rts
 
-; Player Y-position comparison for AI - D_EE62
+; D_EE62: Jump handler - player Y-position comparison for AI
 ; Compares player Y with entity Y and sets entity state flags
+D_EE62:
     ldy  OPPTR                  ; $4B - Player index pointer
     lda  a:ZP_C2,y              ; Load player Y position
     cmp  ZP_C2,x                ; Compare with entity Y
@@ -202,7 +206,8 @@ L_EE91:
 L_EEC5:
     jsr  D_EFA0                 ; Handle normal vertical movement
     
-; Update entity screen position - D_EEC8
+; D_EEC8: Position update after movement
+D_EEC8:
     jsr  D_E9B8                 ; Convert entity position to screen coordinates
     
     ldy  #$BD                   ; Default value
@@ -218,7 +223,8 @@ L_EED9:
     jsr  D_EF1E                 ; Handle rightward movement
     jmp  L_EB0F                 ; Update animation
 
-; Leftward movement handler - D_EEDF
+; D_EEDF: Leftward movement handler
+D_EEDF:
     lda  ZP_25                  ; Load player Y / level index
     cmp  #$04                   ; Compare with threshold
     bcs  D_EEEB                 ; If >= 4, check platforms
@@ -270,7 +276,8 @@ L_EF0D:
     .byte $04, $9D              ; Illegal NOP instruction
     jsr  D_6085                 ; Continues but likely dead code
 
-; Rightward movement handler - D_EF1E
+; D_EF1E: Rightward movement handler
+D_EF1E:
     lda  ZP_25                  ; Load player Y / level index
     cmp  #$04                   ; Compare with threshold
     bcc  L_EF2A                 ; If < 4, check platforms
@@ -309,8 +316,9 @@ L_EF47:
     inc  FA,x                   ; Increment X position again
     rts
 
-; Inverted vertical movement handler - D_EF4C
+; D_EF4C: Inverted vertical movement
 ; Used when entity trapped between platforms (bit 2 of state set)
+D_EF4C:
     lda  $04                    ; Load movement value
     eor  #$FF                   ; Invert all bits
     sta  $04                    ; Store inverted value

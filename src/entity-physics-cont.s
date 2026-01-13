@@ -61,7 +61,8 @@ L_EFE7:
     ; Move right
     jsr  L_EF2A                 ; Right movement handler
 
-    ; D_EFEA - Update animation frame counter
+; D_EFEA: Freed state handler - update animation frame counter
+D_EFEA:
     inc  D_8610,x               ; Increment animation counter
     lda  D_8610,x               ; Load counter
     cmp  #$02                   ; Check if 2 frames elapsed

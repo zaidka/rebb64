@@ -172,8 +172,9 @@ L_ECD8:
 L_ECDC:
     jmp  L_EB0F                 ; Update animation
 
-; Movement handler for state bit flag 0 (called from D_EAFA) - D_ECDF
+; D_ECDF: Movement handler for state bit flag 0 (called from D_EAFA)
 ; Handles directional decision based on player/target position
+D_ECDF:
     lda  ZP_25                  ; Load player Y / level index
     cmp  D_8750,x               ; Compare with target direction
     bcs  L_ECED                 ; If >=, skip direction change
@@ -219,18 +220,21 @@ L_ED0A:
     sta  FA,x                   ; Store new X position
     rts
 
-; Handle right direction input (entry point for external calls) - D_ED12
+; D_ED12: Handle right direction input (entry point for external calls)
+D_ED12:
     ldy  #$28                   ; Cell offset
     lda  #$FC                   ; Direction value (-4 for rightward)
     bmi  L_ECF7                 ; Always taken - jump to common handler
 
-; Handle left direction input (entry point for external calls) - D_ED18
+; D_ED18: Handle left direction input (entry point for external calls)
+D_ED18:
     ldy  #$2B                   ; Cell offset
     lda  #$04                   ; Direction value (+4 for leftward)
     bpl  L_ECF7                 ; Always taken - jump to common handler
 
-; Movement handler for state bit flag 1 (called from D_EAFA) - D_ED1E
+; D_ED1E: Movement handler for state bit flag 1 (called from D_EAFA)
 ; Controls animation frame based on position comparison
+D_ED1E:
     lda  ZP_25                  ; Load player Y / level index
     cmp  D_8750,x               ; Compare with target
     bcc  L_ED2B                 ; If less, change frame
@@ -256,7 +260,8 @@ L_ED37:
     inc  D_8818,x               ; Increment animation frame data
     rts
 
-; Decrement entity animation frame (alternate entry point) - D_ED3B
+; D_ED3B: Normal entity handler - decrement animation frame
+D_ED3B:
     dec  D_8818,x               ; Decrement animation frame data
     beq  L_ED41                 ; If zero, spawn projectile
     rts                         ; Otherwise return
