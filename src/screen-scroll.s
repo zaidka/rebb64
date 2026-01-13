@@ -14,13 +14,13 @@
 ; Creates a smooth vertical scrolling animation when entering a new level.
 ; Uses self-modifying code and double buffering for the effect.
 ;-------------------------------------------------------------------------------
-        jsr     $E494               ; Wait for frame sync
+        jsr     D_E494              ; Wait for frame sync
         
         ; Setup self-modifying code addresses (store screen page)
         lda     $30                 ; ARYTAB+1 (screen page)
-        sta     $3BF1               ; Modify code at $3BF1
-        sta     $3BFA               ; Modify code at $3BFA
-        sta     $3AF0               ; Modify code at $3AF0 (self-mod target)
+        sta     D_3BF1              ; Modify code at $3BF1
+        sta     D_3BFA              ; Modify code at $3BFA
+        sta     D_3AF0              ; Modify code at $3AF0 (self-mod target)
         
         ; Calculate alternate screen addresses
         eor     #$04                ; Toggle screen page
@@ -44,12 +44,12 @@
         sta     $3F                 ; DATLIN (screen pointer low)
         
         ; Copy initial data block
-        jsr     $16E4               ; Setup call
+        jsr     D_16E4              ; Setup call
         inx
 
 @copy_init_data:
-        lda     $3CB2,x             ; Source data
-        sta     $1200,x             ; Copy to destination
+        lda     D_3CB2,x            ; Source data
+        sta     D_1200,x            ; Copy to destination
         inx
         bne     @copy_init_data     ; Loop until X wraps to 0
         
@@ -61,9 +61,9 @@
 
 @save_row_data:
         lda     ($40),y             ; Read from screen buffer 1
-        sta     $3CC4,x             ; Save to temp buffer 1
+        sta     D_3CC4,x            ; Save to temp buffer 1
         lda     ($3E),y             ; Read from screen buffer 2
-        sta     $3CCD,x             ; Save to temp buffer 2
+        sta     D_3CCD,x            ; Save to temp buffer 2
         dey
         dex
         bpl     @save_row_data      ; Loop at $3B08
@@ -77,15 +77,15 @@
 @process_row:
         ldy     $3D                 ; Get row index
         lda     ($3E),y             ; Read color data
-        sta     $3CBB,y             ; Store color
+        sta     D_3CBB,y            ; Store color
         lda     ($40),y             ; Read screen data
-        sta     $3CB2,y             ; Store screen char
+        sta     D_3CB2,y            ; Store screen char
         tay                         ; Use as index
         
         ; Get character definition pointer
-        lda     $0200,y             ; Character pointer low
+        lda     D_0200,y            ; Character pointer low
         sta     $44
-        lda     $0300,y             ; Character pointer high
+        lda     D_0300,y            ; Character pointer high
         ora     $2F                 ; ARYTAB
         eor     #$08
         sta     $45                 ; VARNAM
@@ -95,11 +95,11 @@
 
 @process_char_byte:
         lda     ($44),y             ; Get character byte
-        ora     $ADB1,x             ; OR with mask table
-        sta     $3CD6,x             ; Store to output buffer 1
-        and     $ADF9,x             ; AND with second mask
-        ora     $ADB1,x             ; OR with mask again
-        sta     $3D1E,x             ; Store to output buffer 2
+        ora     D_ADB1,x            ; OR with mask table
+        sta     D_3CD6,x            ; Store to output buffer 1
+        and     D_ADF9,x            ; AND with second mask
+        ora     D_ADB1,x            ; OR with mask again
+        sta     D_3D1E,x            ; Store to output buffer 2
         inx
         iny
         cpy     #$08                ; 8 bytes per character
@@ -110,7 +110,7 @@
         bne     @process_row
         
         ; Frame sync and fill bottom row
-        jsr     $E494               ; Wait for frame
+        jsr     D_E494              ; Wait for frame
         ldy     #$08
         clc
 
@@ -128,14 +128,14 @@
         ldy     #$30
 
 @restore_row:
-        lda     $3CC4,x             ; Get saved screen data
+        lda     D_3CC4,x            ; Get saved screen data
         sta     ($40),y             ; Write to screen
-        lda     $3CCD,x             ; Get saved color
+        lda     D_3CCD,x            ; Get saved color
         sta     ($3E),y             ; Write color
-        lda     $3CBB,x             ; Rotate buffers
-        sta     $3CCD,x
-        lda     $3CB2,x
-        sta     $3CC4,x
+        lda     D_3CBB,x            ; Rotate buffers
+        sta     D_3CCD,x
+        lda     D_3CB2,x
+        sta     D_3CC4,x
         dey
         dex
         bpl     @restore_row
@@ -144,7 +144,7 @@
         ldy     #$47                ; 72 bytes
 
 @copy_to_screen:
-        lda     $3CD6,y             ; Get processed character data
+        lda     D_3CD6,y            ; Get processed character data
         sta     ($18),y             ; Write to screen
         dey
         bpl     @copy_to_screen
@@ -158,22 +158,22 @@
         ldy     #$47
 
 @copy_final:
-        lda     $3D1E,y             ; Get second buffer data
+        lda     D_3D1E,y            ; Get second buffer data
         sta     ($18),y             ; Write to screen
         dey
         bpl     @copy_final
         
         ; Delay loop for final animation
         ldy     #$3C
-        jsr     $05AD               ; Delay routine
+        jsr     D_05AD              ; Delay routine
         ldx     #$06
 
 @delay_loop:
         lda     #$08
-        jsr     $7BC8               ; More delay
+        jsr     D_7BC8              ; More delay
         lda     #$0C
         eor     #$03                ; Calculate value
-        sta     $3BA1               ; Self-modify instruction (!)
+        sta     D_3BA1              ; Self-modify instruction (!)
         ldy     #$08
 
 @inner_delay:
@@ -188,7 +188,7 @@
         bne     @wait_sync          ; Wait for completion
         
         ldy     #$27
-        jsr     $05AD               ; Final delay
+        jsr     D_05AD              ; Final delay
 
 @advance_scroll:
         ; Advance screen pointers up one row (40 bytes)
@@ -208,14 +208,14 @@
 
 @scroll_done:
         ; Cleanup after scroll complete
-        jsr     $E494               ; Wait for frame
+        jsr     D_E494              ; Wait for frame
         ldx     #$08
         ldy     #$30
 
 @final_restore:
-        lda     $3CC4,x             ; Restore final row
+        lda     D_3CC4,x            ; Restore final row
         sta     ($40),y
-        lda     $3CCD,x
+        lda     D_3CCD,x
         sta     ($3E),y
         dey
         dex
@@ -233,11 +233,11 @@
         
         ; Restore saved data
 @restore_saved:
-        lda     $0100,x             ; Stack page data
-        sta     $3CB2,x             ; Restore to buffer
-        lda     $8B00,x             ; High memory data
-        sta     $E200,x             ; Restore to high memory
+        lda     D_0100,x            ; Stack page data
+        sta     D_3CB2,x            ; Restore to buffer
+        lda     D_8B00,x            ; High memory data
+        sta     D_E200,x            ; Restore to high memory
         dex
         bne     @restore_saved
         
-        jmp     $7B53               ; Jump to next routine
+        jmp     D_7B53              ; Jump to next routine

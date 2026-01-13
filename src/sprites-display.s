@@ -63,13 +63,13 @@ display_score_digits:
         ldy     #$00
         sty     $42
 L_E3DD:
-        lda     $0400,x                 ; Get score byte
+        lda     D_0400,x                ; Get score byte
         lsr     a                       ; Shift high nibble down
         lsr     a
         lsr     a
         lsr     a
         jsr     D_3FB0                  ; Display high digit
-        lda     $0400,x
+        lda     D_0400,x
         and     #$0F                    ; Mask low nibble
         jsr     D_3FB0                  ; Display low digit
         inx
@@ -91,7 +91,7 @@ check_high_score:
         ldy     #$00
 L_E3FB:
         lda     ($42),y                 ; Get score byte
-        cmp     $0406,y                 ; Compare with stored high score
+        cmp     D_0406,y                ; Compare with stored high score
         beq     L_E405                  ; Equal, check next byte
         bcs     L_E40B                  ; Current > stored, update
         rts                             ; Current < stored, no update
@@ -104,12 +104,12 @@ L_E40B:
         ldy     #$02                    ; Copy new high score
 L_E40D:
         lda     ($42),y
-        sta     $0406,y
+        sta     D_0406,y
         dey
         bpl     L_E40D
         ldy     $3C
-        lda     $0409,y                 ; Get player name/data
-        sta     $040B
+        lda     D_0409,y                ; Get player name/data
+        sta     D_040B
         rts
 
 ; ============================================================================
@@ -178,14 +178,14 @@ L_E451  = * - 1                         ; Label points to ADC operand
 L_E46F:
         sec
         sbc     #$20                    ; Convert ASCII to screen code
-        sta     $51D3                   ; STA (self-modified address)
+        sta     D_51D3                  ; STA (self-modified address)
 L_E473  = * - 2                         ; Points to low byte of address ($D3)
 L_E474  = * - 1                         ; Points to high byte of address ($51)
-        sta     $55D3                   ; STA (self-modified address)
+        sta     D_55D3                  ; STA (self-modified address)
 L_E476  = * - 2                         ; Points to low byte of address ($D3)
 L_E477  = * - 1                         ; Points to high byte of address ($55)
         lda     $0F                     ; Get stored character/color
-        sta     $D9D3                   ; STA (self-modified address)
+        sta     D_D9D3                  ; STA (self-modified address)
 L_E47B  = * - 2                         ; Points to low byte of address ($D3)
 L_E47C  = * - 1                         ; Points to high byte of address ($D9)
         inc     L_E473                  ; Advance screen pointers
@@ -226,18 +226,18 @@ L_E496:
 copy_screen_buffers:
         ldx     #$00
 L_E49D:
-        lda     $5000,x                 ; Screen data page 0
-        sta     $8B00,x                 ; Copy to display
-        sta     $5400,x                 ; Copy to working
-        lda     $5100,x                 ; Screen data page 1
-        sta     $8C00,x
-        sta     $5500,x
-        lda     $5200,x                 ; Screen data page 2
-        sta     $8D00,x
-        sta     $5600,x
-        lda     $5300,x                 ; Screen data page 3
-        sta     $8E00,x
-        sta     $5700,x
+        lda     D_5000,x                ; Screen data page 0
+        sta     D_8B00,x                ; Copy to display
+        sta     D_5400,x                ; Copy to working
+        lda     D_5100,x                ; Screen data page 1
+        sta     D_8C00,x
+        sta     D_5500,x
+        lda     D_5200,x                ; Screen data page 2
+        sta     D_8D00,x
+        sta     D_5600,x
+        lda     D_5300,x                ; Screen data page 3
+        sta     D_8E00,x
+        sta     D_5700,x
         inx
         bne     L_E49D
         rts
@@ -251,14 +251,14 @@ L_E49D:
 copy_charset_data:
         ldx     #$0F
 L_E4C7:
-        lda     $40D0,x
-        sta     $48D0,x
+        lda     D_40D0,x
+        sta     D_48D0,x
         dex
         bpl     L_E4C7
         ldy     #$1A                    ; Character code
-        sty     $5400                   ; Store at screen position
+        sty     D_5400                  ; Store at screen position
         iny
-        sty     $5401                   ; Store next character
+        sty     D_5401                  ; Store next character
         rts
 
 ; ============================================================================
@@ -282,13 +282,13 @@ update_player_sprite_positions:
         ldx     #$10                    ; Clear sprite registers
         lda     #$00
 L_E4E6:
-        sta     $D000,x                 ; Clear sprite X/Y positions
+        sta     VIC_SPR0_X,x            ; Clear sprite X/Y positions
         dex
         bpl     L_E4E6
         ldx     #$01                    ; Player index (1=P1, 0=P2)
         
 L_E4EE:
-        ldy     $0200,x                 ; Get sprite index for player
+        ldy     D_0200,x                ; Get sprite index for player
         lda     $B2,x                   ; Check player state
         beq     L_E527                  ; Player inactive, skip
         
@@ -296,28 +296,28 @@ L_E4EE:
         lda     $BA,x                   ; Player X position
         sec
         sbc     #$0A                    ; Adjust for sprite offset
-        sta     $D000,y                 ; Sprite 0 X
-        sta     $D004,y                 ; Sprite 2 X
+        sta     VIC_SPR0_X,y            ; Sprite 0 X
+        sta     VIC_SPR2_X,y            ; Sprite 2 X
         adc     #$17                    ; Offset for right sprites
-        sta     $D002,y                 ; Sprite 1 X
-        sta     $D006,y                 ; Sprite 3 X
+        sta     VIC_SPR1_X,y            ; Sprite 1 X
+        sta     VIC_SPR3_X,y            ; Sprite 3 X
         bcc     L_E513
         
         ; Handle X MSB (for X > 255)
-        lda     $D010                   ; VIC sprite X MSB register
+        lda     VIC_SPR_XMSB            ; VIC sprite X MSB register
         ora     L_E552,x                ; OR with sprite mask
-        sta     $D010
+        sta     VIC_SPR_XMSB
         
 L_E513:
         lda     $C2,x                   ; Player Y position
         sec
         sbc     #$08                    ; Adjust for sprite offset
-        sta     $D001,y                 ; Sprite 0 Y
-        sta     $D003,y                 ; Sprite 1 Y
+        sta     VIC_SPR0_Y,y            ; Sprite 0 Y
+        sta     VIC_SPR1_Y,y            ; Sprite 1 Y
         clc
         adc     #$15                    ; Offset for bottom sprites
-        sta     $D005,y                 ; Sprite 2 Y
-        sta     $D007,y                 ; Sprite 3 Y
+        sta     VIC_SPR2_Y,y            ; Sprite 2 Y
+        sta     VIC_SPR3_Y,y            ; Sprite 3 Y
         
 L_E527:
         dex                             ; Next player
@@ -327,9 +327,9 @@ L_E527:
         ldx     #$03
 L_E52C:
         lda     #$05                    ; Green
-        sta     $D027,x                 ; Sprites 0-3 color
+        sta     VIC_SPR0_COL,x          ; Sprites 0-3 color
         lda     #$03                    ; Cyan
-        sta     $D02B,x                 ; Sprites 4-7 color
+        sta     VIC_SPR4_COL,x          ; Sprites 4-7 color
         dex
         bpl     L_E52C
         
@@ -352,12 +352,12 @@ L_E539:
 set_sprite_pointers:
         ldx     #$03
 L_E53D:
-        sta     $53F8,x                 ; Sprite pointers screen 1
-        sta     $57F8,x                 ; Sprite pointers screen 2
+        sta     D_53F8,x                ; Sprite pointers screen 1
+        sta     D_57F8,x                ; Sprite pointers screen 2
         clc
         adc     #$04                    ; Advance 4 sprite frames
-        sta     $53FC,x                 ; Next set of pointers
-        sta     $57FC,x
+        sta     D_53FC,x                ; Next set of pointers
+        sta     D_57FC,x
         sbc     #$04                    ; Restore base value
         dex
         bpl     L_E53D

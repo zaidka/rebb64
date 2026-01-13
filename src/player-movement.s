@@ -165,11 +165,11 @@ L_27C7:
 L_27CB:
         ldy  #$01                   ; a0 01        $27cb
 L_27CD:
-        lda  $00b2,y                ; b9 b2 00     $27cd
+        lda  a:ESSION,y             ; b9 b2 00     $27cd
         beq  L_2804                 ; f0 32        $27d0
         lda  FA,x                   ; b5 ba        $27d2
         sec                         ; 38           $27d4
-        sbc  $00ba,y                ; f9 ba 00     $27d5
+        sbc  a:FA,y                 ; f9 ba 00     $27d5
         bcs  L_27DE                 ; b0 04        $27d8
         eor  #$ff                   ; 49 ff        $27da
         adc  #$01                   ; 69 01        $27dc
@@ -178,7 +178,7 @@ L_27DE:
         bcs  L_2804                 ; b0 22        $27e0
         lda  ZP_C2,x                ; b5 c2        $27e2
         sec                         ; 38           $27e4
-        sbc  $00c2,y                ; f9 c2 00     $27e5
+        sbc  a:ZP_C2,y              ; f9 c2 00     $27e5
         bcs  L_27EE                 ; b0 04        $27e8
         eor  #$ff                   ; 49 ff        $27ea
         adc  #$01                   ; 69 01        $27ec

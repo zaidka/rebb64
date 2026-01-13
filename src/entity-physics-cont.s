@@ -190,7 +190,7 @@ L_F085:
     ; Value > 99: Copy 3-byte value
     ldy  #$02                   ; Copy 3 bytes
 L_F09A:
-    lda  $0075,y                ; Load from source
+    lda  a:ZP_75,y              ; Load from source
     sta  (DATLIN+1),y           ; Store via pointer
     dey                         ; Next byte
     bpl  L_F09A                 ; Loop for all 3 bytes

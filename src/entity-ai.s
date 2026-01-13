@@ -47,7 +47,7 @@ L_EDDC:
     ; Compare entity X position with player X position
     ldy  OPPTR                  ; $4B - Player index pointer
     lda  FA,x                   ; Load entity X position
-    sbc  $00BA,y                ; Subtract player X position (carry already clear from AND)
+    sbc  a:FA,y                 ; Subtract player X position (carry already clear from AND)
     bcs  L_EE07                 ; If entity >= player, check right side
     
     ; Entity is to the left of player
@@ -76,7 +76,7 @@ L_EE07:
 ; Check Y position - entity must be at or above player
 L_EE15:
     lda  ZP_C2,x                ; Load entity Y position
-    sbc  $00C2,y                ; Subtract player Y position
+    sbc  a:ZP_C2,y              ; Subtract player Y position
     bcc  L_EE49                 ; If entity below player, can't attack
     beq  L_EE25                 ; If equal Y, skip RNG check
     
@@ -90,7 +90,7 @@ L_EE25:
     ldy  #$0F                   ; Start at slot 15 (check slots 15-0)
     
 L_EE27:
-    lda  $00CC,y                ; Check projectile slot
+    lda  a:BLNON,y              ; Check projectile slot
     bmi  L_EE31                 ; If negative (free), use this slot
     dey                         ; Try previous slot
     bpl  L_EE27                 ; Loop if more slots to check
@@ -99,7 +99,7 @@ L_EE27:
 ; Create attack projectile
 L_EE31:
     lda  #$42                   ; Projectile type $42
-    sta  $00CC,y                ; Store in projectile slot
+    sta  a:BLNON,y              ; Store in projectile slot
     tya                         ; Transfer slot index to A
     sta  D_87A0,x               ; Store in entity collision state
     lda  #$07                   ; Attack animation frame count
@@ -132,7 +132,7 @@ L_EE61:
 ; Player Y-position comparison for AI - D_EE62
 ; Compares player Y with entity Y and sets entity state flags
     ldy  OPPTR                  ; $4B - Player index pointer
-    lda  $00C2,y                ; Load player Y position
+    lda  a:ZP_C2,y              ; Load player Y position
     cmp  ZP_C2,x                ; Compare with entity Y
     beq  L_EE7E                 ; If equal, set state 1
     bcc  L_EE91                 ; If player below entity, set state 2

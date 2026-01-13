@@ -15,10 +15,10 @@
 ;-------------------------------------------------------------------------------
 D_3C01:
         lda     #$13                ; Graphics mode
-        sta     $A9B0
-        ldx     $A9AE               ; Check init flag
+        sta     D_A9B0
+        ldx     D_A9AE              ; Check init flag
         bne     @skip_init
-        sta     $A9AE               ; Set init flag
+        sta     D_A9AE              ; Set init flag
 
 @skip_init:
         lda     $10                 ; Level number
@@ -27,10 +27,10 @@ D_3C01:
         
         ; Level 99 special case
         lda     #$01
-        sta     $A9AE
+        sta     D_A9AE
         lda     #$00
-        sta     $A9AF
-        sta     $A9B0
+        sta     D_A9AF
+        sta     D_A9B0
 
 @setup_ptrs:
         lda     #$46                ; Setup graphics pointers
@@ -42,21 +42,21 @@ D_3C01:
         sta     $0B
 
 @comp_loop:
-        lda     $519C,x             ; Get sprite index 1
+        lda     D_519C,x            ; Get sprite index 1
         tay
-        lda     $0200,y             ; Sprite pointer low
+        lda     D_0200,y            ; Sprite pointer low
         sta     $02
-        lda     $0300,y             ; Sprite pointer high
+        lda     D_0300,y            ; Sprite pointer high
         ora     #$40
         sta     $03
-        lda     $51EC,x             ; Get sprite index 2
+        lda     D_51EC,x            ; Get sprite index 2
         tay
-        lda     $0200,y
+        lda     D_0200,y
         sta     $04
-        lda     $0300,y
+        lda     D_0300,y
         ora     #$40
         sta     $05
-        lda     $A9A8,x             ; Calculate dest address 1
+        lda     D_A9A8,x            ; Calculate dest address 1
         asl
         asl
         asl
@@ -65,7 +65,7 @@ D_3C01:
         lda     #$00
         adc     #$FE
         sta     $12
-        lda     $AD15,x             ; Calculate dest address 2
+        lda     D_AD15,x            ; Calculate dest address 2
         asl
         asl
         asl
@@ -100,16 +100,16 @@ D_3C01:
         ldx     #$47                ; Copy buffers
 
 @buf_loop:
-        lda     $4600,x
-        sta     $4E00,x
-        lda     $4648,x
-        sta     $4E48,x
+        lda     D_4600,x
+        sta     D_4E00,x
+        lda     D_4648,x
+        sta     D_4E48,x
         dex
         bpl     @buf_loop
         
-        jsr     $E494               ; Wait/sync
+        jsr     D_E494              ; Wait/sync
         lda     #$02
-        sta     $A9B1               ; Set complete flag
+        sta     D_A9B1              ; Set complete flag
         ldx     #$FD
         ldy     #$AC
-        jmp     $E42A               ; Continue
+        jmp     D_E42A              ; Continue

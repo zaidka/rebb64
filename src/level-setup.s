@@ -285,13 +285,13 @@ L_2CD8:
         ldy     #$01                    ; a0 01        $2cd8 - Check 2 item slots
 
 D_2CDA:
-        lda     $0052,y                 ; b9 52 00     $2cda - Get item type
+        lda     a:ZP_52,y               ; b9 52 00     $2cda - Get item type
         bmi     L_2D58                  ; 30 79        $2cdd - Inactive (high bit set), skip
 
         ; Calculate X distance
         lda     FA,x                    ; b5 ba        $2cdf - Player X position
         sec                             ; 38           $2ce1
-        sbc     $0059,y                 ; f9 59 00     $2ce2 - Subtract item X
+        sbc     a:ZP_59,y               ; f9 59 00     $2ce2 - Subtract item X
         bcs     L_2CEB                  ; b0 04        $2ce5 - Positive, skip abs
         eor     #$ff                    ; 49 ff        $2ce7 - Make absolute
         adc     #$01                    ; 69 01        $2ce9
@@ -303,7 +303,7 @@ L_2CEB:
         ; Calculate Y distance
         lda     $c2,x                   ; b5 c2        $2cef - Player Y position
         sec                             ; 38           $2cf1
-        sbc     $005b,y                 ; f9 5b 00     $2cf2 - Subtract item Y
+        sbc     a:ZP_5B,y               ; f9 5b 00     $2cf2 - Subtract item Y
         bcs     L_2CFB                  ; b0 04        $2cf5 - Positive, skip abs
         eor     #$ff                    ; 49 ff        $2cf7 - Make absolute
         adc     #$01                    ; 69 01        $2cf9
@@ -314,7 +314,7 @@ L_2CFB:
 
         ; Collision detected! Collect item
         lda     #$ff                    ; a9 ff        $2cff
-        sta     $005d,y                 ; 99 5d 00     $2d01 - Mark timer as expired
+        sta     a:ZP_5D,y               ; 99 5d 00     $2d01 - Mark timer as expired
         lda     #$01                    ; a9 01        $2d04
         sta     $b0                     ; 85 b0        $2d06 - Set collected flag
 

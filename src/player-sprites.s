@@ -123,7 +123,7 @@ check_collision:
         sta     VARNAM                  ; 85 45    - Store sprite Y position
         
         ldy     D_A76B,x                ; bc 6b a7 - Get sprite data index
-        lda     $0200,y                 ; b9 00 02 - Load collision threshold
+        lda     D_0200,y                ; b9 00 02 - Load collision threshold
         sta     OLDTXT                  ; 85 3d    - Store threshold
         stx     OLDTXT+1                ; 86 3e    - Save X register
         

@@ -154,9 +154,9 @@ L_E7E8:
     tax
     
     ; Get character data pointer for first character
-    lda  $0200,x
+    lda  D_0200,x
     sta  STREND                ; STREND
-    lda  $0300,x              ; IERROR
+    lda  D_0300,x             ; IERROR
     ora  ARYTAB                ; Screen pointer
     sta  STREND+1                ; STREND+1
     
@@ -169,9 +169,9 @@ L_E7E8:
     iny
     lda  (DATLIN1),y            ; DATLIN+1
     tax
-    lda  $0200,x
+    lda  D_0200,x
     sta  FRETOP                ; FRETOP
-    lda  $0300,x              ; IERROR
+    lda  D_0300,x             ; IERROR
     ora  ARYTAB                ; Screen pointer
     sta  FRETOP+1                ; FRETOP+1
     
@@ -184,9 +184,9 @@ L_E7E8:
     iny
     lda  (DATLIN1),y            ; DATLIN+1
     tax
-    lda  $0200,x
+    lda  D_0200,x
     sta  $35                ; FRESPC
-    lda  $0300,x              ; IERROR
+    lda  D_0300,x             ; IERROR
     ora  ARYTAB                ; Screen pointer
     sta  $36                ; FRESPC+1
     
@@ -288,9 +288,9 @@ L_E88A:
     ; Get first character
     lda  (DATLIN1),y            ; DATLIN+1
     tay
-    lda  $0200,y
+    lda  D_0200,y
     sta  STREND                ; STREND
-    lda  $0300,y              ; IERROR
+    lda  D_0300,y             ; IERROR
     adc  ARYTAB                ; Screen pointer
     sta  STREND+1                ; STREND+1
     
@@ -304,9 +304,9 @@ L_E88A:
     iny
     lda  (DATLIN1),y            ; DATLIN+1
     tay
-    lda  $0200,y
+    lda  D_0200,y
     sta  FRETOP                ; FRETOP
-    lda  $0300,y              ; IERROR
+    lda  D_0300,y             ; IERROR
     adc  ARYTAB                ; Screen pointer
     sta  FRETOP+1                ; FRETOP+1
     
@@ -319,9 +319,9 @@ L_E88A:
     iny
     lda  (DATLIN1),y            ; DATLIN+1
     tay
-    lda  $0200,y
+    lda  D_0200,y
     sta  $35                ; FRESPC
-    lda  $0300,y              ; IERROR
+    lda  D_0300,y             ; IERROR
 
 ; Label for BASIC ROM compatibility (PRTFIX at $E8DA)
 PRTFIX:
@@ -404,15 +404,15 @@ L_E931:
     sta  D_E966                ; Self-modifying: store sprite frame offset
     
     ; Copy entity render state
-    lda  $014B,x
-    sta  $015D,x
-    lda  $016F,x
-    sta  $0181,x
+    lda  D_014B,x
+    sta  D_015D,x
+    lda  D_016F,x
+    sta  D_0181,x
     lda  $DC,x
-    sta  $014B,x
+    sta  D_014B,x
     sta  $0E                ; INTFLG
     lda  $EE,x
-    sta  $016F,x
+    sta  D_016F,x
     tay
     iny
     sty  $0D                ; VALTYP
@@ -483,8 +483,8 @@ L_E97F:
     clc
 
 L_E997:
-    adc  $0400,y              ; entry_0400 - score digits
-    sta  $0400,y              ; entry_0400
+    adc  D_0400,y             ; entry_0400 - score digits
+    sta  D_0400,y             ; entry_0400
     bcc  L_E9A4                ; No carry, done
     lda  #$00                  ; Propagate carry
     dey
@@ -573,7 +573,7 @@ prng_update:
     lda  $27
     eor  RESHO                ; RESHO - XOR for mixing
     adc  $27                ; Add with carry
-    eor  $DC06                ; CIA1_TBLO - XOR with timer for entropy
+    eor  CIA1_TBLO            ; CIA1_TBLO - XOR with timer for entropy
     sta  RESHO                ; RESHO - store new random value
     
     rts

@@ -43,7 +43,7 @@ routine_3DB0:
 L_3DC2_play_pop_sound:
         tya                                         ; $3DC2
         pha                                         ; $3DC3 - Save sound effect number
-        lda     $0193,x                             ; $3DC4 - Get player number
+        lda     D_0193,x                            ; $3DC4 - Get player number
         and     #$01                                ; $3DC7 - Player 0 or 1
         tay                                         ; $3DC9
         lda     D_AB51,y                            ; $3DCA - Get sound channel for player
@@ -62,7 +62,7 @@ L_3DC2_play_pop_sound:
         sbc     #$0C                                ; $3DDD - Subtract base (carry set)
         lsr                                         ; $3DDF - Divide by 2
         tay                                         ; $3DE0 - Use as power-up index
-        lda     $0193,x                             ; $3DE1 - Get player number
+        lda     D_0193,x                            ; $3DE1 - Get player number
         tax                                         ; $3DE4
         
         cpy     #$03                                ; $3DE5 - Adjust index if >= 3
@@ -136,7 +136,7 @@ L_3E2C_check_type_0A:
         adc     #$13                                ; $3E3C - Add offset (carry clear from AND)
         sta     D_AA0C,x                            ; $3E3E - Store new X position
         
-        ldy     $0193,x                             ; $3E41 - Get current player number
+        ldy     D_0193,x                            ; $3E41 - Get current player number
         lda     D_8520,y                            ; $3E44 - Look up player mapping
         tay                                         ; $3E47
         
@@ -152,7 +152,7 @@ L_3E56_use_player_04:
         lda     #$04                                ; $3E56
 
 L_3E58_set_player:
-        sta     $0193,x                             ; $3E58 - Set new player number
+        sta     D_0193,x                            ; $3E58 - Set new player number
         jmp     D_3E94                              ; $3E5B - Jump to sprite setup
 
 L_3E5E_check_type_08:

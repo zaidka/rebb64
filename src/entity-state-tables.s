@@ -17,30 +17,30 @@
 ; These appear to be fragments of entity state machine code or jump table data
 ; They are referenced by code in bb-screen-scroll.s
 
-D_3CB2:
+L_3CB2:                                             ; Label at byte before D_3CB2 table
         .byte   $B5,$CA,$38,$E9,$18                 ; $3CB2
         .byte   $4A,$A8,$BD                         ; $3CB7
 
-D_3CBB:
-        .byte   $42                                 ; $3CBB
+L_3CBA:                                             ; Label at byte before D_3CBB
+        .byte   $42                                 ; $3CBA (D_3CBB equate points to $3CBB)
 
-D_3CBB_continued:
+L_3CBB_continued:
         .byte   $AA,$99,$22,$85                     ; $3CBB+1
         lda     #$00                                ; $3CBF
         sta     D_872A,y                            ; $3CC1
 
-D_3CC4:
+L_3CC4:                                             ; Use D_3CC4 equate for correct address
         lda     D_AA0C,x                            ; $3CC4 - Entity X positions
-        sta     $00BC,y                             ; $3CC7
+        sta     a:ZP_BC,y                           ; $3CC7
         lda     D_AA1E,x                            ; $3CCA - Entity Y positions
 
-D_3CCD:
-        sta     $00C4,y                             ; $3CCD
+L_3CCD:                                             ; Use D_3CCD equate for correct address
+        sta     a:ZP_C4,y                           ; $3CCD
         jmp     D_E968                              ; $3CD0 - Continue entity processing
 
         .byte   $F6,$CA,$F6                         ; $3CD3 - Data fragment
 
-D_3CD6:
+L_3CD6:                                             ; Use D_3CD6 equate for correct address
         .byte   $CA                                 ; $3CD6 - Entry point data
 
 ;-------------------------------------------------------------------------------

@@ -220,9 +220,9 @@ D_FF00:
 ; These are lookup tables, jump vectors, or game state data
 ; The patterns suggest indexed data tables rather than code
 
-D_FF30:
+L_FF2F:                              ; Label at $FF2F (padding byte before D_FF30 table)
     .byte $00                    ; $FF2F (padding/alignment)
-    .byte $21, $87, $27, $9D     ; $FF30
+    .byte $21, $87, $27, $9D     ; $FF30 - bgColors table starts here (use D_FF30 equate)
     .byte $5D, $98, $63, $C1     ; $FF34
     .byte $87, $63, $BF, $63     ; $FF38
     .byte $21, $63, $BF          ; $FF3C
@@ -253,8 +253,8 @@ D_FF87:
     .byte $BF, $6E, $27, $87     ; $FF8F
     .byte $27                    ; $FF93
 
-D_FF94:
-    .byte $FF, $80, $81, $FF     ; $FF94
+L_FF93:                              ; Label at $FF93 (padding byte before D_FF94 table)  
+    .byte $FF, $80, $81, $FF     ; $FF94 - symmetry/sidebarIndex table starts here (use D_FF94 equate)
     .byte $02, $03, $84, $85     ; $FF98
     .byte $86, $87, $88, $89     ; $FF9C
 

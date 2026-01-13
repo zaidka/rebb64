@@ -176,9 +176,9 @@ L_3F3E_block_loop:
         ldy     D_A82E,x                            ; $3F3E - Get offset from table
         lda     (DATLIN+1),y                        ; $3F41 - Load value via indirect
         tay                                         ; $3F43 - Use as index
-        lda     $0200,y                             ; $3F44 - Load from page 2
+        lda     D_0200,y                            ; $3F44 - Load from page 2
         sta     DATPTR+1                            ; $3F47 - Store pointer low ($42)
-        lda     $0300,y                             ; $3F49 - Load from page 3 (IERROR)
+        lda     D_0300,y                            ; $3F49 - Load from page 3 (IERROR)
         ora     ARYTAB                              ; $3F4C - OR with $2F
         sta     INPPTR                              ; $3F4E - Store pointer high ($43)
         

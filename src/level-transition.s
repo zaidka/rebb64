@@ -177,10 +177,10 @@ L_2EA4:
     lda  #$4a                   ; Reset state value
     sta  PESSION,x              ; Reset entity spawn state
     lda  #$00                   ; Zero value
-    sta  $014b,x                ; Clear entity data 1
-    sta  $016f,x                ; Clear entity data 2
-    sta  $015d,x                ; Clear entity data 3
-    sta  $0181,x                ; Clear entity data 4
+    sta  D_014B,x               ; Clear entity data 1
+    sta  D_016F,x               ; Clear entity data 2
+    sta  D_015D,x               ; Clear entity data 3
+    sta  D_0181,x               ; Clear entity data 4
     sta  $dc,x                  ; Clear entity position X
     sta  $ee,x                  ; Clear entity position Y
     dex                         ; Next entity

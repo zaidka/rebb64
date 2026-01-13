@@ -110,7 +110,7 @@ L_1ECC:
         lsr                             ; 4a           $1edd - Divide by 8
         lsr                             ; 4a           $1ede
         lsr                             ; 4a           $1edf
-        sta     $00de,y                 ; 99 de 00     $1ee0 - Store bubble column
+        sta     a:ZP_DE,y               ; 99 de 00     $1ee0 - Store bubble column
 
         ; Calculate bubble Y position (player Y - 5) / 8
         lda     ZP_C2,x                 ; b5 c2        $1ee3 - Get player Y
@@ -119,7 +119,7 @@ L_1ECC:
         lsr                             ; 4a           $1ee8 - Divide by 8
         lsr                             ; 4a           $1ee9
         lsr                             ; 4a           $1eea
-        sta     $00f0,y                 ; 99 f0 00     $1eeb - Store bubble row
+        sta     a:ZP_F0,y               ; 99 f0 00     $1eeb - Store bubble row
 
         ; Set shooting cooldown
         lda     #$64                    ; a9 64        $1eee - 100 frames cooldown
@@ -271,7 +271,7 @@ L_1FB3:
 
         ; Turn toward other player
         ldy     OPPTR                   ; a4 4b        $1fbf - Get other player index
-        lda     $00ba,y                 ; b9 ba 00     $1fc1 - Get other player X
+        lda     a:FA,y                  ; b9 ba 00     $1fc1 - Get other player X
         cmp     FA,x                    ; d5 ba        $1fc4 - Compare to this player X
         bcs     L_1FCC                  ; b0 04        $1fc6 - Other player is right, face right
         lda     #$07                    ; a9 07        $1fc8 - Face left direction

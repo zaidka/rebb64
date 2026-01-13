@@ -34,7 +34,7 @@ D_4900:
         lda     #$C1                                ; $4908
         sta     NMINV                               ; $490A - NMI vector low
         lda     #$FE                                ; $490D
-        sta     $0319                               ; $490F - NMI vector high
+        sta     NMINV_HI                            ; $490F - NMI vector high
         
         ; Configure memory banking
         lda     R6510                               ; $4912 - Get CPU port
@@ -188,7 +188,7 @@ D_49C2:
         lda     #$E9                                ; $49DC - IRQ vector low
         sta     CINV                                ; $49DE
         lda     #$49                                ; $49E1 - IRQ vector high ($49E9)
-        sta     $0315                               ; $49E3
+        sta     CINV_HI                             ; $49E3
         jmp     D_4A00                              ; $49E6
 
         sei                                         ; $49E9 - IRQ handler at $49E9
@@ -196,7 +196,7 @@ D_49C2:
         bcc     D_4A00                              ; $49ED - No data
         ldy     $72                                 ; $49EF - Buffer write pointer
         lda     ROESSION                            ; $49F1 - Get received byte
-        sta     $033C,y                             ; $49F3 - Store in buffer
+        sta     D_033C,y                            ; $49F3 - Store in buffer
         lda     #$01                                ; $49F6
         sta     ROESSION                            ; $49F8
         iny                                         ; $49FA
@@ -242,7 +242,7 @@ D_4A1F:
         lda     #$CE                                ; $4A28 - IRQ vector low
         sta     CINV                                ; $4A2A
         lda     #$49                                ; $4A2D - IRQ vector high ($49CE)
-        sta     $0315                               ; $4A2F
+        sta     CINV_HI                             ; $4A2F
         cli                                         ; $4A32 - Enable interrupts
 
 L_4A33:
@@ -261,7 +261,7 @@ D_4A48:
         ldy     #$00                                ; $4A48 - Byte counter
 L_4A4A:
         jsr     D_4A72                              ; $4A4A - Read byte
-        sta     $00A9,y                             ; $4A4D - Store in header buffer
+        sta     a:BAUDOF,y                          ; $4A4D - Store in header buffer
         iny                                         ; $4A50
         cpy     #$07                                ; $4A51 - 7 bytes read?
         bne     L_4A4A                              ; $4A53 - Continue
@@ -290,7 +290,7 @@ L_4A60:
 D_4A72:
         sty     $B5                                 ; $4A72 - Save Y register
 L_4A74:
-        lda     $0312                               ; $4A74 - Check stop key
+        lda     ISTOP                               ; $4A74 - Check stop key
         cmp     #$B2                                ; $4A77
         beq     L_4A86                              ; $4A79 - Stopped
         lda     $B4                                 ; $4A7B - Check status
@@ -302,7 +302,7 @@ L_4A86:
         ldx     FBUFPT                              ; $4A86 - Read pointer
         cpx     $72                                 ; $4A88 - Compare write pointer
         beq     L_4A74                              ; $4A8A - Buffer empty, wait
-        lda     $033C,x                             ; $4A8C - Get byte from buffer
+        lda     D_033C,x                            ; $4A8C - Get byte from buffer
         pha                                         ; $4A8F - Save it
         inx                                         ; $4A90 - Advance pointer
         txa                                         ; $4A91
@@ -335,7 +335,7 @@ D_4A9D:
         lda     #$31                                ; $4AB8 - Restore IRQ vector
         sta     CINV                                ; $4ABA
         lda     #$EA                                ; $4ABD
-        sta     $0315                               ; $4ABF
+        sta     CINV_HI                             ; $4ABF
         cli                                         ; $4AC2
         rts                                         ; $4AC3
 

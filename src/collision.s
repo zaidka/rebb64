@@ -48,7 +48,7 @@ D_0AAB:
         ldy     #$01                            ; $0AAB - Start with player 2
 check_player_loop:
 L_0AAD:
-        lda     $00b2,y                         ; $0AAD - Get player state ($B2+Y)
+        lda     a:ESSION,y                      ; $0AAD - Get player state ($B2+Y)
         cmp     #$01                            ; $0AB0 - State $01 = normal walking
         bne     next_player                     ; $0AB2 - Skip if not walking
         lda     D_8520,y                        ; $0AB4 - Get player animation frame
@@ -71,7 +71,7 @@ L_0AC4:
         bcs     next_enemy_push                 ; $0ACD - Skip (special enemies can't be pushed)
 
         ; Calculate X distance between player and enemy
-        lda     $00ba,y                         ; $0ACF - Player X position
+        lda     a:FA,y                          ; $0ACF - Player X position
         sec                                     ; $0AD2
         sbc     D_AA0C,x                        ; $0AD3 - Subtract enemy X
         cmp     #$14                            ; $0AD6 - Within 20 pixels?
@@ -79,7 +79,7 @@ D_0AD8:
         bcs     next_enemy_push                 ; $0AD8 - No - skip
 
         ; Calculate Y distance (absolute value)
-        lda     $00c2,y                         ; $0ADA - Player Y position
+        lda     a:ZP_C2,y                       ; $0ADA - Player Y position
         sec                                     ; $0ADD
         sbc     D_AA1E,x                        ; $0ADE - Subtract enemy Y
         bcs     positive_y_push                 ; $0AE1 - Positive? Skip abs
@@ -114,13 +114,13 @@ L_0AF2:
         sbc     #$02                            ; $0AFD - Subtract sub-pixels
         bcs     store_sub_x_push                ; $0AFF - No underflow? Store it
         and     #$03                            ; $0B01 - Wrap sub-position
-        dec     $dc,x                           ; $0B03 - Decrement screen column
+        dec     ZP_DC,x                         ; $0B03 - Decrement screen column
 
 store_sub_x_push:
 L_0B05:
         sta     D_A9C4,x                        ; $0B05 - Store enemy X sub-position (9D C4 A9)
-        sty     OLDLIN+1                        ; $0B08 - Save current player index (84 3C)
-        ldy     $ee,x                           ; $0B0A - Load enemy Y row (B4 EE)
+        sty     OLDLIN1                         ; $0B08 - Save current player index (84 3C)
+        ldy     ZP_EE,x                         ; $0B0A - Load enemy Y row (B4 EE)
 
         ; Check if enemy is within valid Y bounds
         cpy     #$04                            ; $0B0C - Y position >= 4?
@@ -130,8 +130,8 @@ L_0B05:
 
         ; Calculate screen memory pointer for collision check
         lda     D_AD1E,y                        ; $0B14 - Get screen row low byte
-        adc     $dc,x                           ; $0B17 - Add enemy column
-        sta     DATLIN+1                        ; $0B19 - Store in pointer ($40)
+        adc     ZP_DC,x                         ; $0B17 - Add enemy column
+        sta     DATLIN1                         ; $0B19 - Store in pointer ($40)
 
         lda     D_AD3D,y                        ; $0B1B - Get screen row high byte
         and     #$03                            ; $0B1E - Mask to valid range
@@ -143,22 +143,22 @@ L_0B05:
         beq     check_mid_wall_push             ; $0B27 - If 0, skip top check
 
         ldy     #$00                            ; $0B29 - Check top position
-        lda     (DATLIN+1),y                    ; $0B2B - Read screen char
+        lda     (DATLIN1),y                     ; $0B2B - Read screen char
         bmi     hit_wall_push                   ; $0B2D - High bit = wall
 
 check_mid_wall_push:
 L_0B2F:
         ldy     #$28                            ; $0B2F - Check middle position
-        lda     (DATLIN+1),y                    ; $0B31 - Read screen char
+        lda     (DATLIN1),y                     ; $0B31 - Read screen char
         bmi     hit_wall_push                   ; $0B33 - High bit = wall
         ldy     #$50                            ; $0B35 - Check bottom position
-        lda     (DATLIN+1),y                    ; $0B37 - Read screen char
+        lda     (DATLIN1),y                     ; $0B37 - Read screen char
         bpl     no_wall_push                    ; $0B39 - No wall? Continue
 
 ; Enemy hit wall - snap to grid
 hit_wall_push:
 L_0B3B:
-        inc     $dc,x                           ; $0B3B - Restore column position
+        inc     ZP_DC,x                         ; $0B3B - Restore column position
         lda     #$00                            ; $0B3D - Clear sub-position
         sta     D_A9C4,x                        ; $0B3F
 
@@ -173,7 +173,7 @@ L_0B3B:
 
 no_wall_push:
 L_0B51:
-        ldy     OLDLIN+1                        ; $0B51 - Restore player index
+        ldy     OLDLIN1                         ; $0B51 - Restore player index
         jmp     next_enemy_push                 ; $0B53 - Continue checking enemies
 
 ; ============================================================================
@@ -190,12 +190,12 @@ D_0B56:
         ; Calculate X distance (enemy X - player X)
         lda     D_AA0C,x                        ; $0B61 - Enemy X position
         sec                                     ; $0B64
-        sbc     $00ba,y                         ; $0B65 - Subtract player X
+        sbc     a:FA,y                          ; $0B65 - Subtract player X
         cmp     #$12                            ; $0B68 - Within 18 pixels?
         bcs     next_enemy_death                ; $0B6A - No - skip
 
         ; Calculate Y distance (absolute value)
-        lda     $00c2,y                         ; $0B6C - Player Y position
+        lda     a:ZP_C2,y                       ; $0B6C - Player Y position
         sec                                     ; $0B6F
         sbc     D_AA1E,x                        ; $0B70 - Subtract enemy Y
         bcs     positive_y_death                ; $0B73 - Positive? Skip abs
@@ -228,13 +228,13 @@ L_0B83:
         and     #$03                            ; $0B90 - Wrap sub-position
         cmp     D_A9C4,x                        ; $0B92 - Did we overflow?
         bcs     store_sub_x_death               ; $0B95 - No - store it
-        inc     $dc,x                           ; $0B97 - Yes - increment column
+        inc     ZP_DC,x                         ; $0B97 - Yes - increment column
 
 store_sub_x_death:
 L_0B99:
         sta     D_A9C4,x                        ; $0B99 - Store enemy X sub-position (9D C4 A9)
-        sty     OLDLIN+1                        ; $0B9C - Save current player index (84 3C)
-        ldy     $ee,x                           ; $0B9E - Load enemy Y row (B4 EE)
+        sty     OLDLIN1                         ; $0B9C - Save current player index (84 3C)
+        ldy     ZP_EE,x                         ; $0B9E - Load enemy Y row (B4 EE)
 
         ; Clamp Y position to valid bounds
         cpy     #$04                            ; $0BA0 - Y position >= 4?
@@ -254,8 +254,8 @@ L_0BAD:
         ; Calculate screen memory pointer for collision check
         lda     D_AD1E,y                        ; $0BAD - Get screen row low byte
 D_0BB0:
-        adc     $dc,x                           ; $0BB0 - Add enemy column
-        sta     DATLIN+1                        ; $0BB2 - Store in pointer ($40)
+        adc     ZP_DC,x                         ; $0BB0 - Add enemy column
+        sta     DATLIN1                         ; $0BB2 - Store in pointer ($40)
 
         lda     D_AD3D,y                        ; $0BB4 - Get screen row high byte
         and     #$03                            ; $0BB7 - Mask to valid range
@@ -267,22 +267,22 @@ D_0BB0:
         beq     check_mid_wall_death            ; $0BC0 - If 0, skip top check
 
         ldy     #$01                            ; $0BC2 - Check top-right position
-        lda     (DATLIN+1),y                    ; $0BC4 - Read screen char
+        lda     (DATLIN1),y                     ; $0BC4 - Read screen char
         bmi     hit_wall_death                  ; $0BC6 - High bit = wall
 
 check_mid_wall_death:
 L_0BC8:
         ldy     #$29                            ; $0BC8 - Check middle-right position
-        lda     (DATLIN+1),y                    ; $0BCA - Read screen char
+        lda     (DATLIN1),y                     ; $0BCA - Read screen char
         bmi     hit_wall_death                  ; $0BCC - High bit = wall
         ldy     #$51                            ; $0BCE - Check bottom-right position
-        lda     (DATLIN+1),y                    ; $0BD0 - Read screen char
+        lda     (DATLIN1),y                     ; $0BD0 - Read screen char
         bpl     no_wall_death                   ; $0BD2 - No wall? Continue
 
 ; Enemy hit wall - snap to grid
 hit_wall_death:
 L_0BD4:
-        dec     $dc,x                           ; $0BD4 - Restore column position
+        dec     ZP_DC,x                         ; $0BD4 - Restore column position
         lda     #$00                            ; $0BD6 - Clear sub-position
         sta     D_A9C4,x                        ; $0BD8
 
@@ -296,7 +296,7 @@ L_0BD4:
 
 no_wall_death:
 L_0BE8:
-        ldy     OLDLIN+1                        ; $0BE8 - Restore player index
+        ldy     OLDLIN1                         ; $0BE8 - Restore player index
         jmp     next_enemy_death                ; $0BEA - Continue checking enemies
 
 ; ============================================================================
@@ -344,7 +344,7 @@ spawn_enemy:
 L_0BF5:
         lda     #$16                            ; $0BF5 - Reset spawn timer to 22 frames
         sta     D_0BEE                          ; $0BF7 - Store (self-modifying at $0BEE)
-        lda     $4a                             ; $0BFA - Check enemies remaining counter
+        lda     ZP_4A                           ; $0BFA - Check enemies remaining counter
         beq     exit_spawn                      ; $0BFC - Exit if no more enemies
 
         ; 40% chance to skip spawning this frame
@@ -409,7 +409,7 @@ L_0C41:
 
 spawn_at_location:
 L_0C4E:
-        stx     DATLIN+1                        ; $0C4E - Store spawn X coordinate
+        stx     DATLIN1                         ; $0C4E - Store spawn X coordinate
         sty     DATPTR                          ; $0C50 - Store spawn Y coordinate
 
         ; Count active enemies (types $06-$0B)
@@ -418,7 +418,7 @@ D_0C54:
         ldx     #$00                            ; $0C54 - Counter = 0
 count_enemies_loop:
 L_0C56:
-        lda     $00ca,y                         ; $0C56 - Get enemy type
+        lda     a:PESSION,y                     ; $0C56 - Get enemy type
         cmp     #$06                            ; $0C59 - Type >= $06?
         bcc     not_active                      ; $0C5B - No, skip
         cmp     #$0c                            ; $0C5D - Type < $0C?
@@ -435,7 +435,7 @@ L_0C62:
         ldy     #$11                            ; $0C69 - Start at slot 17
 find_empty_slot:
 L_0C6B:
-        lda     $00ca,y                         ; $0C6B - Get enemy type
+        lda     a:PESSION,y                     ; $0C6B - Get enemy type
         bmi     found_empty_slot                ; $0C6E - Negative = empty slot
         dey                                     ; $0C70 - Next slot
         bpl     find_empty_slot                 ; $0C71 - Loop all 18
@@ -452,8 +452,8 @@ L_0C74:
         sta     D_A9D6,y                        ; $0C7C - Direction flag = 0
 
         ; Set spawn position
-        lda     DATLIN+1                        ; $0C7F - Get spawn X (grid column)
-        sta     $00dc,y                         ; $0C81 - Store enemy column
+        lda     DATLIN1                         ; $0C7F - Get spawn X (grid column)
+        sta     a:ZP_DC,y                       ; $0C81 - Store enemy column
         asl                                     ; $0C84 - Multiply by 8
         asl                                     ; $0C85
         asl                                     ; $0C86
@@ -461,7 +461,7 @@ L_0C74:
         sta     D_AA0C,y                        ; $0C89 - Store enemy X position
 
         lda     DATPTR                          ; $0C8C - Get spawn Y (grid row)
-        sta     $00ee,y                         ; $0C8E - Store enemy row
+        sta     a:ZP_EE,y                       ; $0C8E - Store enemy row
         asl                                     ; $0C91 - Multiply by 8
         asl                                     ; $0C92
         asl                                     ; $0C93
@@ -499,7 +499,7 @@ L_0CB7:
 ; Standard enemy type chooser
 D_0CC1:
         and     #$00                            ; $0CC1 - Clear accumulator (use seed)
-        sta     DATLIN+1                        ; $0CC3 - Store random bits
+        sta     DATLIN1                         ; $0CC3 - Store random bits
         lda     #$82                            ; $0CC5 - Set special flag
         sta     D_A9FA,y                        ; $0CC7 - Store in enemy flags
 
@@ -507,7 +507,7 @@ D_0CC1:
         lda     #$04                            ; $0CCA - Default enemy type $04
 D_0CCC:
         ldx     #$0d                            ; $0CCC - Default AI routine = 13
-        lsr     DATLIN+1                        ; $0CCE - Shift random bit 0
+        lsr     DATLIN1                         ; $0CCE - Shift random bit 0
         bcc     check_bit_1                     ; $0CD0 - Bit clear? Check next
 
         ; Bit 0 set: Enemy type $06
@@ -517,7 +517,7 @@ D_0CCC:
 
 check_bit_1:
 L_0CD8:
-        lsr     DATLIN+1                        ; $0CD8 - Shift random bit 1
+        lsr     DATLIN1                         ; $0CD8 - Shift random bit 1
         bcc     check_bit_2                     ; $0CDA - Bit clear? Check next
 
         ; Bit 1 set: Enemy type $08
@@ -527,7 +527,7 @@ L_0CD8:
 
 check_bit_2:
 L_0CE2:
-        lsr     DATLIN+1                        ; $0CE2 - Shift random bit 2
+        lsr     DATLIN1                         ; $0CE2 - Shift random bit 2
         bcc     set_enemy_type                  ; $0CE4 - Bit clear? Use default
 
         ; Bit 2 set: Enemy type $0A
@@ -538,7 +538,7 @@ D_0CE8:
 ; Store enemy type and AI routine
 set_enemy_type:
 L_0CEA:
-        sta     $00ca,y                         ; $0CEA - Store enemy type ($CA+Y)
+        sta     a:PESSION,y                     ; $0CEA - Store enemy type ($CA+Y)
         txa                                     ; $0CED - Get AI routine index
         sta     D_A9E8,y                        ; $0CEE - Store AI routine ($E8+Y)
         rts                                     ; $0CF1 - Done!

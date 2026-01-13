@@ -324,7 +324,7 @@ L_309B:
 ; D_30A0 - Player Display Loop Entry
 ;===============================================================================
 D_30A0:
-    lda  $0031,y                ; Get player score value
+    lda  a:STREND,y             ; Get player score value
     pha                         ; Save on stack
     lda  D_A7F7,y               ; Get player display offset
     clc                         ; Clear carry
@@ -350,7 +350,7 @@ D_30A0:
     eor  #$01                   ; Toggle player (0<->1)
     tay                         ; Y = other player index
     lda  STREND,x               ; Get current player score
-    cmp  $0031,y                ; Compare with other player score
+    cmp  a:STREND,y             ; Compare with other player score
     bcc  L_30E3                 ; Branch if current < other
     
     ; Current player has higher score - award small bonus

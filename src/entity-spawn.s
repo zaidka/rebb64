@@ -16,8 +16,8 @@
 ;-------------------------------------------------------------------------------
 D_39D2:
         tay                         ; Transfer count to Y
-        sta     $8638               ; Store in data tables
-        sta     $8639
+        sta     D_8638              ; Store in data tables
+        sta     D_8639
         sty     $04                 ; Store entity index
 
 ; Main entity processing loop
@@ -37,7 +37,7 @@ D_39DB:
         sta     $0B                 ; Store (COUNT)
         and     #$3F                ; Mask type bits
         asl                         ; Multiply by 2
-        sta     $863A,x             ; Store entity type
+        sta     D_863A,x            ; Store entity type
 
         ; Calculate X position
         lda     $09                 ; TRMPOS
@@ -68,7 +68,7 @@ D_39DB:
         rol
         rol
         ora     $0A
-        sta     $85EA,x             ; Store direction/movement data
+        sta     D_85EA,x            ; Store direction/movement data
 
         ; Check for special flag bit
         lda     $0B
@@ -78,37 +78,37 @@ D_39DB:
         ; If special flag set, load value from table
         lda     $B4,x
         tax
-        lda     $AB79,x             ; Load from table
+        lda     D_AB79,x            ; Load from table
         ldx     $04
 
 @skip_special_load:
-        sta     $8522,x             ; Store result (A unchanged if branch taken)
+        sta     D_8522,x            ; Store result (A unchanged if branch taken)
         
         ; Continue with normal entity setup
         lda     $B4,x
         tax
-        lda     $AB61,x             ; Load animation frame
+        lda     D_AB61,x            ; Load animation frame
         pha
-        lda     $AB69,x             ; Load sprite data
+        lda     D_AB69,x            ; Load sprite data
         pha
-        jsr     $E9EA               ; Call random number generator
+        jsr     D_E9EA              ; Call random number generator
         and     #$1F                ; Mask to 5 bits
         clc
-        adc     $AB71,x             ; Add offset from table
+        adc     D_AB71,x            ; Add offset from table
         pha
-        lda     $AB79,x
+        lda     D_AB79,x
         ldx     $04
-        sta     $8752,x             ; Store sprite pointer
+        sta     D_8752,x            ; Store sprite pointer
         sec
         sbc     #$01
-        sta     $877A,x             ; Store decremented value
+        sta     D_877A,x            ; Store decremented value
         pla
-        sta     $868A,x             ; Restore and store animation
-        sta     $8662,x
+        sta     D_868A,x            ; Restore and store animation
+        sta     D_8662,x
         pla
-        sta     $859A,x             ; Store sprite data
+        sta     D_859A,x            ; Store sprite data
         pla
-        sta     $854A,x             ; Store frame data
+        sta     D_854A,x            ; Store frame data
         
         ; Advance to next entity
         iny
@@ -126,20 +126,20 @@ D_3A6C:
         ldx     #$27                ; 40 entities
 
 @clear_loop:
-        lda     $8500,x             ; Copy data between arrays
-        sta     $84D8,x
-        sta     $84B0,x
-        sta     $8488,x
-        lda     $88C0,x
-        sta     $88E8,x
-        sta     $8910,x
-        sta     $8938,x
+        lda     D_8500,x            ; Copy data between arrays
+        sta     D_84D8,x
+        sta     D_84B0,x
+        sta     D_8488,x
+        lda     D_88C0,x
+        sta     D_88E8,x
+        sta     D_8910,x
+        sta     D_8938,x
         dex
         bpl     @clear_loop
 
         ; Level-specific initialization
         ldx     $10                 ; SUBFLG (level number)
-        lda     $B631,x             ; Load item spawn positions C + bubble spawns
+        lda     D_B631,x            ; Load item spawn positions C + bubble spawns
         sta     $02
         lda     #$2C
         lsr     $02                 ; Test flag bit
@@ -147,21 +147,21 @@ D_3A6C:
 
         ; Random setup for certain levels
         ldy     #$4C
-        jsr     $E9EA               ; Random number
+        jsr     D_E9EA              ; Random number
         and     #$01
         bne     @store_flag
         ldy     #$2C
-        jsr     $E9EA
+        jsr     D_E9EA
         and     #$03
         sta     $4C
 
 @store_flag:
-        sty     $0C9C
+        sty     D_0C9C
         lda     $02
         and     #$07
-        sta     $0CC2
+        sta     D_0CC2
         lda     #$20
 
 @skip_random:
-        sta     $0A38               ; Store result
+        sta     D_0A38              ; Store result
         rts

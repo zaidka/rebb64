@@ -123,7 +123,7 @@ L_18EA:
     bmi  L_192F
     lda  #$03
     sta  OLDLIN+1
-    ldy  $0181,x
+    ldy  D_0181,x
 L_18F5:
     cpy  #$04
     bcc  L_192A
@@ -132,7 +132,7 @@ L_18F5:
     sty  D_1929
     lda  D_AD1E,y
     clc
-    adc  $015d,x
+    adc  D_015D,x
     sta  DATLIN+1
     sta  DATPTR+1
     lda  #$00
@@ -223,9 +223,9 @@ L_198A:
     beq  L_19C0
     lda  PESSION
     bmi  L_19C1
-    ldy  $0181
+    ldy  D_0181
     lda  D_AD20,y
-    adc  $015d
+    adc  D_015D
     sta  DATLIN+1
     sta  DATPTR+1
     lda  #$00

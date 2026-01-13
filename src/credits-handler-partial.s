@@ -131,10 +131,10 @@ D_F217:
     lda  #$02                   ; $F21D: a9 02 - Value to fill
     ldx  #$03                   ; $F21F: a2 03 - Loop counter (4 iterations)
 L_F221:
-    sta  $88C9,x                ; $F221: 9d c9 88 - Array 1
-    sta  $88F1,x                ; $F224: 9d f1 88 - Array 2
-    sta  $8919,x                ; $F227: 9d 19 89 - Array 3
-    sta  $8941,x                ; $F22A: 9d 41 89 - Array 4
+    sta  D_88C9,x               ; $F221: 9d c9 88 - Array 1
+    sta  D_88F1,x               ; $F224: 9d f1 88 - Array 2
+    sta  D_8919,x               ; $F227: 9d 19 89 - Array 3
+    sta  D_8941,x               ; $F22A: 9d 41 89 - Array 4
     dex                         ; $F22D: ca
     bpl  L_F221                 ; $F22E: 10 f1 - Loop until X < 0
 
@@ -148,5 +148,5 @@ L_F230:
 L_F23A:
     ldy  #$E6                   ; $F23A: a0 e6 - Alternate timing value
 L_F23C:
-    sta  $0DC7                  ; $F23C: 8d c7 0d - Store level number
+    sta  D_0DC7                 ; $F23C: 8d c7 0d - Store level number
     rts                         ; $F23F: 60 - Return

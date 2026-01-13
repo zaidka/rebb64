@@ -36,7 +36,7 @@ L_29C2:
 L_29CF:
         lda     FA,x                    ; b5 ba        $29cf - Get player X position
         sec                             ; 38           $29d1
-        sbc     $00ba,y                 ; f9 ba 00     $29d2 - Subtract entity X position
+        sbc     a:FA,y                  ; f9 ba 00     $29d2 - Subtract entity X position
         bcs     L_29DB                  ; b0 04        $29d5 - If positive, skip abs conversion
         eor     #$ff                    ; 49 ff        $29d7 - Convert to absolute value
         adc     #$01                    ; 69 01        $29d9 - (two's complement)
@@ -48,7 +48,7 @@ L_29DB:
 ; Calculate vertical distance (Manhattan distance component 2)
         lda     $c2,x                   ; b5 c2        $29df - Get player Y position
         sec                             ; 38           $29e1
-        sbc     $00c2,y                 ; f9 c2 00     $29e2 - Subtract entity Y position
+        sbc     a:ZP_C2,y               ; f9 c2 00     $29e2 - Subtract entity Y position
         bcs     L_29EB                  ; b0 04        $29e5 - If positive, skip abs conversion
         eor     #$ff                    ; 49 ff        $29e7 - Convert to absolute value
         adc     #$01                    ; 69 01        $29e9 - (two's complement)

@@ -148,10 +148,10 @@ L_2ADF:
         sta     D_8522,y                ; 99 22 85     $2ae5 - Store index
         lda     #$00                    ; a9 00        $2ae8
         sta     D_854A,y                ; 99 4a 85     $2aea - Clear item timer
-        lda     $00c4,y                 ; b9 c4 00     $2aed - Get Y position
+        lda     a:ZP_C4,y               ; b9 c4 00     $2aed - Get Y position
         clc                             ; 18           $2af0
         adc     #$04                    ; 69 04        $2af1 - Add 4 pixels offset
-        sta     $00c4,y                 ; 99 c4 00     $2af3 - Store adjusted Y
+        sta     a:ZP_C4,y               ; 99 c4 00     $2af3 - Store adjusted Y
         dey                             ; 88           $2af6
         bpl     L_2ADF                  ; 10 e6        $2af7 - Loop for all items
 
@@ -159,13 +159,13 @@ L_2ADF:
 
 ; Check player collision with super bonus
 L_2AFB:
-        lda     $00ba,y                 ; b9 ba 00     $2afb - Get player X position
+        lda     a:FA,y                  ; b9 ba 00     $2afb - Get player X position
         sec                             ; 38           $2afe
         sbc     ZP_BC                   ; e5 bc        $2aff - Subtract bonus X
         bcc     L_2B2D                  ; 90 2a        $2b01 - Too far left, skip
         cmp     #$30                    ; c9 30        $2b03 - Within $30 pixels?
         bcs     L_2B2D                  ; b0 26        $2b05 - Too far right, skip
-        lda     $00c2,y                 ; b9 c2 00     $2b07 - Get player Y position
+        lda     a:ZP_C2,y               ; b9 c2 00     $2b07 - Get player Y position
         sec                             ; 38           $2b0a
         sbc     $c4                     ; e5 c4        $2b0b - Subtract bonus Y
         bcc     L_2B2D                  ; 90 1e        $2b0d - Too far up, skip
@@ -184,9 +184,9 @@ L_2AFB:
 
 ; Clear all super bonus items
 L_2B21:
-        sta     $00b4,y                 ; 99 b4 00     $2b21 - Clear item state
-        sta     $00bc,y                 ; 99 bc 00     $2b24 - Clear item X
-        sta     $00c4,y                 ; 99 c4 00     $2b27 - Clear item Y
+        sta     a:ZP_B4,y               ; 99 b4 00     $2b21 - Clear item state
+        sta     a:ZP_BC,y               ; 99 bc 00     $2b24 - Clear item X
+        sta     a:ZP_C4,y               ; 99 c4 00     $2b27 - Clear item Y
         dey                             ; 88           $2b2a
         bpl     L_2B21                  ; 10 f4        $2b2b - Loop for all items
 

@@ -37,7 +37,7 @@ L_1CDB:
     txa
     and  #$01
     tay
-    lda  $00b2,y                ; Get player state
+    lda  a:ESSION,y             ; Get player state
     cmp  #$01
     beq  L_1CF3
     tya
@@ -89,13 +89,13 @@ L_1D24:
 L_1D32:
     ldy  #$01
 L_1D34:
-    lda  $00b2,y
+    lda  a:ESSION,y
     cmp  #$01
     bne  L_1D79
-    lda  $00ba,y
+    lda  a:FA,y
     adc  #$01
     sta  $02
-    lda  $00c2,y
+    lda  a:ZP_C2,y
     adc  #$02
     sta  ADRAY1
     ldx  #$05
@@ -123,7 +123,7 @@ L_1D6D:
     cmp  #$0c
     bcs  L_1D76
     lda  #$0e                   ; Set hit state
-    sta  $00b2,y
+    sta  a:ESSION,y
 L_1D76:
     dex
     bpl  L_1D4B
@@ -205,10 +205,10 @@ L_1DEA:
 ; Super bonus player collision check
 ; ============================================================================
 L_1DEC:
-    lda  $00b2,y
+    lda  a:ESSION,y
     cmp  #$01
     bne  L_1E2A
-    lda  $00ba,y
+    lda  a:FA,y
     sec
     sbc  $bc
     bcs  L_1DFF
@@ -218,7 +218,7 @@ L_1DFF:
     cmp  #$40
     bcs  L_1E2A
 L_1E03:
-    lda  $00c2,y
+    lda  a:ZP_C2,y
     sec
     sbc  ROESSION
     bcs  L_1E0F
@@ -238,7 +238,7 @@ L_1E13:
     beq  D_1E2E
 L_1E25:
     lda  #$0e
-    sta  $00b2,y
+    sta  a:ESSION,y
 L_1E2A:
     dey
     bpl  L_1DEC

@@ -26,7 +26,7 @@ L_078C:
         ldx     #$ab                            ; $078C
         ldy     #$06                            ; $078E
         lda     #$fb                            ; $0790
-        jmp     $0717                           ; $0792 - Jump to earlier routine
+        jmp     D_0717                          ; $0792 - Jump to earlier routine
         
         ; Stack preservation and bank switching
         pha                                     ; $0795
@@ -41,21 +41,21 @@ L_078C:
         sta     $01                             ; $07A1
         
         ; Sprite Y-position adjustment
-        lda     $d005                           ; $07A3 - VIC_SPR2_Y
+        lda     VIC_SPR2_Y                      ; $07A3 - VIC_SPR2_Y
         clc                                     ; $07A6
         adc     #$2a                            ; $07A7
 D_07A9:
-        sta     $d005                           ; $07A9 - VIC_SPR2_Y
-        sta     $d007                           ; $07AC - VIC_SPR3_Y
-        sta     $d009                           ; $07AF - VIC_SPR4_Y
+        sta     VIC_SPR2_Y                      ; $07A9 - VIC_SPR2_Y
+        sta     VIC_SPR3_Y                      ; $07AC - VIC_SPR3_Y
+        sta     VIC_SPR4_Y                      ; $07AF - VIC_SPR4_Y
         
         ; Sprite pointer updates
-        lda     $53fa                           ; $07B2 - Sprite pointer
+        lda     D_53FA                          ; $07B2 - Sprite pointer
         adc     #$08                            ; $07B5
         ldx     #$02                            ; $07B7
 L_07B9:
-        sta     $53fa,x                         ; $07B9 - Update sprite pointers
-        sta     $57fa,x                         ; $07BC
+        sta     D_53FA,x                        ; $07B9 - Update sprite pointers
+        sta     D_57FA,x                        ; $07BC
         sec                                     ; $07BF
         sbc     #$01                            ; $07C0
         dex                                     ; $07C2
@@ -65,10 +65,10 @@ L_07B9:
         ldx     #$ab                            ; $07C5
         ldy     #$06                            ; $07C7
         lda     #$fb                            ; $07C9
-        sta     $d012                           ; $07CB - VIC_RASTER
-        stx     $fffe                           ; $07CE - IRQ_VEC low
-        sty     $ffff                           ; $07D1 - IRQ_VEC high
-        dec     $d019                           ; $07D4 - VIC_IRQ (acknowledge)
+        sta     VIC_RASTER                      ; $07CB - VIC_RASTER
+        stx     IRQ_VEC                         ; $07CE - IRQ_VEC low
+        sty     IRQ_VEC_HI                      ; $07D1 - IRQ_VEC high
+        dec     VIC_IRQ                         ; $07D4 - VIC_IRQ (acknowledge)
         
         ; Restore bank and stack
         lda     $2e                             ; $07D7
@@ -93,44 +93,44 @@ D_07E0:
 ; ============================================================================
 D_07E1:
         ldx     #$00                            ; $07E1
-        stx     $d010                           ; $07E3 - VIC_SPR_XMSB
+        stx     VIC_SPR_XMSB                    ; $07E3 - VIC_SPR_XMSB
         lda     $bc                             ; $07E6 - Base X position
-        sta     $d004                           ; $07E8 - VIC_SPR2_X
-        sta     $d00a                           ; $07EB - VIC_SPR5_X
+        sta     VIC_SPR2_X                      ; $07E8 - VIC_SPR2_X
+        sta     VIC_SPR5_X                      ; $07EB - VIC_SPR5_X
         clc                                     ; $07EE
         adc     #$18                            ; $07EF - Add 24 pixels
-        sta     $d006                           ; $07F1 - VIC_SPR3_X
-        sta     $d00c                           ; $07F4 - VIC_SPR6_X
+        sta     VIC_SPR3_X                      ; $07F1 - VIC_SPR3_X
+        sta     VIC_SPR6_X                      ; $07F4 - VIC_SPR6_X
         bcc     L_07FF                          ; $07F7 - No carry? Skip MSB update
         ldy     #$d8                            ; $07F9 - Enable MSB for sprites 3,4,6,7
-        sty     $d010                           ; $07FB - VIC_SPR_XMSB
+        sty     VIC_SPR_XMSB                    ; $07FB - VIC_SPR_XMSB
         clc                                     ; $07FE
 L_07FF:
         adc     #$18                            ; $07FF - Add another 24 pixels
-        sta     $d008                           ; $0801 - VIC_SPR4_X
-        sta     $d00e                           ; $0804 - VIC_SPR7_X
+        sta     VIC_SPR4_X                      ; $0801 - VIC_SPR4_X
+        sta     VIC_SPR7_X                      ; $0804 - VIC_SPR7_X
         bcc     L_080F                          ; $0807 - No carry? Skip MSB update
         lda     #$90                            ; $0809 - Enable MSB for sprites 4,7
-        sta     $d010                           ; $080B - VIC_SPR_XMSB
+        sta     VIC_SPR_XMSB                    ; $080B - VIC_SPR_XMSB
         clc                                     ; $080E
 L_080F:
         lda     $bd                             ; $080F - Base Y position
 D_0811:
-        sta     $d005                           ; $0811 - VIC_SPR2_Y
-        sta     $d007                           ; $0814 - VIC_SPR3_Y
-        sta     $d009                           ; $0817 - VIC_SPR4_Y
+        sta     VIC_SPR2_Y                      ; $0811 - VIC_SPR2_Y
+        sta     VIC_SPR3_Y                      ; $0814 - VIC_SPR3_Y
+        sta     VIC_SPR4_Y                      ; $0817 - VIC_SPR4_Y
         adc     #$15                            ; $081A - Add 21 pixels
-        sta     $d00b                           ; $081C - VIC_SPR5_Y
+        sta     VIC_SPR5_Y                      ; $081C - VIC_SPR5_Y
 D_081F:
-        sta     $d00d                           ; $081F - VIC_SPR6_Y
-        sta     $d00f                           ; $0822 - VIC_SPR7_Y
+        sta     VIC_SPR6_Y                      ; $081F - VIC_SPR6_Y
+        sta     VIC_SPR7_Y                      ; $0822 - VIC_SPR7_Y
         
         ; Update sprite pointers
         lda     #$d9                            ; $0825 - Base sprite pointer
         adc     $be                             ; $0827 - Offset
 L_0829:
-        sta     $53fa,x                         ; $0829 - Sprite pointer buffer 1
-        sta     $57fa,x                         ; $082C - Sprite pointer buffer 2
+        sta     D_53FA,x                        ; $0829 - Sprite pointer buffer 1
+        sta     D_57FA,x                        ; $082C - Sprite pointer buffer 2
         adc     #$01                            ; $082F - Next sprite
         inx                                     ; $0831
         cpx     #$06                            ; $0832
@@ -141,7 +141,7 @@ D_0834:
         ldx     #$05                            ; $0836
         lda     $c0                             ; $0838 - Color value
 L_083A:
-        sta     $d029,x                         ; $083A - VIC_SPR2_COL+
+        sta     VIC_SPR2_COL,x                  ; $083A - VIC_SPR2_COL+
         dex                                     ; $083D
         bpl     L_083A                          ; $083E
         
@@ -186,11 +186,11 @@ L_0867:
         lsr                                     ; $0871
         and     #$01                            ; $0872 - Get bit 5
         tax                                     ; $0874
-        ldy     $3f84,x                         ; $0875 - Load index
+        ldy     D_3F84,x                        ; $0875 - Load index
         ldx     #$09                            ; $0878
 L_087A:
-        lda     $57d4,y                         ; $087A - Copy 10 bytes
-        sta     $50af,x                         ; $087D
+        lda     D_57D4,y                        ; $087A - Copy 10 bytes
+        sta     D_50AF,x                        ; $087D
 D_0880:
         dey                                     ; $0880
         dex                                     ; $0881
@@ -209,7 +209,7 @@ D_0880:
 ;   - Fill level with random tiles (200 tiles for demo/attract mode)
 ; ============================================================================
 D_0885:
-        jsr     $e374                           ; $0885 - Screen setup
+        jsr     D_E374                          ; $0885 - Screen setup
         lda     #$54                            ; $0888
         sta     $30                             ; $088A - ARYTAB+1
         lda     #$48                            ; $088C
@@ -218,16 +218,16 @@ D_0885:
         ; Copy sprite/charset data
         ldx     #$0f                            ; $0890
 L_0892:
-        lda     $ae41,x                         ; $0892
-        sta     $47f0,x                         ; $0895
+        lda     D_AE41,x                        ; $0892
+        sta     D_47F0,x                        ; $0895
         dex                                     ; $0898
         bpl     L_0892                          ; $0899
         
         ; Initialize game state
         lda     #$00                            ; $089B
         sta     $20                             ; $089D - Game mode flag
-        sta     $d015                           ; $089F - VIC_SPR_ENA (disable sprites)
-        jsr     $e740                           ; $08A2
+        sta     VIC_SPR_ENA                     ; $089F - VIC_SPR_ENA (disable sprites)
+        jsr     D_E740                          ; $08A2
         
         ; Set up random level fill
         lda     #$06                            ; $08A5
@@ -240,30 +240,30 @@ L_0892:
         ; Fill level with random tiles (200 iterations)
         ldx     #$c8                            ; $08B1 - 200 tiles
 L_08B3:
-        jsr     $e9ea                           ; $08B3 - Random number generator
+        jsr     D_E9EA                          ; $08B3 - Random number generator
         cmp     #$19                            ; $08B6 - Limit to 0-24
         bcs     L_08B3                          ; $08B8 - Retry if >= 25
         asl                                     ; $08BA - Multiply by 2 (table index)
         tay                                     ; $08BB
         lda     #$00                            ; $08BC
-        adc     $ac09,y                         ; $08BE - Level data pointer low
+        adc     D_AC09,y                        ; $08BE - Level data pointer low
         sta     $11                             ; $08C1 - INPFLG
         lda     #$50                            ; $08C3
-        adc     $ac0a,y                         ; $08C5 - Level data pointer high
+        adc     D_AC0A,y                        ; $08C5 - Level data pointer high
         sta     $12                             ; $08C8 - TANSGN
 L_08CA:
-        jsr     $e9ea                           ; $08CA - Random Y coordinate
+        jsr     D_E9EA                          ; $08CA - Random Y coordinate
         cmp     #$28                            ; $08CD - Limit to 0-39
 D_08CF:
         bcs     L_08CA                          ; $08CF - Retry if >= 40
         tay                                     ; $08D1
-        jsr     $e9ea                           ; $08D2 - Random tile data
+        jsr     D_E9EA                          ; $08D2 - Random tile data
         ora     #$fe                            ; $08D5 - Set upper bits
         sta     ($11),y                         ; $08D7 - Write to level buffer
         dex                                     ; $08D9
         bne     L_08B3                          ; $08DA - Loop 200 times
         
         ; Finish initialization
-        jsr     $e494                           ; $08DC - Wait one frame
+        jsr     D_E494                          ; $08DC - Wait one frame
         lda     #$09                            ; $08DF
-        jmp     $e740                           ; $08E1
+        jmp     D_E740                          ; $08E1

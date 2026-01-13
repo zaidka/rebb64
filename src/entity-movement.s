@@ -289,14 +289,14 @@ L_ED41:
     
     ; Projectile goes left
     lda  #$02                   ; Direction code for left
-    sta  $0195,y                ; Store in projectile direction array
+    sta  D_0195,y               ; Store in projectile direction array
     ldy  #$2B                   ; Cell offset for left
     bne  L_ED71                 ; Skip right setup
     
 L_ED68:
     ; Projectile goes right
     lda  #$80                   ; Direction code for right
-    sta  $0195,y                ; Store in projectile direction array
+    sta  D_0195,y               ; Store in projectile direction array
     ldy  #$27                   ; Cell offset for right
     lda  #$FE                   ; Direction offset
     
@@ -314,7 +314,7 @@ L_ED71:
     lda  ADRAY1                 ; Load grid X position
     clc
     adc  $04                    ; Add direction offset
-    sta  $00DE,y                ; Store in entity array +$DE
+    sta  a:ZP_DE,y              ; Store in entity array +$DE
     sta  D_AA0E,y               ; Store in data table
     
     ; Calculate spawn Y position (entity Y - $15) / 8
@@ -324,7 +324,7 @@ L_ED71:
     lsr                         ; Divide by 8
     lsr
     lsr
-    sta  $00F0,y                ; Store grid Y position in array +$F0
+    sta  a:ZP_F0,y              ; Store grid Y position in array +$F0
     
     ; Store source entity index
     txa                         ; Transfer entity index to A
@@ -357,13 +357,13 @@ L_EDAA:
     
 L_EDB9:
     ; Default projectile type - based on direction
-    lda  $0195,y                ; Load projectile direction
+    lda  D_0195,y               ; Load projectile direction
     and  #$7F                   ; Clear high bit
     sta  D_A9C6,y               ; Store as projectile state
     lda  #$28                   ; Default projectile type
     
 L_EDC3:
-    sta  $00CC,y                ; Store projectile type in array +$CC
+    sta  a:BLNON,y              ; Store projectile type in array +$CC
     
     ; L_EDC7
     rts

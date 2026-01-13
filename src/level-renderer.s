@@ -43,17 +43,17 @@ setup_level_screen:
         
         ; Call helper routines
         jsr     D_E494              ; Wait one frame / prepare screen
-        jsr     $E393               ; Setup screen memory (clear_color_ram)
+        jsr     D_E393              ; Setup screen memory (clear_color_ram)
         
         ; Get current level number
         ldx     SUBFLG              ; $10 = current level (1-100)
         
         ; Calculate pointer to level header ($0200,x + $6E offset)
-        lda     $0200,x
+        lda     D_0200,x
         clc
         adc     #$6E
         sta     $18                 ; Store low byte of header pointer
-        lda     $0300,x
+        lda     D_0300,x
         adc     #$C2
         sta     $19                 ; Store high byte of header pointer
         
@@ -61,13 +61,13 @@ setup_level_screen:
         ldy     #$07
 L_E021:
         lda     ($18),y
-        sta     $40A8,y
-        sta     $48A8,y
+        sta     D_40A8,y
+        sta     D_48A8,y
         dey
         bpl     L_E021
         
         ; Check level number (level >= 100 branches)
-        lda     $FF94,x             ; Get symmetry (bit 7) + sidebarCharsIndex (bits 0-6)
+        lda     D_FF94,x            ; Get symmetry (bit 7) + sidebarCharsIndex (bits 0-6)
         and     #$7F
         cmp     #$64                ; Compare with 100
         bcs     L_E05E              ; Branch if >= 100
@@ -95,8 +95,8 @@ L_E021:
         ldy     #$1F
 L_E051:
         lda     ($1A),y
-        sta     $40B0,y
-        sta     $48B0,y
+        sta     D_40B0,y
+        sta     D_48B0,y
         dey
         bpl     L_E051
         bmi     L_E07E              ; Always branches
@@ -105,15 +105,15 @@ L_E05E:
         ; For levels >= 100: Duplicate existing data
         ldy     #$07
 L_E060:
-        lda     $40A8,y             ; Source data
-        sta     $40B0,y             ; Copy to 4 locations
-        sta     $40B8,y
-        sta     $40C0,y
-        sta     $40C8,y
-        sta     $48B0,y             ; Mirror locations
-        sta     $48B8,y
-        sta     $48C0,y
-        sta     $48C8,y
+        lda     D_40A8,y            ; Source data
+        sta     D_40B0,y            ; Copy to 4 locations
+        sta     D_40B8,y
+        sta     D_40C0,y
+        sta     D_40C8,y
+        sta     D_48B0,y            ; Mirror locations
+        sta     D_48B8,y
+        sta     D_48C0,y
+        sta     D_48C8,y
         dey
         bpl     L_E060
 
@@ -124,7 +124,7 @@ L_E07E:
         sty     VARTAB              ; $2D = 0
         
         ; Extract color information from level flags
-        lda     $FF30,x             ; Get background color byte (bgColors metadata)
+        lda     D_FF30,x            ; Get background color byte (bgColors metadata)
         tay
         lsr     a                   ; High nibble -> $1D
         lsr     a
@@ -326,11 +326,11 @@ L_E150:
 ; ============================================================================
         ldx     #$1F
 L_E16F:
-        lda     $5400,x
+        lda     D_5400,x
         cmp     #$0C
         bne     L_E17B
         lda     #$0E
-        sta     $5400,x
+        sta     D_5400,x
         
 L_E17B:
         dex
@@ -340,7 +340,7 @@ L_E17B:
         ldx     #$08
         lda     #$00
 L_E182:
-        sta     $5800,x
+        sta     D_5800,x
         dex
         bpl     L_E182
 
@@ -648,7 +648,7 @@ init_level_renderer:
         ldx     #$00
 L_E2AD:
         lda     #$2E                ; Base offset = 46 bytes
-        ldy     $FF94,x             ; Get symmetry flag (bit 7)
+        ldy     D_FF94,x            ; Get symmetry flag (bit 7)
         bmi     L_E2B5              ; Branch if asymmetric level (bit 7 set)
         asl     a                   ; Double offset (92 bytes)
 L_E2B5:
@@ -665,7 +665,7 @@ L_E2BE:
 L_E2C3:
         ; Get data table index based on level flags
         ldy     #$00
-        lda     $FF94,x             ; Get symmetry flag (bit 7)
+        lda     D_FF94,x            ; Get symmetry flag (bit 7)
         bpl     L_E2CB              ; Branch if symmetric (bit 7 clear)
         iny                         ; Y = 1 for special levels
         
@@ -677,7 +677,7 @@ L_E2CB:
         sta     D_E30D
         
         ; Get hole metadata (holes in lower nibble, bubble currents in upper nibble)
-        lda     $C58E,x
+        lda     D_C58E,x
         sta     $3D
         
         ; Process two chunks (at X=0 and X=96)
@@ -694,16 +694,16 @@ L_E2CB:
         lsr     $3D
         
         ; Update color RAM at $8B03
-        lda     $8B03
+        lda     D_8B03
         and     #$FC                ; Clear low 2 bits
         ora     $3E                 ; Set new bits
-        sta     $8B03
+        sta     D_8B03
         
         ; Update color RAM at $8B63
-        lda     $8B63
+        lda     D_8B63
         and     #$FC
         ora     $3D
-        sta     $8B63
+        sta     D_8B63
         
         ; Copy data from source to $8B00 area
         ldx     #$00
@@ -718,9 +718,9 @@ D_E30D  = * + 2                     ; High byte of JSR operand
         jsr     L_E32A              ; Default target (modified at runtime)
         
         ; Set high bits of data
-        lda     $8B00,x
+        lda     D_8B00,x
         ora     #$C0                ; Set bits 7 and 6
-        sta     $8B00,x
+        sta     D_8B00,x
         cpx     #$5C                ; 92 bytes processed?
         bne     L_E308
         
@@ -739,7 +739,7 @@ D_E31F:
 L_E322:
 D_E322:
         lda     ($40),y             ; Read from source
-        sta     $8B04,x             ; Write to destination+4
+        sta     D_8B04,x            ; Write to destination+4
         iny
         inx
         rts
@@ -747,13 +747,13 @@ D_E322:
 ; Additional helper routine (13 bytes)
 L_E32A:
         jsr     D_E337
-        sta     $8B04,x
+        sta     D_8B04,x
         jsr     D_E337
-        sta     $8B02,x
+        sta     D_8B02,x
         rts
 
 D_E337:
-        lda     $8B02,x
+        lda     D_8B02,x
         sta     $3D
         lda     #$01
         sta     $3E
@@ -781,10 +781,10 @@ D_E355:
         ldy     #$00                ; Use index 0
 L_E35B:
         lda     D_E36E,y            ; Get data byte 1
-        sta     $8B00,x
+        sta     D_8B00,x
         inx
         lda     D_E371,y            ; Get data byte 2
-        sta     $8B00,x
+        sta     D_8B00,x
         inx
         rts
 
@@ -819,10 +819,10 @@ D_E371:
         ; Clear screen RAM $5000-$53FF (1024 bytes)
         lda     #$20                ; Space character
 L_E384:
-        sta     $5000,x
-        sta     $5100,x
-        sta     $5200,x
-        sta     $5300,x
+        sta     D_5000,x
+        sta     D_5100,x
+        sta     D_5200,x
+        sta     D_5300,x
         inx
         bne     L_E384
 
@@ -836,10 +836,10 @@ clear_color_ram:
         ldx     #$00
         lda     #$20                ; White color
 L_E397:
-        sta     $5400,x
-        sta     $5500,x
-        sta     $5600,x
-        sta     $5700,x
+        sta     D_5400,x
+        sta     D_5500,x
+        sta     D_5600,x
+        sta     D_5700,x
         inx
         bne     L_E397
         rts

@@ -19,6 +19,8 @@
 ; ============================================================================
 
 ; --- Zero Page (C64 BASIC locations reused by game) ---
+; NOTE: These addresses are used as base addresses for indexed access
+; e.g., lda $00b2,y accesses player state for player Y (0 or 1)
 ZP_02       = $02
 ZP_03       = $03  
 ZP_04       = $04
@@ -29,19 +31,39 @@ ENDCHR      = $08       ; Frame counter (incremented each IRQ)
 TRMPOS      = $09       ; Temporary pointer (low byte)
 VERCK       = $0A       ; Temporary pointer (high byte)
 SUBFLG      = $10       ; Current level (1-100)
+INPFLG      = $11       ; Input flag
+TANSGN      = $12       ; Cell pointer high byte
+ZP_15       = $15       ; Saved A register in IRQ
+ZP_16       = $16       ; Saved X register in IRQ  
+ZP_17       = $17       ; Saved Y register in IRQ
 ZP_1C       = $1C       ; Background color 1
 ZP_1D       = $1D       ; Background color temp 1
 ZP_1E       = $1E       ; Background color 2
 ZP_1F       = $1F       ; Background color temp 2
 ZP_20       = $20       ; Split-screen mode flag
 ZP_21       = $21       ; Level complete flag
+INDEX1      = $22       ; Player loop counter
+ZP_23       = $23       ; Level/world index
+INDEX2      = $24       ; Terrain index
+ZP_25       = $25       ; Player Y position / level index
+RESHO       = $26       ; Random seed storage
 ZP_2A       = $2A       ; Level timer (seconds)
 TXTTAB      = $2B       ; Frame sub-counter  
 TXTTAB1     = $2C
 VARTAB      = $2D
+ZP_2E       = $2E       ; CPU port save value
+ARYTAB      = $2F       ; Screen pointer
 STREND      = $31       ; String end pointer (BASIC)
 FRETOP      = $33       ; Free string space (BASIC)
+ZP_36       = $36       ; Used during spawn
 MEMSIZ      = $37       ; Pause flag
+MEMSIZ1     = $38       ; Animation timer storage
+CURLIN      = $39       ; Temp storage for column
+CURLIN1     = $3A       ; Temp storage for X position
+OLDLIN      = $3B       ; Temp storage in collision detection
+OLDLIN1     = $3C       ; Temp storage - current player index
+OLDTXT      = $3D       ; Temp storage
+ZP_3E       = $3E       ; Temp storage
 DATLIN      = $3F
 DATLIN1     = $40
 DATPTR      = $41
@@ -51,19 +73,40 @@ ZP_44       = $44
 VARNAM      = $45       ; Variable name/temp storage
 ZP_46       = $46
 ZP_47       = $47
+ZP_48       = $48       ; Temp storage
+ZP_49       = $49       ; Temp storage
 ZP_4A       = $4A       ; Enemies remaining to spawn
 OPPTR       = $4B       ; Player index pointer
+ZP_4C       = $4C       ; Temp storage
 OPMASK      = $4D
 DEFPNT      = $4E       ; Player screen position (low)
-FOUR6       = $53       ; Special item type
+ZP_4F       = $4F       ; Temp storage
 DSESSION    = $50       ; Player screen position (high)
+ZP_51       = $51       ; Temp storage  
 ZP_52       = $52       ; Player active flags
+FOUR6       = $53       ; Special item type
+ZP_54       = $54       ; Temp storage
+ZP_55       = $55       ; Temp storage
+ZP_56       = $56       ; Temp storage
+ZP_57       = $57       ; Temp storage
+ZP_58       = $58       ; Random timer seed
+ZP_59       = $59       ; Temp storage
+TEMPF1      = $5A       ; Temp storage
+ZP_5B       = $5B       ; Temp storage
+ZP_5C       = $5C       ; Temp storage
 ZP_5D       = $5D       ; Player 1 bubble timer
 ZP_5E       = $5E       ; Player 2 bubble timer
 TEMPF2      = $5F       ; Bubble animation
-TEMPF1      = $5A       ; Temp storage
-RESHO       = $26       ; Random seed storage
+ZP_60       = $60       ; Temp storage
+FAC         = $61       ; Floating point accumulator (used as temp)
+ZP_67       = $67       ; Animation active flag (also SESSION)
+ZP_68       = $68       ; Timer storage
+ZP_69       = $69       ; Score value storage (also ARG)
+ZP_6A       = $6A       ; Temp storage
+SESSION     = $67       ; Animation active flag
+ARG         = $69       ; Score value storage
 FBUFPT      = $71       ; Loader buffer read pointer
+ZP_75       = $75       ; Score display buffer (3 bytes)
 CHRGOT      = $79       ; BASIC get-character routine pointer
 TXTPTR      = $7A       ; Text pointer / temp storage (BASIC)
 STATUS      = $90       ; I/O status byte
@@ -82,27 +125,58 @@ RIDBS       = $AC
 RODBS       = $AD       ; Loader comparison byte
 RODBE       = $AE
 IRQTMP      = $AF       ; Loader temp/status
-ENESSION    = $B2       ; Player 1 state
+ZP_B0       = $B0       ; Temp storage
+ZP_B1       = $B1       ; Temp storage
+
+; --- Entity State Arrays (Zero Page, indexed access) ---
+; These are accessed as base + index for entity data
+; e.g., lda $00b2,y where Y = player/entity index
+ESSION      = $B2       ; Entity state base (alias for ENESSION)
+ENESSION    = $B2       ; Player 1 state / Entity state array base
 ENESSION1   = $B3       ; Player 2 state  
-FA          = $BA       ; Player 1 X position
+ZP_B4       = $B4       ; Entity state +2 (bubble state array base)
+FA          = $BA       ; Player 1 X position / Entity X array base
 FA1         = $BB       ; Player 2 X position
-ZP_BC       = $BC       ; Viewport X offset
-FREKZP      = $FB       ; Temp pointer (used by memory copy routines)
+FNADR       = $BB       ; Bubble X position (alias for FA1)
+ZP_BC       = $BC       ; Viewport X offset / Entity X +2
 ROESSION    = $BD       ; Super bonus Y position
 ZP_BD       = $BD       ; Alias for ROESSION
 FSESSION    = $BE       ; Super bonus state
 ZP_BE       = $BE       ; Alias for FSESSION
-ZP_C2       = $C2       ; Player 1 Y position
+ZP_C2       = $C2       ; Player 1 Y position / Entity Y array base
 ZP_C3       = $C3       ; Player 2 Y position
-PESSION     = $CA
-LSXP        = $CB       ; Player 2 enemy state
-BLNON       = $CC       ; Enemy type array
+TAPE1       = $C3       ; Bubble Y position (alias for ZP_C3)
+ZP_C4       = $C4       ; Entity Y +2
+PESSION     = $CA       ; Enemy type array base
+LSXP        = $CB       ; Player 2 enemy state / Enemy type +1
+BLNON       = $CC       ; Enemy type +2
+ZP_DC       = $DC       ; Entity screen column array base
+ZP_DE       = $DE       ; Entity X sub-position array base
+ZP_EE       = $EE       ; Entity screen row array base
+ZP_F0       = $F0       ; Entity Y sub-position array base
+FREKZP      = $FB       ; Temp pointer (used by memory copy routines)
 
 ; --- C64 Hardware ---
 R6510       = $01       ; CPU I/O port (memory banking control)
 VIC_SPR0_X  = $D000     ; Sprite X positions
 VIC_SPR0_Y  = $D001     ; Sprite Y positions
+VIC_SPR1_X  = $D002     ; Sprite 1 X position
+VIC_SPR1_Y  = $D003     ; Sprite 1 Y position
+VIC_SPR2_X  = $D004     ; Sprite 2 X position
+VIC_SPR2_Y  = $D005     ; Sprite 2 Y position
+VIC_SPR3_X  = $D006     ; Sprite 3 X position
+VIC_SPR3_Y  = $D007     ; Sprite 3 Y position
+VIC_SPR4_X  = $D008     ; Sprite 4 X position
+VIC_SPR4_Y  = $D009     ; Sprite 4 Y position
+VIC_SPR5_X  = $D00A     ; Sprite 5 X position
+VIC_SPR5_Y  = $D00B     ; Sprite 5 Y position
+VIC_SPR6_X  = $D00C     ; Sprite 6 X position
+VIC_SPR6_Y  = $D00D     ; Sprite 6 Y position
+VIC_SPR7_X  = $D00E     ; Sprite 7 X position
+VIC_SPR7_Y  = $D00F     ; Sprite 7 Y position
+VIC_SPR_XMSB = $D010    ; Sprite X MSB (high bit of X for all sprites)
 VIC_CTRL1   = $D011     ; VIC control register 1 (screen mode)
+VIC_RASTER  = $D012     ; Raster line register
 VIC_SPR_ENA = $D015     ; Sprite enable register
 VIC_CTRL2   = $D016     ; VIC control register 2 (multicolor, etc)
 VIC_MEMPTR  = $D018     ; VIC memory pointers (screen/charset location)
@@ -110,7 +184,11 @@ VIC_BORDER  = $D020     ; Border color
 VIC_BG0     = $D021     ; Background color 0
 VIC_BG1     = $D022     ; Background color 1
 VIC_BG2     = $D023     ; Background color 2
+VIC_IRQ     = $D019     ; VIC interrupt register
 VIC_SPR0_COL = $D027    ; Sprite colors
+VIC_SPR1_COL = $D028    ; Sprite 1 color
+VIC_SPR2_COL = $D029    ; Sprite 2 color
+VIC_SPR4_COL = $D02B    ; Sprite 4 color (also sprites 4-7 base)
 
 ; --- SID Chip (Sound Interface Device) ---
 SID_V1_FREQ_LO = $D400  ; Voice 1 frequency low byte
@@ -124,6 +202,7 @@ SID_VOL        = $D418  ; Volume and filter mode control
 
 CIA1_PRA    = $DC00     ; Joystick port 2
 CIA1_PRB    = $DC01     ; Joystick port 1
+CIA1_TBLO   = $DC06     ; CIA1 timer B low byte (used for RNG entropy)
 CIA1_ICR    = $DC0D     ; CIA1 interrupt control register
 CIA2_PRA    = $DD00     ; CIA2 port A (VIC bank selection)
 CIA2_TALO   = $DD04     ; CIA2 timer A low byte
@@ -132,13 +211,29 @@ CIA2_ICR    = $DD0D     ; CIA2 interrupt control register
 CIA2_CRA    = $DD0E     ; CIA2 control register A
 D_D800      = $D800     ; Color RAM start
 D_D801      = $D801     ; Color RAM
+D_D900      = $D900     ; Color RAM page 1
+D_DA00      = $DA00     ; Color RAM page 2
+D_DB00      = $DB00     ; Color RAM page 3
 
 ; --- KERNAL Vectors ---
 CINV        = $0314     ; IRQ vector (low byte at $0314, high at $0315)
+CINV_HI     = $0315     ; IRQ vector high byte
 NMINV       = $0318     ; NMI vector (low byte at $0318, high at $0319)
+NMINV_HI    = $0319     ; NMI vector high byte
+ISTOP       = $0312     ; BASIC stop key check routine vector
+D_033C      = $033C     ; Cassette buffer (192 bytes)
+IRQ_VEC     = $FFFE     ; Hardware IRQ vector low byte
+IRQ_VEC_HI  = $FFFF     ; Hardware IRQ vector high byte
 D_FEBC      = $FEBC     ; KERNAL IRQ exit routine
 
 ; --- Game Data Tables (in RAM, addresses fixed) ---
+D_0107      = $0107     ; Stack page temp buffer
+D_0108      = $0108     ; Stack page temp buffer
+D_010F      = $010F     ; Stack page temp buffer
+D_0117      = $0117     ; Stack page temp buffer
+D_011F      = $011F     ; Stack page temp buffer
+D_0200      = $0200     ; Level pointer table (low bytes, 100 entries)
+D_0300      = $0300     ; Level pointer table (high bytes, 100 entries)
 D_7357      = $7357     ; Data table
 D_735A      = $735A     ; Data table
 D_7420      = $7420     ; Data table
@@ -146,6 +241,8 @@ D_742D      = $742D     ; Data table offset
 D_7430      = $7430     ; Data table offset
 D_7436      = $7436     ; Data table
 D_7437      = $7437     ; Data table
+D_A9A8      = $A9A8     ; Graphics composite dest 1 (9 bytes)
+D_A9B0      = $A9B0     ; Graphics mode flag
 D_A9B1      = $A9B1     ; Hurry-up timer
 D_A9B2      = $A9B2     ; Enemy state flags (18 bytes, one per enemy slot)
 D_A9C4      = $A9C4     ; Enemy X sub-position (18 bytes)
@@ -159,6 +256,18 @@ D_5C3F      = $5C3F
 D_5A7F      = $5A7F     ; Game mode flag
 D_5B7F      = $5B7F     ; Active sprite mask
 D_3F86      = $3F86     ; Bubble character table
+D_8B00      = $8B00     ; Level decompression buffer
+D_8B02      = $8B02     ; Level decompression buffer +2
+D_8B03      = $8B03     ; Level decompression buffer +3
+D_8B04      = $8B04     ; Level decompression buffer +4
+D_8B63      = $8B63     ; Level decompression buffer +$63
+D_8D00      = $8D00     ; Screen buffer page 2
+D_8E00      = $8E00     ; Screen buffer page 3
+D_C58E      = $C58E     ; Level hole/bubble current metadata (100 bytes)
+; NOTE: D_FF30: and D_FF94: labels in final-data.s are off by 1 due to padding bytes
+; Use these explicit equates for the correct addresses
+D_FF30      = $FF30     ; Level background color metadata (100 bytes)  
+D_FF94      = $FF94     ; Level symmetry/sidebar index metadata (100 bytes)
 D_AB41      = $AB41     ; Entity sprite page table
 D_AB49      = $AB49     ; Entity sprite page high table
 D_AB51      = $AB51     ; Player score offset table
@@ -167,12 +276,17 @@ D_AB53      = $AB53     ; Player sprite mask table
 D_AB55      = $AB55     ; Sprite enable masks
 D_AB5B      = $AB5B     ; Sprite data table
 D_AB5F      = $AB5F     ; Sprite routine value table
+D_AB61      = $AB61     ; Entity animation frame table
+D_AB69      = $AB69     ; Entity sprite data table
+D_AB71      = $AB71     ; Entity animation offset table
+D_AB79      = $AB79     ; Entity sprite index table
 D_AB81      = $AB81     ; Score value table
 D_AC01      = $AC01     ; Flying enemy pathfinding table (low)
 D_AC02      = $AC02     ; Flying enemy pathfinding table (high)
 D_AC03      = $AC03     ; Screen position table (low bytes)
 D_AC04      = $AC04     ; Screen position table (high bytes)
 D_ACB6      = $ACB6     ; Enemy animation direction table
+D_AD15      = $AD15     ; Graphics composite dest 2 (9 bytes)
 D_AD1E      = $AD1E     ; Screen row pointer table (low bytes)
 D_AD1F      = $AD1F     ; Screen row pointer table (low bytes, offset by 1)
 D_AD20      = $AD20     ; Screen row pointer (offset by 2)
@@ -190,18 +304,28 @@ D_8020      = $8020     ; Sprite mask background bits 3
 D_8240      = $8240     ; Sprite mask table 1
 D_8250      = $8250     ; Sprite mask table 2
 D_8260      = $8260     ; Sprite mask table 3
+D_8488      = $8488     ; Entity data array 3
+D_84B0      = $84B0     ; Entity data array 2
+D_84D8      = $84D8     ; Entity data array 1
+D_8500      = $8500     ; Entity data array source
+D_8522      = $8522     ; Item index storage
 
 D_854A      = $854A     ; Item timer array
 D_8520      = $8520     ; Player mapping table
 D_8570      = $8570     ; Data table
 D_8610      = $8610     ; Player data array
 D_8638      = $8638     ; Player animation timer
+D_8639      = $8639     ; Player animation timer +1
+D_8662      = $8662     ; Entity animation array 1
 D_8688      = $8688     ; Player state flags
+D_868A      = $868A     ; Entity animation array 2
 D_86D8      = $86D8     ; Player collision data
 D_8700      = $8700     ; Player movement data
 D_8728      = $8728     ; Player sprite data
 D_8729      = $8729     ; Player sprite offset
 D_8750      = $8750     ; Player target direction
+D_8752      = $8752     ; Entity sprite pointer array
+D_877A      = $877A     ; Entity sprite pointer array -1
 D_87A0      = $87A0     ; Collision flags array
 D_87C8      = $87C8     ; Collision flags array
 D_87F0      = $87F0     ; Collision flags array
@@ -215,16 +339,19 @@ D_87CA      = $87CA     ; Collision flags array (alternate)
 D_87F2      = $87F2     ; Collision flags array (alternate)
 D_85E8      = $85E8     ; Joystick port A data
 D_85E9      = $85E9     ; Joystick port B data
+D_85EA      = $85EA     ; Entity direction/movement data
 D_8840      = $8840     ; Saved item types array
 D_8842      = $8842     ; Saved item types
 D_886A      = $886A     ; Item movement array
 D_881A      = $881A     ; Item animation array
-SESSION     = $67       ; Animation active flag
-CURLIN      = $39       ; Temp storage for column
-CURLIN1     = $3A       ; Temp storage for X position
-MEMSIZ1     = $38       ; Animation timer storage
-FNADR       = $BB       ; Bubble X position
-TAPE1       = $C3       ; Bubble Y position
+D_88C0      = $88C0     ; Entity data array base
+D_88C9      = $88C9     ; Credits array 1 (18 bytes)
+D_88E8      = $88E8     ; Entity data array 1
+D_88F1      = $88F1     ; Credits array 2 (18 bytes)
+D_8910      = $8910     ; Entity data array 2
+D_8919      = $8919     ; Credits array 3 (18 bytes)
+D_8938      = $8938     ; Entity data array 3
+D_8941      = $8941     ; Credits array 4 (18 bytes)
 
 ; --- Spawn Point Data ---
 D_850A      = $850A     ; Spawn point 0 availability (top left)
@@ -237,8 +364,11 @@ D_597F      = $597F     ; Frame counter
 D_872A      = $872A     ; Special sprite flags
 D_8892      = $8892     ; Item counter array
 D_0193      = $0193     ; Player-captured-by flags (18 bytes)
+D_0195      = $0195     ; Projectile direction array (18 bytes)
 D_0181      = $0181     ; Enemy row positions (18 bytes)
+D_016F      = $016F     ; Enemy screen position temp (18 bytes)
 D_015D      = $015D     ; Enemy column positions (18 bytes)
+D_014B      = $014B     ; Enemy render state (18 bytes)
 D_A756      = $A756     ; Item Y positions (11 bytes)
 D_A74B      = $A74B     ; Item X positions (11 bytes)
 D_A74C      = $A74C     ; Item X positions (offset by 1)
@@ -277,10 +407,27 @@ D_8548      = $8548     ; Sprite colors
 D_859A      = $859A     ; Sprite character data
 D_8598      = $8598     ; Sprite base pointers
 D_53F8      = $53F8     ; Screen 1 sprite pointers
+D_53FA      = $53FA     ; Screen 1 sprite pointers +2
+D_53FC      = $53FC     ; Screen 1 sprite pointers +4
 D_57F8      = $57F8     ; Screen 2 sprite pointers
+D_57FA      = $57FA     ; Screen 2 sprite pointers +2
+D_57FC      = $57FC     ; Screen 2 sprite pointers +4
 D_8890      = $8890     ; Target Y positions
 D_85C0      = $85C0     ; Fall counter
 D_3AB8      = $3AB8     ; Hurry-up handler
+D_3AF0      = $3AF0     ; Self-modifying code target (screen scroll)
+D_3BA1      = $3BA1     ; Self-modifying code target (screen scroll)
+D_3BFA      = $3BFA     ; Self-modifying code target (screen scroll)
+D_3D1E      = $3D1E     ; Screen scroll output buffer 2
+; NOTE: D_3CB2:, D_3CBB:, etc. labels in entity-state-tables.s are at wrong positions
+; Use these explicit equates for correct addresses (similar to D_FF30 issue)
+D_3CB2      = $3CB2     ; Screen scroll data buffer 1
+D_3CBB      = $3CBB     ; Screen scroll color buffer
+D_3CC4      = $3CC4     ; Screen scroll saved data 1
+D_3CCD      = $3CCD     ; Screen scroll saved data 2
+D_3CD6      = $3CD6     ; Screen scroll output buffer 1
+; D_3F84 defined as label in sprite-init.s
+D_47F0      = $47F0     ; Sprite/charset data buffer
 D_045C      = $045C     ; Check player state routine
 D_47F8      = $47F8     ; Item table 1
 D_4FF8      = $4FF8     ; Item table 2
@@ -289,89 +436,145 @@ D_7BA6      = $7BA6     ; Screen setup routine
 D_7BC8      = $7BC8     ; Wait routine with delay
 D_7D00      = $7D00     ; Level data destination
 D_A854      = $A854     ; Level data source
+; D_48D0 defined as label in init-routines.s
 D_4300      = $4300     ; Enemy template data table 1 (RAM copy)
 D_4400      = $4400     ; Enemy template data table 2 (RAM copy)
 D_4460      = $4460     ; Main game code entry point
 D_4500      = $4500     ; Enemy template data table 3 (RAM copy)
 D_4600      = $4600     ; Platform Y position table / Enemy template data table 4
+D_4648      = $4648     ; Graphics work buffer (72 bytes)
 D_4E00      = $4E00     ; Platform screen address low
+D_4E48      = $4E48     ; Graphics output buffer (72 bytes)
 D_4F00      = $4F00     ; Platform screen address high
+D_50AF      = $50AF     ; Screen memory area for animation
+D_0100      = $0100     ; Stack page (used for temp storage)
+D_0A38      = $0A38     ; Entity spawn result storage
+; D_0C9C defined as label in collision.s
+D_0CC2      = $0CC2     ; Self-modifying code target (entity spawn)
+D_0DC7      = $0DC7     ; Level number storage (credits handler)
+D_1200      = $1200     ; Temp data buffer
 D_5053      = $5053     ; Screen memory area 1
 D_525B      = $525B     ; Screen memory area 2
 D_A63C      = $A63C     ; Temp storage (Y register)
 D_A63D      = $A63D     ; Temp storage (X register)
 D_D853      = $D853     ; Color RAM area 1
+D_D9D3      = $D9D3     ; Color RAM text output (self-modifying)
 D_DA5B      = $DA5B     ; Color RAM area 2
 D_A7E2      = $A7E2     ; Sprite data storage
 D_A7EE      = $A7EE     ; Sprite data pointer
 D_A7F0      = $A7F0     ; Bonus display character 1
 D_A7F1      = $A7F1     ; Bonus display character 2
 D_A7F7      = $A7F7     ; Player display offset table
+D_E200      = $E200     ; High memory restore target
 D_E42A      = $E42A     ; Sprite/entity update routine
 D_E494      = $E494     ; Wait one frame
 D_E49B      = $E49B     ; Game loop continuation
-ARYTAB      = $2F       ; Screen pointer
 EVAL        = $A7E4     ; Sprite data pointer
-INPFLG      = $11       ; Input flag
-TANSGN      = $12       ; Cell pointer high byte
-
-; --- Zero Page Variables ---
-ZP_23       = $23       ; Level/world index
-ZP_25       = $25       ; Player Y position / level index
-INDEX1      = $22       ; Player loop counter
-OLDLIN      = $3B       ; Temp storage in collision detection
-OLDTXT      = $3D       ; Temp storage
-ZP_3E       = $3E       ; Temp storage
 ADRAY1      = $03       ; Address high byte (used in level complete)
 ADRAY2      = $05       ; Address high byte alternate
 CHARONE     = $07       ; Character/color pointer
 
 ; --- Forward References (subroutines defined later in file) ---
 ; These are in the [BYTES] section but we call them from [CODE] sections
+
+; --- Forward References (subroutines defined later in file) ---
+; NOTE: Only include labels that are used BEFORE they are defined
+; Labels defined as "D_XXXX:" in include files don't need equates here
+
+; Game variable area
 entry_0400  = $0400     ; Game variable area (used by special enemies)
-L_0D4A      = $0D4A     ; Enemy AI loop continuation
+D_040A      = $040A     ; Score byte +1
+D_0400      = $0400     ; Score data / game variables base
+D_0406      = $0406     ; High score storage (3 bytes)
+D_040B      = $040B     ; Player name/initials storage
+D_049D      = $049D     ; Self-modifying code target (L_049D)
+D_0717      = $0717     ; IRQ handler continuation routine
+D_0CF2      = $0CF2     ; Enemy AI update main loop
+
+; Forward references for routines called from master.s before their definition
+; These are needed because master.s code calls these before the includes
+D_0F73      = $0F73     ; Self-modifying code target (low address)
+D_F073      = $F073     ; Self-modifying code target (high address)
 D_105B      = $105B     ; Check bubble collision
+D_1319      = $1319     ; Update player sprites
+D_13BE      = $13BE     ; Process bubble captures
+D_1578      = $1578     ; Update bubbles physics
 D_1677      = $1677     ; Skip timer continuation (in .byte section)
 D_16E4      = $16E4     ; Continue game routine
 D_16EF      = $16EF     ; Continue flag
+D_17BE      = $17BE     ; Timer update routine
 D_1805      = $1805     ; Update player sprite positions
 D_18D6      = $18D6     ; Self-modifying code storage
 D_18D8      = $18D8     ; Self-modifying code storage
 D_18DF      = $18DF     ; Self-modifying code storage
 D_1929      = $1929     ; Self-modifying code storage
 D_1CA0      = $1CA0     ; Player falling handler (in bb-level-complete.s)
-; D_2162 defined in bb-entity-interaction.s
-; D_2985 defined in bb-spawn-handlers.s
 D_2020      = $2020     ; Unknown routine
 D_30A9      = $30A9     ; Data table (possibly invalid address)
-D_53E4      = $53E4     ; Data/routine location
-D_57E4      = $57E4     ; Data/routine location
+D_3BF1      = $3BF1     ; Self-modifying code target in screen scroll
 D_3EF3      = $3EF3     ; Sprite init continuation (in bb-sprite-init.s)
 D_42C6      = $42C6     ; Data/flag location
+D_53E4      = $53E4     ; Data/routine location
+D_57E4      = $57E4     ; Data/routine location
+D_59BF      = $59BF     ; Game state flag
+D_59FF      = $59FF     ; Game state flag
 D_6085      = $6085     ; Handler routine
-D_C2B5      = $C2B5     ; Handler routine
+L_0D4A      = $0D4A     ; Enemy AI loop continuation
+D_CF2       = $0CF2     ; Enemy AI update main loop (forward reference)
+D_A825      = $A825     ; Player 2 invincibility timer
 D_ACDD      = $ACDD     ; Movement table
 D_ACED      = $ACED     ; Jump table
-L_EB0F      = $EB0F     ; Default state handler
-D_EB34      = $EB34     ; Alternate state handler
-D_EBB8      = $EBB8     ; Jump state handler
-D_ED12      = $ED12     ; Handle right input
-D_ED18      = $ED18     ; Handle left input
-D_EE4A      = $EE4A     ; State handler
-D_EE62      = $EE62     ; Jump handler
-D_EFEA      = $EFEA     ; Freed state handler
-INDEX2      = $24       ; Terrain index
+D_ADB1      = $ADB1     ; Character mask table 1
+D_ADF9      = $ADF9     ; Character mask table 2
+
+; $7Bxx - Level/screen routines (in level-data.bin, not source)
+; D_05AD defined as label in master.s (code section)
 D_7BB3      = $7BB3     ; Bank RAM under I/O
 D_7BC3      = $7BC3     ; Wait for frame sync
 D_7BE8      = $7BE8     ; Game over sequence
 D_7BFE      = $7BFE     ; Terrain check routine
+
+; $7Cxx - Score/collision routines
 D_7C21      = $7C21     ; Collision handler routine
 D_7C26      = $7C26     ; Add score routine
-D_7E80      = $7E80     ; Unknown routine (called from platform collision)
+
+; $7Exx - Input/pause routines
+D_7E80      = $7E80     ; Check for SPACE (pause)
+D_7EB3      = $7EB3     ; Read joystick/keyboard input
+D_7EC1      = $7EC1     ; Check for RUN/STOP (quit)
+
+; $7Fxx - Player death routines
 D_7F53      = $7F53     ; Player death handler
+
+; $87xx - Animation data
+D_8778      = $8778     ; Animation frame mask array
+
+; $C2xx - Handler routines
+D_C2B5      = $C2B5     ; Handler routine
+
+; --- $E000+ High Memory Routines (forward references) ---
+; Many of these are defined in include files, but some are in binary data
+
+; $E0xx - Level renderer
+D_E000      = $E000     ; Level renderer main entry
+
+; $E1xx - Screen rendering
+D_E189      = $E189     ; Screen rendering routine
+
+; Entity-related forward references
 D_E3A7      = $E3A7     ; Update sprite data
+D_E3D9      = $E3D9     ; Display text line routine
+D_E374      = $E374     ; Screen setup routine
+D_E4C5      = $E4C5     ; Entity setup routine
+D_E4DA      = $E4DA     ; Entity update routine
+D_E554      = $E554     ; Line drawing routine
+D_E658      = $E658     ; Unknown routine
+D_E6CD      = $E6CD     ; State change handler
+D_E740      = $E740     ; Screen/sprite update routine
 D_E758      = $E758     ; Entity cleanup routine
 D_E7CF      = $E7CF     ; Sprite display routine
+
+; $E8xx - Sprite pointers (self-modifying code targets)
 D_E849      = $E849     ; Sprite routine pointer 1
 D_E84A      = $E84A     ; Sprite routine pointer 1 instruction
 D_E84C      = $E84C     ; Sprite pointer 1 low
@@ -384,54 +587,71 @@ D_E85D      = $E85D     ; Sprite routine pointer 3
 D_E85E      = $E85E     ; Sprite routine pointer 3 instruction
 D_E860      = $E860     ; Sprite pointer 3 low
 D_E861      = $E861     ; Sprite pointer 3 high
+
+; $E9xx - Entity/RNG routines
 D_E90E      = $E90E     ; Update game state
+D_E966      = $E966     ; Self-modifying: sprite frame offset
 D_E968      = $E968     ; Entity processing continuation
+D_E96F      = $E96F     ; Entity loop continuation
 D_E97A      = $E97A     ; Entity handler continuation
 D_E9B8      = $E9B8     ; Get sprite animation frame
 D_E9EA      = $E9EA     ; Random number generator (RNG)
-D_E966      = $E966     ; Self-modifying: sprite frame offset
-D_E96F      = $E96F     ; Entity loop continuation
-D_E6CD      = $E6CD     ; State change handler
+
+; $EBxx - Entity state handlers
+L_EB0F      = $EB0F     ; Default state handler
+D_EB34      = $EB34     ; Alternate state handler
 D_EB3F      = $EB3F     ; Falling through floor handler
-D_8778      = $8778     ; Animation frame mask array
 D_EB94      = $EB94     ; Self-modifying: jump instruction
 D_EBB5      = $EBB5     ; Self-modifying: jump target low
 D_EBB6      = $EBB6     ; Self-modifying: jump target high
+D_EBB8      = $EBB8     ; Jump state handler
 D_EBC4      = $EBC4     ; Reset velocities handler
 D_EBD9      = $EBD9     ; Platform physics handler
-D_ECDF      = $ECDF     ; Movement handler bit 0
-D_ED1E      = $ED1E     ; Movement handler bit 1
-D_ED3B      = $ED3B     ; Normal entity handler
-D_EDCD      = $EDCD     ; Update entity position
-D_EC87      = $EC87     ; Continue processing after descent
+
+; $ECxx - Entity movement
 L_EC0C      = $EC0C     ; Next section continuation
 D_EC2C      = $EC2C     ; Alternate movement table load
 D_EC3C      = $EC3C     ; Platform collision check after climb
 D_EC7C      = $EC7C     ; Exit climbing state
-D_A9C6      = $A9C6     ; Projectile state array 1
-D_A9D8      = $A9D8     ; Projectile state array 2
+D_EC87      = $EC87     ; Continue processing after descent
+D_ECDF      = $ECDF     ; Movement handler bit 0
+
+; $EDxx - Entity input handlers
+D_ED12      = $ED12     ; Handle right input
+D_ED18      = $ED18     ; Handle left input
+D_ED1E      = $ED1E     ; Movement handler bit 1
+D_ED3B      = $ED3B     ; Normal entity handler
 L_EDC7      = $EDC7     ; Abort spawn / return point
+D_EDCD      = $EDCD     ; Update entity position
+
+; $EExx - Entity movement continued
+L_EE49      = $EE49     ; Exit point for attack logic
+D_EE4A      = $EE4A     ; State handler
+D_EE62      = $EE62     ; Jump handler
 D_EEB4      = $EEB4     ; Entity movement handler
+D_EEC8      = $EEC8     ; Position update after movement
 D_EEDF      = $EEDF     ; Leftward movement handler
 D_EEEB      = $EEEB     ; Check platforms for left movement
+
+; $EFxx - Entity physics
 D_EF15      = $EF15     ; Self-modified RTS
 D_EF1E      = $EF1E     ; Rightward movement handler
 D_EF3B      = $EF3B     ; Right movement platform check
 D_EF4C      = $EF4C     ; Inverted vertical movement
 D_EFA0      = $EFA0     ; Normal vertical movement
-D_EEC8      = $EEC8     ; Position update after movement
-L_EE49      = $EE49     ; Exit point for attack logic
+L_EFBC      = $EFBC     ; Next section start (platform check)
+D_EFEA      = $EFEA     ; Freed state handler
+D_A9C6      = $A9C6     ; Projectile state array 1
+D_A9D8      = $A9D8     ; Projectile state array 2
 D_A9FC      = $A9FC     ; Projectile state array 3
 D_88C1      = $88C1     ; Screen wrap permission table (top)
 D_8501      = $8501     ; Screen wrap permission table (bottom)
 D_8660      = $8660     ; Direction change timer
 D_86B0      = $86B0     ; Current direction index
 D_4985      = $4985     ; Unknown routine
-L_EFBC      = $EFBC     ; Next section start (platform check)
-D_E3D9      = $E3D9     ; Display text line routine
-D_7EB3      = $7EB3     ; Read joystick/keyboard input
 D_0409      = $0409     ; Score/stat value array
-D_57D4      = $57D4     ; Game state storage
+D_57D4      = $57D4     ; Game state storage / animation data
+D_AE41      = $AE41     ; Sprite/charset source data
 D_8572      = $8572     ; Game state flag
 D_A632      = $A632     ; Sprite Y position table
 D_A634      = $A634     ; Pointer table (high bytes)
@@ -458,7 +678,6 @@ L_F846      = $F846     ; Forward reference within sound code flow
 D_F4BD      = $F4BD     ; Sound init routine
 D_F53C      = $F53C     ; Sound update routine (called every frame)
 D_F887      = $F887     ; Music/mode initialization routine
-ESSION      = $B2       ; Player state variable
 
 ; --- Music & Sound Data Forward References ---
 ; These labels are defined in bb-music-sound-data.s and referenced by sound engine
@@ -542,7 +761,6 @@ D_ACC4      = $ACC4     ; Direction table
 D_ACCB      = $ACCB     ; Direction storage
 D_ACCD      = $ACCD     ; Fall speed table
 D_DE85      = $DE85     ; Animation update routine
-FAC         = $61       ; Floating point accumulator (used as temp)
 
 ; --- Player Movement Forward References ---
 ; D_272F, D_273D, D_2782 are defined in bb-player-movement.s
@@ -584,8 +802,7 @@ D_A7B0      = $A7B0     ; Super bonus X positions (normal)
 D_A7B6      = $A7B6     ; Super bonus Y positions (normal)
 D_A7BC      = $A7BC     ; Super bonus X positions (expanded)
 D_A7C2      = $A7C2     ; Super bonus Y positions (expanded)
-D_8522      = $8522     ; Item index storage
-ARG         = $69       ; Score value storage
+; D_8522 already defined above
 VIC_SPR_YEXP = $D017    ; VIC sprite Y expansion register
 VIC_SPR_XEXP = $D01D    ; VIC sprite X expansion register
 
@@ -623,11 +840,21 @@ D_7C3C      = $7C3C     ; Bonus level score handler
 ; --- EXTEND Bonus Forward References ---
 ; D_32C1, D_3421, D_344A are defined in bb-extend-bonus.s
 D_4080      = $4080     ; Memory region cleared during bonus stage
+D_4087      = $4087     ; Graphics source data 1
+D_408F      = $408F     ; Graphics source data 2
+D_4097      = $4097     ; Graphics source data 3
+D_409F      = $409F     ; Graphics source data 4
+D_4200      = $4200     ; Graphics work buffer
 
 ; --- Bonus Round Forward References ---
 ; D_348A, D_3495, D_34A0, D_34FA, D_3502, D_350A, D_350C, D_3517, D_35A8 are defined in bb-bonus-round.s
 D_2AE9      = $2AE9     ; Configuration byte storage
-D_40A8      = $40A8     ; Final level layout data
+D_40A8      = $40A8     ; Level header data (8 bytes)
+D_40B0      = $40B0     ; Level sidebar chars 1
+D_40B8      = $40B8     ; Level sidebar chars 2
+D_40C0      = $40C0     ; Level sidebar chars 3
+D_40C8      = $40C8     ; Level sidebar chars 4
+; D_48A8, D_48B0, D_48B8, D_48C0, D_48C8 defined in init-routines.s
 D_5ABF      = $5ABF     ; Countdown timer 2
 D_7D37      = $7D37     ; Special data area 1 (8 bytes)
 D_7D76      = $7D76     ; Special data area 2 (8 bytes)
@@ -649,7 +876,20 @@ D_40D8      = $40D8     ; Level display data (ones digit)
 D_40DE      = $40DE     ; Level display data
 D_40DF      = $40DF     ; Level display data
 D_4880      = $4880     ; Level layout buffer 2
-D_5000      = $5000     ; Screen pointer storage
+D_5000      = $5000     ; Screen RAM page 0
+D_5100      = $5100     ; Screen RAM page 1
+D_519C      = $519C     ; Sprite index table 1 (9 bytes)
+D_51D3      = $51D3     ; Screen text output (self-modifying)
+D_51EC      = $51EC     ; Sprite index table 2 (9 bytes)
+D_5200      = $5200     ; Screen RAM page 2
+D_5300      = $5300     ; Screen RAM page 3
+D_5400      = $5400     ; Color RAM buffer page 0
+D_5401      = $5401     ; Color RAM buffer +1
+D_55D3      = $55D3     ; Screen text output 2 (self-modifying)
+D_5500      = $5500     ; Color RAM buffer page 1
+D_5600      = $5600     ; Color RAM buffer page 2
+D_5700      = $5700     ; Color RAM buffer page 3
+D_5800      = $5800     ; Sprite data buffer
 D_5001      = $5001     ; Screen pointer storage
 D_501E      = $501E     ; Level position data
 D_501F      = $501F     ; Level position data
@@ -683,9 +923,7 @@ D_A710      = $A710     ; Position table 1
 D_A722      = $A722     ; Position table 2
 D_A877      = $A877     ; Screen data source table
 D_E09B      = $E09B     ; Engine routine
-D_E189      = $E189     ; Engine routine
 D_E2C3      = $E2C3     ; Engine routine with pointer
-D_E740      = $E740     ; Engine routine
 D_F192      = $F192     ; Level data index table
 D_F19F      = $F19F     ; Level data value table
 
@@ -697,8 +935,6 @@ D_9EE0      = $9EE0     ; Enemy template ROM table 5
 D_A804      = $A804     ; Player bonus data location
 D_A80D      = $A80D     ; "EXTEND" character table
 D_A988      = $A988     ; Enemy state temporary storage
-D_E374      = $E374     ; Unknown routine
-D_E658      = $E658     ; Unknown routine
 D_7B53      = $7B53     ; Unknown routine
 D_7BC6      = $7BC6     ; Wait for frame variant
 L_A474      = $A474     ; READY label
@@ -834,7 +1070,7 @@ lives_decrement:
 L_04F0:
         sty     DATPTR              ; 84 41
         lda     SUBFLG              ; a5 10
-        sta     $0409,x             ; 9d 09 04
+        sta     D_0409,x            ; 9d 09 04
         jsr     D_7BE8              ; 20 e8 7b
         ldy     DATPTR              ; a4 41
         lda     #$00                ; a9 00
@@ -896,11 +1132,11 @@ starting_lives:
 D_0540:
         lda     #$00                ; a9 00
         ldy     D_AB51,x            ; bc 51 ab
-        sta     $0400,y             ; 99 00 04
+        sta     D_0400,y            ; 99 00 04
         dey                         ; 88
-        sta     $0400,y             ; 99 00 04
+        sta     D_0400,y            ; 99 00 04
         dey                         ; 88
-        sta     $0400,y             ; 99 00 04
+        sta     D_0400,y            ; 99 00 04
         sta     RIDBS,x             ; 95 ac
         iny                         ; c8
         tya                         ; 98

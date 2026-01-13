@@ -35,7 +35,7 @@ L_3D31_check_entity_loop:
         beq     L_3D74_next_entity                  ; $3D33
 
 D_3D35:
-        lda     $00CA,y                             ; $3D35 - Get other entity state
+        lda     a:PESSION,y                         ; $3D35 - Get other entity state
         cmp     #$24                                ; $3D38 - Check if >= $24 (inactive?)
         bcs     L_3D74_next_entity                  ; $3D3A - Skip if inactive
 
@@ -72,14 +72,14 @@ L_3D5F_y_dist_positive:
         bcs     L_3D74_next_entity                  ; $3D61 - Too far on Y axis
 
         ; COLLISION DETECTED! Handle capture
-        lda     $00CA,y                             ; $3D63 - Get other entity's state
+        lda     a:PESSION,y                         ; $3D63 - Get other entity's state
         sta     D_AA42,y                            ; $3D66 - Save original state
         
         lda     #$34                                ; $3D69 - State $34 = captured in bubble
-        sta     $00CA,y                             ; $3D6B - Set new state
+        sta     a:PESSION,y                         ; $3D6B - Set new state
         
-        lda     $0193,x                             ; $3D6E - Get our player number
-        sta     $0193,y                             ; $3D71 - Assign to captured entity
+        lda     D_0193,x                            ; $3D6E - Get our player number
+        sta     D_0193,y                            ; $3D71 - Assign to captured entity
 
 L_3D74_next_entity:
         dey                                         ; $3D74 - Next entity
@@ -111,7 +111,7 @@ L_3D74_next_entity:
         sta     VIC_SPR_ENA                         ; $3D97 - Update sprite enable register
         
         ; Update score counter
-        lda     $0193,y                             ; $3D9A - Get player number
+        lda     D_0193,y                            ; $3D9A - Get player number
         tax                                         ; $3D9D
         inc     $46,x                               ; $3D9E - Increment score counter
         

@@ -29,10 +29,10 @@ draw_animated_sprite:
         
 ; Clear 4 pages of sprite buffer memory
 L_E55E:
-        sta     $8B00,x                 ; Clear buffer page 0
-        sta     $8C00,x                 ; Clear buffer page 1
-        sta     $8D00,x                 ; Clear buffer page 2
-        sta     $8E00,x                 ; Clear buffer page 3
+        sta     D_8B00,x                ; Clear buffer page 0
+        sta     D_8C00,x                ; Clear buffer page 1
+        sta     D_8D00,x                ; Clear buffer page 2
+        sta     D_8E00,x                ; Clear buffer page 3
         dex
         bne     L_E55E
         
@@ -68,23 +68,23 @@ L_E591:
 ; Display all drawn sprites from buffer
 L_E594:
         ldy     $39                     ; Get buffer index
-        lda     $8B00,y                 ; Check buffer 0
-        ora     $8D00,y                 ; OR with buffer 2
+        lda     D_8B00,y                ; Check buffer 0
+        ora     D_8D00,y                ; OR with buffer 2
         beq     L_E5BD                  ; Done if both empty
         
         ; Update player 1 position if buffer 0 has data
-        lda     $8B00,y
+        lda     D_8B00,y
         beq     L_E5AA
         sta     $BA                     ; Update P1 X
-        lda     $8C00,y
+        lda     D_8C00,y
         sta     $C2                     ; Update P1 Y
         
 L_E5AA:
         ; Update player 2 position if buffer 2 has data
-        lda     $8D00,y
+        lda     D_8D00,y
         beq     L_E5B6
         sta     $BB                     ; Update P2 X
-        lda     $8E00,y
+        lda     D_8E00,y
         sta     $C3                     ; Update P2 Y
         
 L_E5B6:
@@ -248,14 +248,14 @@ copy_and_mask_graphics:
         
 ; Copy 32 bytes of graphics data
 L_E662:
-        lda     $4087,x                 ; Source data 1
-        sta     $0107,x                 ; Destination 1
-        lda     $408F,x                 ; Source data 2
-        sta     $010F,x                 ; Destination 2
-        lda     $4097,x                 ; Source data 3
-        sta     $0117,x                 ; Destination 3
-        lda     $409F,x                 ; Source data 4
-        sta     $011F,x                 ; Destination 4
+        lda     D_4087,x                ; Source data 1
+        sta     D_0107,x                ; Destination 1
+        lda     D_408F,x                ; Source data 2
+        sta     D_010F,x                ; Destination 2
+        lda     D_4097,x                ; Source data 3
+        sta     D_0117,x                ; Destination 3
+        lda     D_409F,x                ; Source data 4
+        sta     D_011F,x                ; Destination 4
         dex
         bne     L_E662
         
@@ -265,7 +265,7 @@ L_E67D:
         
 ; Copy row to screen
 L_E67F:
-        lda     $0108,y                 ; Get graphics byte
+        lda     D_0108,y                ; Get graphics byte
         sta     ($02),y                 ; Write to screen
         dey
         bpl     L_E67F
@@ -278,13 +278,13 @@ L_E67F:
         tay
         
         ; Load mask/data pointers from tables
-        lda     $AA54,y                 ; OR mask low
+        lda     D_AA54,y                ; OR mask low
         sta     $40
-        lda     $AA8E,y                 ; OR mask high
+        lda     D_AA8E,y                ; OR mask high
         sta     $41
-        lda     $AAC8,y                 ; AND mask low
+        lda     D_AAC8,y                ; AND mask low
         sta     $42
-        lda     $AB02,y                 ; AND mask high
+        lda     D_AB02,y                ; AND mask high
         sta     $43
         
         ldy     #$1F
@@ -294,7 +294,7 @@ L_E6A3:
         lda     ($02),y                 ; Get screen byte
         and     ($42),y                 ; AND with mask
         ora     ($40),y                 ; OR with pattern
-        and     $A988,y                 ; AND with final mask
+        and     D_A988,y                ; AND with final mask
         sta     ($02),y                 ; Write back
         dey
         bpl     L_E6A3
@@ -315,8 +315,8 @@ L_E6BC:
         ; Copy result to final location
         ldx     #$00
 L_E6C3:
-        lda     $4200,x                 ; Source
-        sta     $4A00,x                 ; Destination
+        lda     D_4200,x                ; Source
+        sta     D_4A00,x                ; Destination
         inx
         bne     L_E6C3
         rts
@@ -424,10 +424,10 @@ L_E73A:
 fill_color_ram:
         ldx     #$00
 L_E742:
-        sta     $D800,x                 ; Color RAM page 0
-        sta     $D900,x                 ; Color RAM page 1
-        sta     $DA00,x                 ; Color RAM page 2
-        sta     $DB00,x                 ; Color RAM page 3
+        sta     D_D800,x                ; Color RAM page 0
+        sta     D_D900,x                ; Color RAM page 1
+        sta     D_DA00,x                ; Color RAM page 2
+        sta     D_DB00,x                ; Color RAM page 3
         inx
         bne     L_E742
         rts
