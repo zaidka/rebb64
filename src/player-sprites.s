@@ -455,4 +455,5 @@ L1573:                                                  ; $1573
         dey
         bpl     L153F
         clc
+L1577:                                                  ; $1577 - Exit point for animation_timer_handler
         rts
