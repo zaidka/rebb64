@@ -11,9 +11,9 @@
 ; - Manages bonus level configuration
 ;
 ; Level data tables:
-;   $B569 - Level scroll/wrap attributes (100 bytes)
-;   $B5CD - Level tile set / platform layout pointer low (100 bytes)
-;   $B631 - Level tile set / platform layout pointer high (100 bytes)
+;   $B569 - Item spawn positions A (100 bytes) - 5-bit packed coords
+;   $B5CD - Item spawn positions B (100 bytes) - 5-bit packed coords
+;   $B631 - Item spawn positions C (upper nibble) + bubble spawns (lower nibble, 100 bytes)
 ; ==============================================================================
 
 ; Main level setup entry point

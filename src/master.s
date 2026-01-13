@@ -565,9 +565,9 @@ D_298E      = $298E     ; Self-modifying code target
 D_ABA5      = $ABA5     ; Loader completion check
 D_C085      = $C085     ; Far routine
 D_C6D0      = $C6D0     ; Loader callback routine
-D_A790      = $A790     ; Enemy type table
-D_A892      = $A892     ; Enemy attribute table
-D_A8E4      = $A8E4     ; Enemy color table
+D_A790      = $A790     ; Enemy death bonus item indices (6 bytes at $A791)
+D_A892      = $A892     ; Points item char block indices (47 bytes)
+D_A8E4      = $A8E4     ; Points item color indices (47 bytes, lower nibble only)
 D_A79A      = $A79A     ; Item score value table
 
 ; --- Item Collision Forward References ---
@@ -591,14 +591,14 @@ VIC_SPR_XEXP = $D01D    ; VIC sprite X expansion register
 
 ; --- Level Setup Forward References ---
 ; D_2B31, D_2BBD, D_2C32, D_2C8C, D_2C9F, D_2CB7 are defined in bb-level-setup.s
-D_B569      = $B569     ; Level scroll/wrap attributes (100 bytes)
-D_B5CD      = $B5CD     ; Level tileset pointer low (100 bytes)
-D_B631      = $B631     ; Level tileset pointer high (100 bytes)
+D_B569      = $B569     ; Item spawn positions A (100 bytes) - 5-bit packed coords
+D_B5CD      = $B5CD     ; Item spawn positions B (100 bytes) - 5-bit packed coords
+D_B631      = $B631     ; Item spawn positions C (upper nibble) + bubble spawns (lower nibble, 100 bytes)
 D_AC09      = $AC09     ; Data pointer table low
 D_AC0A      = $AC0A     ; Data pointer table high
 D_5B3F      = $5B3F     ; Level progression counter
-D_A913      = $A913     ; Special item color table
-D_A8C1      = $A8C1     ; Special item data index
+D_A913      = $A913     ; Powerup item color indices (35 bytes, lower nibble only)
+D_A8C1      = $A8C1     ; Powerup item char block indices (35 bytes)
 D_4210      = $4210     ; Item work buffer 1
 D_4230      = $4230     ; Item work buffer 2
 D_4A10      = $4A10     ; Item work buffer 3
@@ -635,7 +635,7 @@ D_A420      = $A420     ; Additional data table (8 bytes)
 D_A814      = $A814     ; Spawn data table + 1
 D_A815      = $A815     ; Level data pointer table (low bytes)
 D_A81A      = $A81A     ; Level data pointer table (high bytes)
-D_A81F      = $A81F     ; Configuration table for bonus stages
+D_A81F      = $A81F     ; Large bonus sprite colors (5 bytes: cupcake, melon, yellow/blue/purple diamond)
 
 ; --- Bonus Stage Extended Forward References ---
 ; D_35B0, D_35C0, D_3621, D_362F, D_370C, D_3771, D_3794 are defined in bb-bonus-stage-extended.s

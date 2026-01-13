@@ -9,13 +9,15 @@ $0400-$07FF  Game variables, score data, player state
 $0800-$0FFF  Game logic: main loop, collision detection, enemy AI
 $1000-$1FFF  Level handling, bubble mechanics
 $2000-$3FFF  Graphics routines, screen updates
-$4000-$47FF  Character set (VIC bank)
+$4000-$47FF  Character set (fonts, shadows, fire/water animations)
 $4800-$57FF  Screen buffers, sprite pointers
-$5800-$5FFF  Sprite data block 1
+$5800-$5FFF  Sprite data block 1 (player, enemies)
 $6000-$7FFF  Level data and game code
-$8000-$9FFF  Sprite definitions, animation data
-$A000-$AFFF  Level data, enemy patterns
-$B000-$CFFF  Level/graphics data tables
+$7440-$7FFF  Additional sprite data (player in bubble, boss sprites)
+$8000-$8FFF  Character data (bubble animations, Baron Von Blubba)
+$8F00-$9FFF  Character data continued (special bubbles, items, weapons)
+$A000-$AFFF  Sprite data (bonus items), item/monster data tables
+$B000-$CFFF  Level/graphics data tables (platforms, bitmaps, metadata)
 $D000-$DFFF  (I/O area - banked out when needed)
 $E000-$EFFF  Game routines, input handling
 $F000-$FFFF  Sound/music routines, IRQ handlers
@@ -175,12 +177,48 @@ The game runs at 25fps (PAL), achieved by skipping every other frame:
 - Sprite updates only run on odd frames (AND #$01 check)
 - Sound updates run every frame
 
+### Graphics Data Tables
+
+#### Sprite Data Locations
+
+| Address | Description | Count | Size |
+|---------|-------------|-------|------|
+| $5800 | Sprite data block 1 (Player, enemies) | Variable | 2KB |
+| $7440 | Player in bubble A | 4 sprites | 256 bytes |
+| $7540 | Player in bubble B | 4 sprites | 256 bytes |
+| $7640 | Boss facing left | 9 sprites | 576 bytes |
+| $7880 | Boss in bubble | 9 sprites | 576 bytes |
+| $7C40 | Boss facing right | 9 sprites | 576 bytes |
+| $8000 | Sprite data block 2 | Variable | 8KB |
+| $A320 | Bonus cupcake | 4 sprites | 256 bytes |
+| $A420 | Bonus melon (partial) | 3 sprites | 192 bytes |
+| $A520 | Bonus diamond | 2 sprites | 128 bytes |
+
+#### Character Set Data Locations
+
+| Address | Description |
+|---------|-------------|
+| $4000 | Numeric font (charset base) |
+| $4050 | Shadows (6 chars × 8 bytes) |
+| $4080 | Fatneck font |
+| $40E0 | Fire on ground A |
+| $40E8 | Life dot lines font |
+| $40F8 | Flowing water animation |
+| $4108 | Alpha font |
+| $41D8 | Punctuation font |
+| $4200 | Fire on ground |
+| $4210 | Ruddy "HELLO THERE" font |
+| $8000 | Bubble blow animation |
+| $8980 | Bubble pop animation |
+| $8F00 | Baron Von Blubba (main block start) |
+
 ### Level Data Format
 
 Level data uses bit-packed compression:
 - Each bit determines tile placement (1 = platform, 0 = empty)
 - RLE encoding for repeated patterns
 - Optional horizontal mirroring (left half copied to right)
+- Symmetry flag in $FF94 (bit 7): 0 = symmetric, 1 = asymmetric
 
 ### Sprite System
 
@@ -230,7 +268,35 @@ The text rendering system at $E42A supports:
 
 ## Data Tables in ROM
 
-Important lookup tables:
+### Level Data Tables
+
+| Address | Description | Length |
+|---------|-------------|--------|
+| $AE51 | Monster spawn data | 1,815 bytes (572 monsters × 3 bytes + stop bytes) |
+| $B569 | Item spawn positions A | 100 bytes (5-bit packed coords) |
+| $B5CD | Item spawn positions B | 100 bytes (5-bit packed coords) |
+| $B631 | Item spawn positions C (upper nibble) + bubble spawns (lower nibble) | 100 bytes |
+| $B695 | Wind currents / level data | Variable (up to 1,145 bytes) |
+| $BB0E | Sidebar chars | 1,888 bytes (32 bytes × 59 sidebars) |
+| $C26E | Platform chars | 800 bytes |
+| $C58E | Hole metadata (lower nibble: holes, upper nibble: bubble currents) | 100 bytes |
+| $C5F2 | Bitmaps | 6,670 bytes (46 bytes × 145 levels) |
+| $FF30 | Background colors | 100 bytes |
+| $FF94 | Symmetry flag (bit 7) + sidebar chars index (bits 0-6) | 100 bytes |
+
+### Item Data Tables
+
+| Address | Description | Length |
+|---------|-------------|--------|
+| $A790 | Enemy death bonus item indices | 6 bytes (starting at $A791) |
+| $A81F | Large bonus sprite colors (cupcake, melon, diamonds) | 5 bytes |
+| $A892 | Points item char block indices | 47 bytes |
+| $A8C1 | Powerup item char block indices | 35 bytes |
+| $A8E4 | Points item color indices (lower nibble only) | 47 bytes |
+| $A913 | Powerup item color indices (lower nibble only) | 35 bytes |
+| $AB63 | Monster sprite colors | 8 bytes (one per monster type) |
+
+### Other Lookup Tables
 
 | Address | Description |
 |---------|-------------|

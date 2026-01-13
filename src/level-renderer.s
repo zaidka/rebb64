@@ -67,13 +67,13 @@ L_E021:
         bpl     L_E021
         
         ; Check level number (level >= 100 branches)
-        lda     $FF94,x             ; Get level type/flags
+        lda     $FF94,x             ; Get symmetry (bit 7) + sidebarCharsIndex (bits 0-6)
         and     #$7F
         cmp     #$64                ; Compare with 100
         bcs     L_E05E              ; Branch if >= 100
         
-        ; For levels < 100: Calculate tileset pointer
-        ; Multiply level by 32 (shift left 5 times) and add $BB0E
+        ; For levels < 100: Calculate sidebar chars pointer
+        ; Multiply level by 32 (shift left 5 times) and add $BB0E (sidebarChars base)
         iny                         ; Y = 0
         sty     $1B                 ; Clear high byte
         asl     a                   ; Level * 2
@@ -91,7 +91,7 @@ L_E021:
         adc     #$BB                ; Add high byte $BB
         sta     $1B                 ; Pointer is now at $BB0E + (level * 32)
         
-        ; Copy 32 bytes from tileset data to $40B0 and $48B0
+        ; Copy 32 bytes from sidebar chars data to $40B0 and $48B0
         ldy     #$1F
 L_E051:
         lda     ($1A),y
@@ -124,7 +124,7 @@ L_E07E:
         sty     VARTAB              ; $2D = 0
         
         ; Extract color information from level flags
-        lda     $FF30,x             ; Get color byte
+        lda     $FF30,x             ; Get background color byte (bgColors metadata)
         tay
         lsr     a                   ; High nibble -> $1D
         lsr     a
@@ -357,7 +357,7 @@ L_E188:
 ;   $10 (SUBFLG) - Current level number
 ;
 ; USES:
-;   $02,$03 - Source data pointer ($B695)
+;   $02,$03 - Source data pointer ($B695 - wind currents/level data)
 ;   $11 - Level counter
 ;   $13,$14 - Decompression buffer pointer ($8B00)
 ;   $04,$05 - Screen destination pointer ($8500)
@@ -370,7 +370,7 @@ decompress_level_data:
 L_E18B:
         sta     $11                 ; Save level number
         
-        ; Set up source pointer to $B695
+        ; Set up source pointer to $B695 (wind currents/level data)
         lda     #$95
         sta     $02
         lda     #$B6
@@ -625,7 +625,7 @@ L_E297:
 ;   $01 - Memory banking ($30 = RAM under I/O)
 ;   $3C - Level counter save
 ;   $3D,$3E - Bit manipulation temporaries
-;   $40,$41 - Data pointer ($C5F2 base)
+;   $40,$41 - Data pointer ($C5F2 - bitmaps base address)
 ; ============================================================================
 D_E299:
 init_level_renderer:
@@ -648,8 +648,8 @@ init_level_renderer:
         ldx     #$00
 L_E2AD:
         lda     #$2E                ; Base offset = 46 bytes
-        ldy     $FF94,x             ; Get level flags
-        bmi     L_E2B5              ; Branch if special level
+        ldy     $FF94,x             ; Get symmetry flag (bit 7)
+        bmi     L_E2B5              ; Branch if asymmetric level (bit 7 set)
         asl     a                   ; Double offset (92 bytes)
 L_E2B5:
         clc
@@ -665,8 +665,8 @@ L_E2BE:
 L_E2C3:
         ; Get data table index based on level flags
         ldy     #$00
-        lda     $FF94,x             ; Level flags
-        bpl     L_E2CB              ; Branch if normal
+        lda     $FF94,x             ; Get symmetry flag (bit 7)
+        bpl     L_E2CB              ; Branch if symmetric (bit 7 clear)
         iny                         ; Y = 1 for special levels
         
 L_E2CB:
@@ -676,7 +676,7 @@ L_E2CB:
         lda     D_E36C,y            ; Get high byte  
         sta     D_E30D
         
-        ; Get color data
+        ; Get hole metadata (holes in lower nibble, bubble currents in upper nibble)
         lda     $C58E,x
         sta     $3D
         
