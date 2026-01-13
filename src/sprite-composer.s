@@ -17,8 +17,6 @@
 ; - D_E972 ($E973) - Contains ADC immediate operand for screen row advancement
 ;===============================================================================
 
-.segment "CODE"
-
 ;-------------------------------------------------------------------------------
 ; Sprite composition entry points (continuation from previous routines)
 ;-------------------------------------------------------------------------------

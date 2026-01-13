@@ -2,6 +2,7 @@
 ; bb-game-init.s - Game Initialization Routine
 ;===============================================================================
 ; Address range: $A428-$A631 (522 bytes including routines and data)
+; Memory positions defined in linker config
 ;
 ; This module contains game initialization routines:
 ; - D_A428: Main initialization routine
@@ -10,7 +11,9 @@
 ; - D_A625: Helper routine
 ;===============================================================================
 
-        .org    $A428           ; Force assembly at correct address
+; First part of game init code
+        .segment "GAMEINIT1"
+        .org $A428
 
 ;-------------------------------------------------------------------------------
 ; Game Initialization Routine ($A428-$A47D)
@@ -94,19 +97,19 @@ D_A428:
         rts                         ; 60 - Return
 
 ;-------------------------------------------------------------------------------
-; Sprite Pattern Data ($A47E-$A59F, 290 bytes)
+; Sprite Pattern Data - loaded via data/binaries.s
 ;-------------------------------------------------------------------------------
-; Sprite pattern tables used by the game
-;-------------------------------------------------------------------------------
-
-        .incbin "../data/sprite-patterns.bin"
 
 ;-------------------------------------------------------------------------------
 ; Clear Screen Areas ($A5A0-$A5B6)
 ;-------------------------------------------------------------------------------
 ; Clears specific screen memory regions
 ; Called from D_A5B7 (title screen setup)
+; Memory position defined in linker config
 ;-------------------------------------------------------------------------------
+
+        .segment "GAMEINIT2"
+        .org $A5A0
 
 D_A5A0:
         jsr     D_0885              ; 20 85 08 - Clear/setup routine

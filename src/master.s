@@ -673,8 +673,10 @@ L_F20A      = $F20A     ; Credits handler return
 ; D_F20B, D_F211, D_F217 are now defined in credits-handler-partial.s
 D_F256      = $F256     ; Music data (in music-tables.bin)
 D_F2AE      = $F2AE     ; Music data (in music-tables.bin)
-D_F3B9      = $F3B9     ; Frequency data (in music-freqs.bin)
-D_F418      = $F418     ; Frequency data (in music-freqs.bin)
+
+; Frequency tables - defined in music-freqs.s (relocatable)
+; D_F3B9 and D_F418 are now aliases to FREQ_TABLE_LO and FREQ_TABLE_HI
+; which are labels defined within the MUSICFREQS segment
 D_4CF3      = $4CF3     ; External routine (called from sound engine)
 L_F846      = $F846     ; Forward reference within sound code flow
 D_F477      = $F477     ; Initialize sound tables
@@ -942,6 +944,12 @@ D_7B53      = $7B53     ; Unknown routine
 D_7BC6      = $7BC6     ; Wait for frame variant
 L_A474      = $A474     ; READY label
 D_8CA9      = $8CA9     ; Item setup routine
+
+; ============================================================================
+; Binary data files - memory positions defined in linker config
+; ============================================================================
+; Included here so labels (e.g., FREQ_TABLE_LO) are defined before use
+.include "data/binaries.s"
 
 ; ============================================================================
 ; CODE START - $0400
@@ -1544,40 +1552,22 @@ D_0786:
 .include "sprite-init.s"
 .include "sprite-helpers.s"
 
-; Character set data ($4000-$47FF, 2048 bytes)
-.incbin "../data/charset.bin"
-
+; Code section $4800-$4AFF
+.segment "CODE_4800"
+.org $4800
 .include "init-routines.s"
 .include "loader.s"
 
-; Graphics data ($4B00-$57FF, 3328 bytes) - screen layouts, sprite patterns
-.incbin "../data/graphics-data.bin"
-
-; Sprite data 1 ($5800-$5FFF, 2048 bytes)
-.incbin "../data/sprites1.bin"
-
-; Level data ($6000-$7FFF, 8192 bytes)
-.incbin "../data/level-data.bin"
-
-; Sprite data 2 ($8000-$9FFF, 8192 bytes)
-.incbin "../data/sprites2.bin"
-
-; Sprite data 3 ($A000-$A427, 1064 bytes) - additional sprite patterns
-.incbin "../data/sprites3.bin"
-
+; Game init code
 .include "game-init.s"
-
-; Game data tables ($A632-$B0EF, 2750 bytes) - various game tables, text strings, patterns
-.incbin "../data/game-tables.bin"
-
-; Game data ($B0F0-$DFFF, 12048 bytes) - enemy patterns, level data, animations
-.incbin "../data/game-data.bin"
 
 ; ============================================================================
 ; Code and data includes ($E000-$FFFB)
 ; ============================================================================
 
-; Level renderer and screen setup ($E000-$E3A6, 935 bytes)
+; Level renderer and screen setup
+.segment "CODE_E000"
+.org $E000
 .include "level-renderer.s"
 
 ; Sprite display and animation system ($E3A7-$E553, 430 bytes)
@@ -1607,20 +1597,17 @@ D_0786:
 ; Credits handler, music tables & level init ($F1AC-$F23F, 148 bytes)
 .include "credits-handler-partial.s"
 
-; Music data tables ($F240-$F2C3, 132 bytes)
-.incbin "../data/music-tables.bin"
-
-; Music & sound effect data tables ($F2C4-$F39B, 216 bytes)
+; Music & sound effect data tables
+.segment "CODE_F2C4"
+.org $F2C4
 .include "music-sound-data.s"
 
-; Frequency tables ($F39C-$F4BB, 288 bytes)
-.incbin "../data/music-freqs.bin"
-
-; Sound engine - SID music and effects system ($F4BC-$F921, 1,126 bytes)
+; Sound engine - SID music and effects system
+.segment "CODE_F4BC"
+.org $F4BC
 .include "sound-engine.s"
 
-; SFX & music data ($F900-$FDFF, 1280 bytes)
-.incbin "../data/sfx-music.bin"
-
-; Final data section - music data, digit fonts, data tables ($FE00-$FFFA, 507 bytes)
+; Final data section
+.segment "CODE_FE00"
+.org $FE00
 .include "final-data.s"

@@ -4,8 +4,6 @@
 ; Address range: $26BF - $284C (398 bytes)
 ; -----------------------------------------------------------------------------
 
-.segment "CODE"
-
 ; Entry point: $26BF - Player horizontal movement handler
 L_26BF:
         lda  D_87F0,x               ; bd f0 87     $26bf

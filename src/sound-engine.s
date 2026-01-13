@@ -146,10 +146,10 @@ L_F581:
     jsr  D_F4F2                 ; 20 f2 f4     $f59e
 L_F5A1:
     ldy  $78                    ; a4 78        $f5a1
-    lda  D_F418,y               ; b9 18 f4     $f5a3
+    lda  FREQ_TABLE_HI,y        ; b9 18 f4     $f5a3 - Frequency high byte
     sta  CHRGOT                 ; 85 79        $f5a6
     pha                         ; 48           $f5a8
-    lda  D_F3B9,y               ; b9 b9 f3     $f5a9
+    lda  FREQ_TABLE_LO,y        ; b9 b9 f3     $f5a9 - Frequency low byte
     sta  $78                    ; 85 78        $f5ac
     ldy  D_7430,x               ; bc 30 74     $f5ae
     sta  D_F333,y               ; 99 33 f3     $f5b1
@@ -414,9 +414,9 @@ L_F7BE:
     sta  D_F327,y               ; 99 27 f3     $f7c9
     pla                         ; 68           $f7cc
     tay                         ; a8           $f7cd
-    lda  D_F418,y               ; b9 18 f4     $f7ce
+    lda  FREQ_TABLE_HI,y        ; b9 18 f4     $f7ce - Frequency high byte
     pha                         ; 48           $f7d1
-    lda  D_F3B9,y               ; b9 b9 f3     $f7d2
+    lda  FREQ_TABLE_LO,y        ; b9 b9 f3     $f7d2 - Frequency low byte
     ldy  D_7436,x               ; bc 36 74     $f7d5
     sta  SID_V1_FREQ_LO,y       ; 99 00 d4     $f7d8 - SID_V1_FREQ_LO
     pla                         ; 68           $f7db
@@ -525,10 +525,10 @@ L_F8A3:
     ldy  #$1d                   ; a0 1d        $f8ac
     lda  (TIME),y               ; b1 9e        $f8ae
     tax                         ; aa           $f8b0
-    lda  D_F3B9,x               ; bd b9 f3     $f8b1
+    lda  FREQ_TABLE_LO,x        ; bd b9 f3     $f8b1 - Frequency low byte
     sta  SID_V1_FREQ_LO         ; 8d 00 d4     $f8b4 - SID_V1_FREQ_LO
     sta  D_F333                 ; 8d 33 f3     $f8b7
-    lda  D_F418,x               ; bd 18 f4     $f8ba
+    lda  FREQ_TABLE_HI,x        ; bd 18 f4     $f8ba - Frequency high byte
     sta  SID_V1_FREQ_HI         ; 8d 01 d4     $f8bd - SID_V1_FREQ_HI
     sta  D_F334                 ; 8d 34 f3     $f8c0
     dey                         ; 88           $f8c3
