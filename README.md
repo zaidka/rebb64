@@ -69,21 +69,28 @@ lives_decrement:
 
 ### Adding New Code
 
-For larger modifications, use free space at `$8DE2` (158 bytes available):
+**Note:** There is currently no free space in the game binary. The memory region $8B00-$8EFF (previously documented as free) is actively used as a screen buffer and is overwritten every time a level starts.
+
+For larger modifications, you have two options:
+
+1. **Replace existing code** with your custom routine (maintaining exact byte count)
+2. **Use the cassette buffer** at $033C-$03FB (192 bytes) which is unused during gameplay:
 
 ```asm
 ; Replace original instruction with JSR to your code:
 lives_decrement:
         jsr     custom_lives_handler
 
-; Add your code in free space:
-.org $8DE2
+; Add your code in cassette buffer (unused during gameplay):
+.org $033C
 custom_lives_handler:
         lda     cheat_flag
         bne     @skip
         dec     D_045A,x
 @skip:  rts
 ```
+
+**Warning:** The cassette buffer ($033C) may be used during disk/tape operations. Test thoroughly.
 
 ### Modifying Graphics and Audio
 
