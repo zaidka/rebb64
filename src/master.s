@@ -433,6 +433,7 @@ D_47F8      = $47F8     ; Item table 1
 D_4FF8      = $4FF8     ; Item table 2
 D_58BF      = $58BF     ; Global level flag
 D_7BA6      = $7BA6     ; Screen setup routine
+D_7AE3      = $7AE3     ; Level 99 special handler
 D_7BC8      = $7BC8     ; Wait routine with delay
 D_7D00      = $7D00     ; Level data destination
 D_A854      = $A854     ; Level data source
@@ -509,6 +510,7 @@ D_18D8      = $18D8     ; Self-modifying code storage
 D_18DF      = $18DF     ; Self-modifying code storage
 D_1929      = $1929     ; Self-modifying code storage
 D_1CA0      = $1CA0     ; Player falling handler (in bb-level-complete.s)
+D_1CBD      = $1CBD     ; Game update routine (called from IRQ)
 D_2020      = $2020     ; Unknown routine
 D_30A9      = $30A9     ; Data table (possibly invalid address)
 D_3BF1      = $3BF1     ; Self-modifying code target in screen scroll
@@ -675,6 +677,7 @@ D_F3B9      = $F3B9     ; Frequency data (in music-freqs.bin)
 D_F418      = $F418     ; Frequency data (in music-freqs.bin)
 D_4CF3      = $4CF3     ; External routine (called from sound engine)
 L_F846      = $F846     ; Forward reference within sound code flow
+D_F477      = $F477     ; Initialize sound tables
 D_F4BD      = $F4BD     ; Sound init routine
 D_F53C      = $F53C     ; Sound update routine (called every frame)
 D_F887      = $F887     ; Music/mode initialization routine
@@ -1198,48 +1201,154 @@ L_05AC:
         rts                         ; 60
 
 ; ============================================================================
-; [BYTES] Remaining code from $05AD onwards
+; SOUND INITIALIZATION ($05AD)
 ; ============================================================================
-; These sections contain game logic as raw bytes.
-; See the converted .s files for documented examples of game routines.
+; Called to initialize sound system
+; Calls BASIC ROM routines and sound player initialization
 
-; .org $05AD (removed - should be contiguous)
 D_05AD:
-        .byte   $20,$94,$E4,$8C,$3F,$5C,$20,$77  ; $05AD
-        .byte   $F4,$4C,$3C,$F5                  ; $05B5
+        jsr     D_E494                  ; Call BASIC initialization
+        sty     D_5C3F                  ; Store Y to temp
+        jsr     D_F477                  ; Initialize sound tables
+        jmp     D_F53C                  ; Jump to sound update
+
+; ============================================================================
+; LEVEL COLUMN OFFSET TABLE ($05B9) - DATA
+; ============================================================================
+; Table of screen column offsets used for level rendering
+; 12 entries, indexed by level type/variant
+
 D_05B9:
-        .byte   $30,$01,$04,$10  ; $05B9
-        .byte   $20,$30,$40,$50,$60,$70,$80,$90  ; $05BD
+        .byte   $30, $01, $04, $10      ; Offsets 0-3
+        .byte   $20, $30, $40, $50      ; Offsets 4-7
+        .byte   $60, $70, $80, $90      ; Offsets 8-11
+
+; ============================================================================
+; LEVEL INITIALIZATION ($05C5)
+; ============================================================================
+; Called at the start of each level to initialize game state
+; Sets up entity arrays, clears buffers, initializes timers
+
 D_05C5:
-        .byte   $A2,$03,$8E,$49,$85,$E8,$8E,$21  ; $05C5
-        .byte   $85,$E8,$8E,$48,$85,$AD,$29,$87  ; $05CD
-        .byte   $48,$AD,$28,$87,$48,$A0,$0B,$A5  ; $05D5
-        .byte   $10,$C9,$63,$D0,$03,$A0,$12,$2C  ; $05DD
-        .byte   $AD,$3F,$5C,$C9,$12,$90,$07,$C9  ; $05E5
-        .byte   $4A,$F0,$03,$20,$AD,$05,$A2,$07  ; $05ED
-        .byte   $A9,$FF,$9D,$A0,$87,$9D,$C8,$87  ; $05F5
-        .byte   $9D,$F0,$87,$9D,$18,$88,$A9,$00  ; $05FD
-        .byte   $9D,$D8,$86,$9D,$00,$87,$9D,$28  ; $0605
-        .byte   $87,$8A,$9D,$B0,$86,$CA,$10,$E0  ; $060D
-        .byte   $68,$8D,$28,$87,$68,$8D,$29,$87  ; $0615
-        .byte   $8A,$A2,$11,$95,$CA,$CA,$10,$FB  ; $061D
-        .byte   $20,$A6,$7B,$8A,$A2,$23,$95,$DC  ; $0625
-        .byte   $CA,$10,$FB,$8D,$20,$85,$85,$21  ; $062D
-        .byte   $85,$46,$85,$47,$8D,$FF,$58,$8D  ; $0635
-        .byte   $3F,$59,$8D,$BF,$58,$85,$67,$85  ; $063D
-        .byte   $68,$85,$69,$85,$B1,$85,$B0,$A2  ; $0645
-        .byte   $48,$9D,$5D,$01,$CA,$10,$FA,$A2  ; $064D
-        .byte   $05,$95,$61,$CA,$10,$FB,$8E,$83  ; $0655
-        .byte   $A7,$8E,$84,$A7,$8E,$15,$D0,$86  ; $065D
-        .byte   $6A,$A9,$10,$8D,$7F,$5A,$A9,$0A  ; $0665
-        .byte   $8D,$BF,$5A,$20,$17,$F2,$AD,$BF  ; $066D
-        .byte   $59,$C5,$10,$D0,$18,$6D,$FF,$59  ; $0675
-        .byte   $8D,$BF,$59,$EE,$FF,$59,$A5,$10  ; $067D
-        .byte   $0A,$69,$09,$C9,$2F,$90,$04,$E9  ; $0685
-        .byte   $2E,$D0,$F8,$85,$68,$A5,$10,$C9  ; $068D
-        .byte   $63,$D0,$03,$4C,$E3,$7A,$A2,$00  ; $0695
-        .byte   $8A,$9D,$00,$7D,$9D,$80,$7D,$9D  ; $069D
-        .byte   $00,$7E,$E8,$10,$F4,$60          ; $06A5
+        ldx     #$03                    ; Initialize with value 3
+        stx     $8549                   ; Store to entity array
+        inx                             ; X = 4
+        stx     $8521                   ; Store to entity array
+        inx                             ; X = 5
+        stx     $8548                   ; Store to entity array
+        lda     $8729                   ; Get saved state high
+        pha                             ; Save on stack
+        lda     $8728                   ; Get saved state low
+        pha                             ; Save on stack
+        ldy     #$0B                    ; Default Y offset = 11
+        lda     SUBFLG                  ; Get current level
+        cmp     #$63                    ; Is it level 99?
+        bne     L05E5                   ; If not, continue
+        ldy     #$12                    ; Level 99: Y offset = 18
+        .byte   $2C                     ; Skip next instruction (BIT abs)
+L05E5:
+        lda     D_5C3F                  ; Get temp value
+        cmp     #$12                    ; Compare to 18
+        bcc     L05F3                   ; If < 18, skip
+        cmp     #$4A                    ; Compare to 74
+        beq     L05F3                   ; If == 74, skip
+        jsr     D_05AD                  ; Re-init sound
+L05F3:
+        ldx     #$07                    ; Initialize 8 entities
+L05F5:
+        lda     #$FF                    ; Value $FF
+        sta     $87A0,x                 ; Clear bubble state
+        sta     $87C8,x                 ; Clear vertical state
+        sta     $87F0,x                 ; Clear ascent state
+        sta     $8818,x                 ; Clear bubble timer
+        lda     #$00                    ; Value $00
+        sta     $86D8,x                 ; Clear entity array
+        sta     $8700,x                 ; Clear entity array
+        sta     $8728,x                 ; Clear entity array
+        txa                             ; Transfer X to A
+        sta     $86B0,x                 ; Store index
+        dex                             ; Next entity
+        bpl     L05F5                   ; Loop if more
+        pla                             ; Restore saved state low
+        sta     $8728                   ; Store back
+        pla                             ; Restore saved state high
+        sta     $8729                   ; Store back
+        txa                             ; X = $FF after loop
+        ldx     #$11                    ; Clear 18 entity types
+L0620:
+        sta     PESSION,x               ; Clear entity type
+        dex                             ; Next slot
+        bpl     L0620                   ; Loop if more
+        jsr     D_7BA6                  ; Call setup routine
+        txa                             ; Transfer X to A
+        ldx     #$23                    ; Clear 36 bytes
+L062B:
+        sta     ZP_DC,x                 ; Clear screen column array
+        dex                             ; Next byte
+        bpl     L062B                   ; Loop if more
+        sta     $8520                   ; Clear animation frame
+        sta     ZP_21                   ; Clear level complete flag
+        sta     $46                     ; Clear temp
+        sta     $47                     ; Clear temp
+        sta     $58FF                   ; Clear game buffer
+        sta     $593F                   ; Clear game buffer
+        sta     $58BF                   ; Clear game buffer
+        sta     SESSION                 ; Clear animation flag ($67)
+        sta     ZP_68                   ; Clear timer
+        sta     ARG                     ; Clear score value ($69)
+        sta     ZP_B1                   ; Clear bubble count
+        sta     ZP_B0                   ; Clear temp
+        ldx     #$48                    ; Clear 73 bytes
+L064E:
+        sta     $015D,x                 ; Clear buffer
+        dex                             ; Next byte
+        bpl     L064E                   ; Loop if more
+        ldx     #$05                    ; Clear 6 bytes
+L0656:
+        sta     FAC,x                   ; Clear FAC area ($61-$66)
+        dex                             ; Next byte
+        bpl     L0656                   ; Loop if more
+        stx     $A783                   ; Store $FF
+        stx     $A784                   ; Store $FF
+        stx     VIC_SPR_ENA             ; Disable all sprites
+        stx     ZP_6A                   ; Clear temp
+        lda     #$10                    ; Value 16
+        sta     $5A7F                   ; Set buffer
+        lda     #$0A                    ; Value 10
+        sta     $5ABF                   ; Set buffer
+        jsr     D_F217                  ; Call sound routine
+        lda     $59BF                   ; Get level state
+        cmp     SUBFLG                  ; Compare to current level
+        bne     L0692                   ; If different, skip
+        adc     $59FF                   ; Add offset
+        sta     $59BF                   ; Store back
+        inc     $59FF                   ; Increment offset
+        lda     SUBFLG                  ; Get level number
+        asl     a                       ; Multiply by 2
+        adc     #$09                    ; Add 9
+L0688:
+        cmp     #$2F                    ; Compare to 47
+        bcc     L0690                   ; If < 47, done
+        sbc     #$2E                    ; Subtract 46
+        bne     L0688                   ; Loop if not zero
+L0690:
+        sta     ZP_68                   ; Store result
+L0692:
+        lda     SUBFLG                  ; Get level number
+        cmp     #$63                    ; Is it level 99?
+        bne     L069B                   ; If not, continue
+        jmp     D_7AE3                  ; Jump to special handler
+
+L069B:
+        ldx     #$00                    ; Clear index
+        txa                             ; A = 0
+L069E:
+        sta     $7D00,x                 ; Clear screen buffer 1
+        sta     $7D80,x                 ; Clear screen buffer 2
+        sta     $7E00,x                 ; Clear screen buffer 3
+        inx                             ; Next byte
+        bpl     L069E                   ; Loop for 128 bytes
+        rts
 
 ; ============================================================================
 ; [CODE] IRQ_FRAME_UPDATE ($06AB) - Raster IRQ handler
@@ -1296,29 +1405,89 @@ L_0703:
         lda     ZP_1E               ; a5 1e
         sta     VIC_BG2             ; 8d 23 d0
 
-; Continue with remaining bytes...
-        .byte   $A2,$2E,$A0,$07,$A5,$20,$D0,$02  ; $070D
-        .byte   $A9,$32,$8D,$12,$D0,$8E,$FE,$FF  ; $0715
-        .byte   $8C,$FF,$FF,$CE,$19,$D0,$A5,$2E  ; $071D
-        .byte   $85,$01,$A4,$17,$A6,$16,$A5,$15  ; $0725
-        .byte   $40,$20,$B3,$7B,$A5,$20,$F0,$26  ; $072D
-        .byte   $A5,$1D,$8D,$22,$D0,$A5,$1F,$8D  ; $0735
-        .byte   $23,$D0,$A9,$07,$AA,$25,$08,$D0  ; $073D
-        .byte   $46,$BD,$F8,$53,$C9,$D5,$B0,$04  ; $0745
-        .byte   $69,$04,$D0,$02,$E9,$04,$9D,$F8  ; $074D
-        .byte   $53,$CA,$10,$ED,$30,$31,$A9,$52  ; $0755
-        .byte   $A6,$2F,$E0,$48,$D0,$02,$A9,$40  ; $075D
-        .byte   $8D,$18,$D0                      ; $0765
+; --- Setup raster split and return from IRQ ($070D) ---
+        ldx     #$2E                    ; IRQ vector low = $072E
+        ldy     #$07                    ; IRQ vector high = $07
+        lda     ZP_20                   ; Get split-screen flag
+        bne     L0717                   ; If split, use default
+        lda     #$32                    ; Raster line 50
+L0717:
+        sta     VIC_RASTER              ; Set raster compare
+        stx     $FFFE                   ; Set IRQ vector low
+        sty     $FFFF                   ; Set IRQ vector high
+L0720:
+        dec     VIC_IRQ                 ; Acknowledge VIC interrupt
+        lda     ZP_2E                   ; Get saved CPU port
+        sta     R6510                   ; Restore CPU port
+        ldy     ZP_17                   ; Restore Y
+        ldx     ZP_16                   ; Restore X
+        lda     ZP_15                   ; Restore A
+        rti                             ; Return from interrupt
+
+; --- Split-screen IRQ handler ($072E) ---
+L072E:
+        jsr     D_7BB3                  ; Bank in game RAM
+        lda     ZP_20                   ; Get split-screen flag
+        beq     L075B                   ; If not split, skip
+        lda     ZP_1D                   ; Get background color 1 temp
+        sta     VIC_BG1                 ; Set background 1
+        lda     ZP_1F                   ; Get background color 2 temp
+        sta     VIC_BG2                 ; Set background 2
+        lda     #$07                    ; Check frame counter
+        tax                             ; X = 7
+        and     ENDCHR                  ; AND with frame counter
+        bne     L_078C                  ; If non-zero, skip animation
+L0746:
+        lda     $53F8,x                 ; Get sprite pointer
+        cmp     #$D5                    ; Compare to threshold
+        bcs     L0751                   ; If >= $D5, subtract
+        adc     #$04                    ; Add 4
+        bne     L0753                   ; Store (always branches)
+L0751:
+        sbc     #$04                    ; Subtract 4
+L0753:
+        sta     $53F8,x                 ; Store sprite pointer
+        dex                             ; Next sprite
+        bpl     L0746                   ; Loop for all 8
+        bmi     L_078C                  ; Always branch to exit
+
+L075B:
+        lda     #$52                    ; Default memory pointer
+        ldx     ARYTAB                  ; Get screen pointer ($2F)
+        cpx     #$48                    ; Compare to $48
+        bne     L0765                   ; If not equal, use default
+        lda     #$40                    ; Alternate memory pointer
+L0765:
+        sta     VIC_MEMPTR              ; Set VIC memory pointer
+
+; --- Self-modifying jump 1 ($0768) ---
+; Modified to JMP or BIT to skip/execute code
 D_0768:
-        .byte   $4C,$7C,$07,$A9,$95  ; $0768
-        .byte   $8D,$FE,$FF,$A9,$07,$8D,$FF,$FF  ; $076D
-        .byte   $A5,$BD,$69,$1E,$8D,$12,$D0      ; $0775 (7 bytes)
+        jmp     D_077C                  ; Jump to next section (or skip)
+
+        lda     #$95                    ; IRQ vector low
+        sta     $FFFE                   ; Set IRQ vector
+        lda     #$07                    ; IRQ vector high
+        sta     $FFFF                   ; Set IRQ vector
+        lda     ROESSION                ; Get super bonus Y ($BD)
+        adc     #$1E                    ; Add 30
+        sta     VIC_RASTER              ; Set raster line
+
+; --- Self-modifying jump 2 ($077C) ---
+; Modified to JMP or BIT to skip/execute code
 D_077C:
-        .byte   $4C                              ; $077C
-        .byte   $86,$07,$CE,$19,$D0,$58,$20,$BD  ; $077D
-        .byte   $1C                              ; $0785
+        jmp     D_0786                  ; Jump to next section (or skip)
+
+        dec     VIC_IRQ                 ; Acknowledge interrupt
+        cli                             ; Enable interrupts
+        jsr     D_1CBD                  ; Call game update
+
+; --- Self-modifying jump 3 ($0786) ---
+; Modified to JMP or BIT to skip/execute code
 D_0786:
-        .byte   $4C,$8C,$07,$4C,$20,$07          ; $0786
+        jmp     L_078C                  ; Jump to sprites-init (or skip)
+
+        jmp     L0720                   ; Unreachable - Return from IRQ (for reference)
 
 ; ============================================================================
 ; Include the rest of the game

@@ -166,63 +166,293 @@ next_bubble:
 ; ============================================================================
 ; ENEMY_TIMER_HANDLER ($13BE - $1577)
 ; ============================================================================
-; Handles enemy timers, state transitions, and special behaviors.
-; This is a complex section with many subsystems. Keeping as .byte for now.
+; Handles enemy timers, state transitions, bubble capture release, and
+; player collision detection.
 ; ============================================================================
 
-        .byte   $A2,$11,$DE,$FA,$A9,$D0,$4E,$B5                 ; $13BE
-        .byte   $CA,$C9,$04,$D0,$07,$9D,$42,$AA                 ; $13C6
-        .byte   $A9,$3A,$D0,$34,$C9,$24,$B0,$35                 ; $13CE
-        .byte   $C9,$18,$90,$69,$E9,$18,$4A,$A8                 ; $13D6
-        .byte   $AD,$BF,$5A,$99,$B4,$00,$B9,$C4                 ; $13DE
-        .byte   $00,$09,$01,$99,$C4,$00,$B9,$BC                 ; $13E6
-        .byte   $00,$29,$FE,$99,$BC,$00,$A9,$FF                 ; $13EE
-        .byte   $99,$2A,$87,$BD,$30,$AA,$99,$A2                 ; $13F6
-        .byte   $87,$A9,$00,$99,$22,$85,$A9,$38                 ; $13FE
-        .byte   $95,$CA,$4C,$43,$14,$C9,$42,$D0                 ; $1406
-        .byte   $34,$A9,$FF,$30,$F3,$BD,$FA,$A9                 ; $140E
-        .byte   $C9,$11,$B0,$29,$29,$01,$D0,$25                 ; $1416
-        .byte   $B5,$CA,$C9,$04,$F0,$04,$C9,$48                 ; $141E
-        .byte   $D0,$06,$49,$4C,$95,$CA,$D0,$15                 ; $1426
-        .byte   $C9,$24,$B0,$11,$C9,$18,$90,$0D                 ; $142E
-        .byte   $E9,$18,$4A,$A8,$B9,$55,$AB,$4D                 ; $1436
-        .byte   $15,$D0,$8D,$15,$D0,$CA,$30,$03                 ; $143E
-        .byte   $4C,$C0,$13,$A2,$11,$A0,$00,$B5                 ; $1446
-        .byte   $CA,$C9,$34,$90,$01,$C8,$CA,$10                 ; $144E
-        .byte   $F6,$98,$C0,$02,$B0,$12,$20,$5F                 ; $1456
-        .byte   $14,$A2,$11,$B5,$CA,$C9,$04,$D0                 ; $145E
-        .byte   $08,$9D,$42,$AA,$A9,$3A,$95,$CA                 ; $1466
-        .byte   $60,$CA,$10,$EF,$60,$B5,$B2,$C9                 ; $146E
-        .byte   $0E,$D0,$1D,$A9,$3A,$95,$CA,$9D                 ; $1476
-        .byte   $42,$AA,$8A,$49,$01,$A8,$B9,$CA                 ; $147E
-        .byte   $00,$C9,$2E,$F0,$08,$C9,$30,$F0                 ; $1486
-        .byte   $04,$A9,$32,$85,$2B,$4C,$4A,$0D                 ; $148E
-        .byte   $CE,$45,$15,$EE,$49,$15,$20,$2B                 ; $1496
-        .byte   $15,$EE,$45,$15,$CE,$49,$15,$B0                 ; $149E
-        .byte   $D2,$BD,$42,$AA,$29,$7F,$D0,$1D                 ; $14A6
-        .byte   $FE,$30,$AA,$BD,$30,$AA,$29,$0F                 ; $14AE
-        .byte   $D0,$03,$DE,$30,$AA,$BD,$30,$AA                 ; $14B6
-        .byte   $49,$80,$9D,$30,$AA,$9D,$42,$AA                 ; $14BE
-        .byte   $A9,$1E,$9D,$75,$A7,$BD,$75,$A7                 ; $14C6
-        .byte   $F0,$06,$DE,$75,$A7,$4C,$4A,$0D                 ; $14CE
-        .byte   $B5,$BA,$38,$E9,$14,$4A,$4A,$4A                 ; $14D6
-        .byte   $85,$40,$A0,$00,$D5,$DC,$B0,$02                 ; $14DE
-        .byte   $A0,$02,$98,$9D,$65,$E7,$B5,$C2                 ; $14E6
-        .byte   $38,$E9,$15,$4A,$4A,$4A,$85,$41                 ; $14EE
-        .byte   $DE,$42,$AA,$10,$14,$A9,$01,$B4                 ; $14F6
-        .byte   $DC,$C4,$40,$90,$05,$F0,$1E,$A9                 ; $14FE
-        .byte   $FF,$18,$75,$DC,$95,$DC,$4C,$4A                 ; $1506
-        .byte   $0D,$A9,$01,$B4,$EE,$C4,$41,$90                 ; $150E
-        .byte   $05,$F0,$0A,$A9,$FF,$18,$75,$EE                 ; $1516
-        .byte   $95,$EE,$4C,$4A,$0D,$A9,$00,$9D                 ; $151E
-        .byte   $42,$AA,$4C,$4A,$0D,$B5,$DC,$0A                 ; $1526
-        .byte   $0A,$0A,$69,$18,$85,$40,$B5,$EE                 ; $152E
-        .byte   $0A,$0A,$0A,$69,$15,$85,$41,$A0                 ; $1536
-        .byte   $01,$B9,$B2,$00,$F0,$2F,$C9,$19                 ; $153E
-        .byte   $F0,$04,$C9,$0D,$B0,$27,$B9,$BA                 ; $1546
-        .byte   $00,$38,$E5,$40,$B0,$04,$49,$FF                 ; $154E
-        .byte   $69,$01,$C9,$10,$B0,$17,$B9,$C2                 ; $1556
-        .byte   $00,$38,$E5,$41,$B0,$04,$49,$FF                 ; $155E
-        .byte   $69,$01,$C9,$10,$B0,$07,$A9,$0E                 ; $1566
-        .byte   $99,$B2,$00,$38,$60,$88,$10,$C9                 ; $156E
-        .byte   $18,$60                                         ; $1576
+; External reference: L0D4A ($0D4A) defined in enemy-ai.s
+
+enemy_timer_handler:                                    ; $13BE
+        ldx     #$11                    ; Process all 18 entities
+L13C0:                                                  ; $13C0
+        dec     $A9FA,x                 ; Decrement timer
+        bne     L1413                   ; Skip if not expired
+        lda     $CA,x                   ; Get entity type
+        cmp     #$04
+        bne     L13D2
+        sta     $AA42,x                 ; Store original type
+        lda     #$3A                    ; Set to released state
+        bne     L1406
+
+L13D2:                                                  ; $13D2
+        cmp     #$24
+        bcs     L140B                   ; Skip if special type
+        cmp     #$18
+        bcc     L1443                   ; Skip if < $18
+        ; Release captured enemy from bubble
+        sbc     #$18
+        lsr     a
+        tay                             ; Y = bubble slot
+        lda     $5ABF                   ; Get bubble state
+        sta     $B4,y
+        lda     $C4,y
+        ora     #$01
+        sta     $C4,y
+        lda     $BC,y
+        and     #$FE
+        sta     $BC,y
+        lda     #$FF
+        sta     $872A,y
+        lda     $AA30,x
+        sta     $87A2,y
+        lda     #$00
+        sta     $8522,y
+        lda     #$38
+L1406:                                                  ; $1406
+        sta     $CA,x
+        jmp     L1443
+
+L140B:                                                  ; $140B
+        cmp     #$42
+        bne     L1443
+        lda     #$FF
+        bmi     L1406
+
+L1413:                                                  ; $1413
+        lda     $A9FA,x
+        cmp     #$11
+        bcs     L1443
+        and     #$01
+        bne     L1443
+        lda     $CA,x
+        cmp     #$04
+        beq     L1428
+        cmp     #$48
+        bne     L142E
+L1428:                                                  ; $1428
+        eor     #$4C                    ; Toggle between states
+        sta     $CA,x
+        bne     L1443
+
+L142E:                                                  ; $142E
+        cmp     #$24
+        bcs     L1443
+        cmp     #$18
+        bcc     L1443
+        sbc     #$18
+        lsr     a
+        tay
+        lda     $AB55,y                 ; Sprite enable mask
+        eor     $D015                   ; Toggle sprite
+        sta     $D015
+
+L1443:                                                  ; $1443
+        dex
+        bmi     L1449
+        jmp     L13C0
+
+L1449:                                                  ; $1449
+        ldx     #$11
+        ldy     #$00
+L144D:                                                  ; $144D
+        lda     $CA,x
+        cmp     #$34
+        bcc     L1454
+        iny                             ; Count captured enemies
+L1454:                                                  ; $1454
+        dex
+        bpl     L144D
+        tya
+        cpy     #$02
+        bcs     L146E                   ; Return if 2+ captured
+        jsr     L145F                   ; Call twice if < 2
+
+L145F:                                                  ; $145F
+        ldx     #$11
+L1461:                                                  ; $1461
+        lda     $CA,x
+        cmp     #$04
+        bne     L146F
+        sta     $AA42,x
+        lda     #$3A
+        sta     $CA,x
+L146E:                                                  ; $146E
+        rts
+
+L146F:                                                  ; $146F
+        dex
+        bpl     L1461
+        rts
+
+; -----------------------------------------------------------------------------
+; Player death handler ($1473)
+; -----------------------------------------------------------------------------
+player_death_handler:                                   ; $1473
+        lda     $B2,x
+        cmp     #$0E                    ; Dying state?
+        bne     L1496
+L1479:                                                  ; $1479
+        lda     #$3A
+        sta     $CA,x
+        sta     $AA42,x
+        txa
+        eor     #$01
+        tay                             ; Other player
+        lda     $CA,y
+        cmp     #$2E
+        beq     L1493
+        cmp     #$30
+        beq     L1493
+        lda     #$32
+        sta     $2B
+L1493:                                                  ; $1493
+        jmp     L0D4A
+
+; -----------------------------------------------------------------------------
+; Enemy movement/collision ($1496)
+; Contains self-modifying code at L1545/L1549
+; -----------------------------------------------------------------------------
+L1496:                                                  ; $1496
+        dec     L1545
+        inc     L1549
+        jsr     L152B
+        inc     L1545
+        dec     L1549
+        bcs     L1479
+        lda     $AA42,x
+        and     #$7F
+        bne     L14CB
+        inc     $AA30,x
+        lda     $AA30,x
+        and     #$0F
+        bne     L14BB
+        dec     $AA30,x
+L14BB:                                                  ; $14BB
+        lda     $AA30,x
+        eor     #$80
+        sta     $AA30,x
+        sta     $AA42,x
+        lda     #$1E
+        sta     $A775,x
+L14CB:                                                  ; $14CB
+        lda     $A775,x
+        beq     L14D6
+        dec     $A775,x
+        jmp     L0D4A
+
+L14D6:                                                  ; $14D6
+        lda     $BA,x
+        sec
+        sbc     #$14
+        lsr     a
+        lsr     a
+        lsr     a
+        sta     $40
+        ldy     #$00
+        cmp     $DC,x
+        bcs     L14E8
+        ldy     #$02
+L14E8:                                                  ; $14E8
+        tya
+        sta     $E765,x
+        lda     $C2,x
+        sec
+        sbc     #$15
+        lsr     a
+        lsr     a
+        lsr     a
+        sta     $41
+        dec     $AA42,x
+        bpl     L150F
+        ; Move horizontally
+        lda     #$01
+        ldy     $DC,x
+        cpy     $40
+        bcc     L1508
+        beq     L1523
+        lda     #$FF
+        clc
+L1508:                                                  ; $1508
+        adc     $DC,x
+        sta     $DC,x
+        jmp     L0D4A
+
+L150F:                                                  ; $150F
+        ; Move vertically
+        lda     #$01
+        ldy     $EE,x
+        cpy     $41
+        bcc     L151C
+        beq     L1523
+        lda     #$FF
+        clc
+L151C:                                                  ; $151C
+        adc     $EE,x
+        sta     $EE,x
+        jmp     L0D4A
+
+L1523:                                                  ; $1523
+        lda     #$00
+        sta     $AA42,x
+        jmp     L0D4A
+
+; -----------------------------------------------------------------------------
+; Collision check routine ($152B)
+; Self-modifying: L1545/L1549 modified by caller
+; -----------------------------------------------------------------------------
+L152B:                                                  ; $152B
+        lda     $DC,x
+        asl     a
+        asl     a
+        asl     a
+        adc     #$18
+        sta     $40
+        lda     $EE,x
+        asl     a
+        asl     a
+        asl     a
+        adc     #$15
+        sta     $41
+        ldy     #$01
+L153F:                                                  ; $153F
+        lda     $B2,y
+        beq     L1573
+L1544:                                                  ; $1544 - CMP instruction
+        cmp     #$19                    ; Operand at $1545 is self-modified
+        beq     L154C
+L1548:                                                  ; $1548 - CMP instruction  
+        cmp     #$0D                    ; Operand at $1549 is self-modified
+        bcs     L1573
+L154C:                                                  ; $154C
+
+; Equates for self-modifying code (point to operand bytes)
+L1545 = L1544 + 1                                       ; Operand of first CMP
+L1549 = L1548 + 1                                       ; Operand of second CMP
+        lda     $BA,y
+        sec
+        sbc     $40
+        bcs     L1558
+        eor     #$FF
+        adc     #$01
+L1558:                                                  ; $1558
+        cmp     #$10
+        bcs     L1573
+        lda     $C2,y
+        sec
+        sbc     $41
+        bcs     L1568
+        eor     #$FF
+        adc     #$01
+L1568:                                                  ; $1568
+        cmp     #$10
+        bcs     L1573
+        lda     #$0E                    ; Set dying state
+        sta     $B2,y
+        sec
+        rts
+
+L1573:                                                  ; $1573
+        dey
+        bpl     L153F
+        clc
+        rts

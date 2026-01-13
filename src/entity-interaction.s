@@ -1,216 +1,877 @@
 ; ============================================================================
 ; ENTITY INTERACTION AND PLAYER STATE HANDLERS ($2162 - $26BE)
 ; ============================================================================
-; This section handles entity collision, player states, and movement.
-; Currently using raw bytes for accuracy. Convert incrementally.
+; This section handles bubble capture, bubble physics, player movement in
+; bubbles, and entity state transitions.
 ;
-; Entry points:
-;   D_2162 ($2162)
-;   D_220C ($220C)
-;   D_222B ($222B)
-;   D_226B ($226B)
-;   D_22C3 ($22C3)
-;   D_22E8 ($22E8)
-;   D_2300 ($2300)
-;   D_2301 ($2301)
-;   D_23DE ($23DE)
-;   D_23EA ($23EA)
-;   D_2483 ($2483)
-;   D_2519 ($2519)
-;   D_257C ($257C)
-;   L_25E2 ($25E2)
-;   D_25F1 ($25F1)
+; Key routines:
+;   D_2162 - Main bubble/entity interaction check
+;   D_220C - Player input dispatch (movement bits)
+;   D_222B - Initialize bubble capture state
+;   D_226B - Move left in bubble
+;   D_22C3 - Move right in bubble
+;   D_22E8 - Bubble release timer/animation
+;   D_2301 - Continue bubble animation update
+;   D_23EA - Bubble ascent (captured enemy rising)
+;   D_2483 - Horizontal bubble movement
+;   D_2519 - Bubble reached top - check for pop
+;   D_257C - Bubble vertical movement (ascending)
+;   D_25F1 - Animation frame update
+;   L_25E2 - Animation counter increment
+;
+; Zero-page variables used:
+;   $02 - Temp: entity flags
+;   $04 - Movement delta
+;   $10 - Current level number
+;   $11 - Level data pointer (low)
+;   $23 - Two-player mode flag
+;   $24 - Player index (0 or 1)
+;   $25 - Level type/variant
+;   $B1 - Bubble count
+;   $BA,x - Entity X position
+;   $C2,x - Entity Y position
+;   $CA,y - Entity type array
+;   $DC,y - Entity screen column
+;   $EE,y - Entity screen row
+;
+; Entity arrays:
+;   $8520,x - Animation frame
+;   $8610,x - Animation timer
+;   $8818,x - Bubble timer
+;   $8840,x - Horizontal movement direction (left)
+;   $8868,x - Horizontal movement direction (right)
+;   $87A0,x - Bubble capture state
+;   $87C8,x - Bubble vertical state
+;   $87F0,x - Bubble ascent state
+;   $AA0C,y - Captured entity X position
+;   $AA1E,y - Captured entity Y position
+;   $ACCB,x - Saved animation frame
+;   $ACCD,y - Vertical movement table
 ; ============================================================================
 
+; --- Main bubble/entity interaction check ---
+; Called to check if an entity should capture an enemy in a bubble
+; Input: X = entity index
 D_2162:
-        .byte   $BC,$18,$88,$30,$03,$20,$01,$23                 ; $2162
-        .byte   $BD,$A0,$87,$30,$02,$D0,$4C,$BD                 ; $216A
-        .byte   $E8,$85,$85,$02,$29,$01,$D0,$43                 ; $2172
-        .byte   $A0,$11,$B9,$CA,$00,$F0,$39,$C9                 ; $217A
-        .byte   $24,$B0,$35,$C9,$16,$F0,$31,$B9                 ; $2182
-        .byte   $0C,$AA,$38,$F5,$BA,$B0,$04,$49                 ; $218A
-        .byte   $FF,$69,$01,$C9,$0E,$B0,$21,$B9                 ; $2192
-        .byte   $1E,$AA,$38,$F5,$C2,$C9,$14,$B0                 ; $219A
-        .byte   $17,$20,$21,$7C,$A9,$FF,$9D,$A0                 ; $21A2
-        .byte   $87,$9D,$C8,$87,$9D,$F0,$87,$B5                 ; $21AA
-        .byte   $C2,$09,$01,$95,$C2,$4C,$2B,$22                 ; $21B2
-        .byte   $88,$10,$BF,$BD,$A0,$87,$30,$03                 ; $21BA
-        .byte   $4C,$EA,$23,$BD,$F0,$87,$30,$03                 ; $21C2
-        .byte   $4C,$7C,$25,$A5,$24,$D0,$1A,$A0                 ; $21CA
-        .byte   $51,$B1,$11,$30,$14,$C8,$B1,$11                 ; $21D2
-        .byte   $30,$0F,$A5,$23,$F0,$05,$C8,$B1                 ; $21DA
-        .byte   $11,$30,$06,$FE,$F0,$87,$4C,$7C                 ; $21E2
-        .byte   $25,$A5,$02,$29,$1F,$C9,$1F,$D0                 ; $21EA
-        .byte   $19,$BD,$18,$88,$10,$14,$FE,$10                 ; $21F2
-        .byte   $86,$BD,$10,$86,$C9,$07,$D0,$28                 ; $21FA
-        .byte   $20,$59,$21,$A9,$00,$9D,$10,$86                 ; $2202
-        .byte   $F0,$1E                                         ; $220A
+        ldy     $8818,x                 ; Get bubble timer
+        bmi     L216A                   ; If negative, check for capture
+        jsr     D_2301                  ; Continue bubble animation
+L216A:
+        lda     $87A0,x                 ; Get bubble capture state
+        bmi     L2171                   ; If captured, check state
+        bne     L21BD                   ; If non-zero, skip
+L2171:
+        lda     $85E8,x                 ; Get entity flags
+        sta     ZP_02                   ; Save to temp
+        and     #$01                    ; Check bit 0
+        bne     L21BD                   ; If set, no interaction
+        ldy     #$11                    ; Check all 18 entities
+L217C:
+        lda     PESSION,y               ; Get entity type
+        beq     L21BA                   ; If empty, skip
+        cmp     #$24                    ; Compare to type $24
+        bcs     L21BA                   ; If >= $24, skip
+        cmp     #$16                    ; Compare to bubble type
+        beq     L21BA                   ; If bubble, skip
+        lda     $AA0C,y                 ; Get entity X position
+        sec
+        sbc     FA,x                    ; Subtract our X
+        bcs     L2195                   ; If positive, skip negate
+        eor     #$FF                    ; Negate (absolute value)
+        adc     #$01
+L2195:
+        cmp     #$0E                    ; Check X distance
+        bcs     L21BA                   ; If too far, skip
+        lda     $AA1E,y                 ; Get entity Y position
+        sec
+        sbc     ZP_C2,x                 ; Subtract our Y
+        cmp     #$14                    ; Check Y distance
+        bcs     L21BA                   ; If too far, skip
+        jsr     D_7C21                  ; Call collision handler
+        lda     #$FF                    ; Mark as captured
+        sta     $87A0,x                 ; Set capture state
+        sta     $87C8,x                 ; Set vertical state
+        sta     $87F0,x                 ; Set ascent state
+        lda     ZP_C2,x                 ; Get Y position
+        ora     #$01                    ; Set low bit
+        sta     ZP_C2,x                 ; Store back
+        jmp     D_222B                  ; Initialize capture
+
+L21BA:
+        dey                             ; Next entity
+        bpl     L217C                   ; Loop if more
+L21BD:
+        lda     $87A0,x                 ; Get capture state
+        bmi     L21C5                   ; If captured, handle it
+        jmp     D_23EA                  ; Otherwise, handle ascent
+
+L21C5:
+        lda     $87F0,x                 ; Get ascent state
+        bmi     L21CD                   ; If ascending, handle it
+        jmp     D_257C                  ; Otherwise, vertical movement
+
+L21CD:
+        lda     INDEX2                  ; Get terrain index
+        bne     L21EB                   ; If non-zero, skip platform check
+        ldy     #$51                    ; Check platform at offset $51
+        lda     (INPFLG),y              ; Read platform data
+        bmi     L21EB                   ; If negative, blocked
+        iny
+        lda     (INPFLG),y              ; Check next byte
+        bmi     L21EB                   ; If negative, blocked
+        lda     ZP_23                   ; Get two-player flag
+        beq     L21E5                   ; If single player, allow
+        iny
+        lda     (INPFLG),y              ; Check player 2 platform
+        bmi     L21EB                   ; If negative, blocked
+L21E5:
+        inc     $87F0,x                 ; Increment ascent state
+        jmp     D_257C                  ; Continue vertical movement
+
+L21EB:
+        lda     ZP_02                   ; Get saved flags
+        and     #$1F                    ; Mask lower 5 bits
+        cmp     #$1F                    ; Check if all set
+        bne     D_220C                  ; If not, dispatch input
+        lda     $8818,x                 ; Get bubble timer
+        bpl     D_220C                  ; If positive, dispatch
+        inc     $8610,x                 ; Increment animation timer
+        lda     $8610,x                 ; Get timer value
+        cmp     #$07                    ; Compare to 7
+        bne     L222A                   ; If not 7, done
+        jsr     D_2159                  ; Call animation handler
+        lda     #$00                    ; Reset timer
+        sta     $8610,x
+        beq     L222A                   ; Always branch (done)
+
+; --- Player input dispatch ---
+; Dispatches to movement handlers based on input bits
+; Input: X = entity index, $02 = input flags
 D_220C:
-        .byte   $46,$02,$B0,$03,$4C,$2B,$22,$46                 ; $220C
-        .byte   $02,$46,$02,$B0,$03,$20,$6B,$22                 ; $2214
-        .byte   $46,$02,$B0,$03,$20,$C3,$22,$46                 ; $221C
-        .byte   $02,$B0,$03,$4C,$E8,$22,$60                     ; $2224
+        lsr     ZP_02                   ; Shift bit 0 into carry
+        bcs     L2213                   ; If set, skip capture init
+        jmp     D_222B                  ; Initialize capture
+
+L2213:
+        lsr     ZP_02                   ; Shift next bit
+        lsr     ZP_02                   ; And again
+        bcs     L221C                   ; If set, skip left movement
+        jsr     D_226B                  ; Move left in bubble
+L221C:
+        lsr     ZP_02                   ; Shift next bit
+        bcs     L2223                   ; If set, skip right movement
+        jsr     D_22C3                  ; Move right in bubble
+L2223:
+        lsr     ZP_02                   ; Shift next bit
+        bcs     L222A                   ; If set, skip release
+        jmp     D_22E8                  ; Handle bubble release
+
+L222A:
+        rts
+
+; --- Initialize bubble capture state ---
+; Sets up entity state when capturing an enemy in a bubble
+; Input: X = entity index
 D_222B:
-        .byte   $A9,$0F,$9D,$A0,$87,$A0,$00,$BD                 ; $222B
-        .byte   $E8,$85,$29,$04,$D0,$0B,$A5,$25                 ; $2233
-        .byte   $C9,$04,$90,$05,$C9,$08,$B0,$01                 ; $223B
-        .byte   $88,$98,$9D,$40,$88,$A0,$00,$BD                 ; $2243
-        .byte   $E8,$85,$29,$08,$D0,$07,$A5,$25                 ; $224B
-        .byte   $C9,$04,$B0,$01,$88,$98,$9D,$68                 ; $2253
-        .byte   $88,$BD,$20,$85,$C9,$08,$B0,$05                 ; $225B
-        .byte   $09,$02,$9D,$20,$85,$E6,$B1,$60                 ; $2263
+        lda     #$0F                    ; Initial capture state
+        sta     $87A0,x                 ; Set capture state
+        ldy     #$00                    ; Default Y direction = 0
+        lda     $85E8,x                 ; Get entity flags
+        and     #$04                    ; Check direction bit
+        bne     L2244                   ; If set, check right
+        lda     ZP_25                   ; Get level variant
+        cmp     #$04                    ; Check range
+        bcc     L2244                   ; If < 4, check right
+        cmp     #$08                    ; Check upper range
+        bcs     L2244                   ; If >= 8, check right
+        dey                             ; Y = $FF (move left)
+L2244:
+        tya                             ; Transfer Y to A
+        sta     $8840,x                 ; Store left movement flag
+        ldy     #$00                    ; Default right direction = 0
+        lda     $85E8,x                 ; Get entity flags
+        and     #$08                    ; Check direction bit
+        bne     L2258                   ; If set, store
+        lda     ZP_25                   ; Get level variant
+        cmp     #$04                    ; Check range
+        bcs     L2258                   ; If >= 4, store
+        dey                             ; Y = $FF (move right)
+L2258:
+        tya                             ; Transfer Y to A
+        sta     $8868,x                 ; Store right movement flag
+        lda     $8520,x                 ; Get animation frame
+        cmp     #$08                    ; Compare to 8
+        bcs     L2268                   ; If >= 8, don't change
+        ora     #$02                    ; Set bit 1
+        sta     $8520,x                 ; Store new frame
+L2268:
+        inc     ZP_B1                   ; Increment bubble count
+        rts
+
+; --- Move left in bubble ---
+; Handles leftward movement when player presses left in bubble
+; Input: X = entity index
 D_226B:
-        .byte   $A9,$FE,$85,$04,$A0,$28,$A5,$24                 ; $226B
-        .byte   $F0,$02,$A0,$50,$A5,$25,$C9,$04                 ; $2273
-        .byte   $F0,$17,$C9,$05,$F0,$13,$C9,$0A                 ; $227B
-        .byte   $F0,$21,$C9,$0B,$F0,$1D,$BD,$18                 ; $2283
-        .byte   $88,$10,$34,$A9,$04,$9D,$20,$85                 ; $228B
-        .byte   $60,$FE,$10,$86,$BD,$10,$86,$C9                 ; $2293
-        .byte   $04,$90,$08,$A9,$00,$9D,$10,$86                 ; $229B
-        .byte   $20,$59,$21,$B5,$C2,$C9,$2D,$90                 ; $22A3
-        .byte   $08,$A5,$23,$D0,$04,$B1,$11,$30                 ; $22AB
-        .byte   $0E,$B5,$63,$F0,$03,$20,$21,$7C                 ; $22B3
-        .byte   $B5,$BA,$18,$65,$04,$95,$BA,$60                 ; $22BB
+        lda     #$FE                    ; Movement delta = -2
+        sta     ZP_04                   ; Store delta
+        ldy     #$28                    ; Platform check offset (P1)
+        lda     INDEX2                  ; Get terrain index
+        beq     L2277                   ; If zero, check level
+        ldy     #$50                    ; Platform check offset (P2)
+L2277:
+        lda     ZP_25                   ; Get level variant
+        cmp     #$04                    ; Check type 4
+        beq     L2294                   ; If type 4, handle timer
+        cmp     #$05                    ; Check type 5
+        beq     L2294                   ; If type 5, handle timer
+        cmp     #$0A                    ; Check type 10
+        beq     L22A6                   ; If type 10, check platform
+        cmp     #$0B                    ; Check type 11
+        beq     L22A6                   ; If type 11, check platform
+        lda     $8818,x                 ; Get bubble timer
+        bpl     L22C2                   ; If positive, done
+        lda     #$04                    ; Set animation frame 4
+        sta     $8520,x
+        rts
+
+L2294:
+        inc     $8610,x                 ; Increment animation timer
+        lda     $8610,x                 ; Get timer
+        cmp     #$04                    ; Compare to 4
+        bcc     L22A6                   ; If < 4, check platform
+        lda     #$00                    ; Reset timer
+        sta     $8610,x
+        jsr     D_2159                  ; Call animation handler
+L22A6:
+        lda     ZP_C2,x                 ; Get Y position
+        cmp     #$2D                    ; Compare to $2D
+        bcc     L22B4                   ; If below, apply movement
+        lda     ZP_23                   ; Get two-player flag
+        bne     L22B4                   ; If two-player, apply
+        lda     (INPFLG),y              ; Check platform
+        bmi     L22C2                   ; If blocked, done
+L22B4:
+        lda     $63,x                   ; Get entity state
+        beq     L22BB                   ; If zero, do move
+        jsr     D_7C21                  ; Call collision handler
+L22BB:
+        lda     FA,x                    ; Get X position
+        clc
+        adc     ZP_04                   ; Add delta
+        sta     FA,x                    ; Store new X
+L22C2:
+        rts
+
+; --- Move right in bubble ---
+; Handles rightward movement when player presses right in bubble
+; Input: X = entity index
 D_22C3:
-        .byte   $A9,$02,$85,$04,$A0,$2B,$A5,$24                 ; $22C3
-        .byte   $F0,$02,$A0,$53,$A5,$25,$C9,$02                 ; $22CB
-        .byte   $90,$BF,$C9,$08,$F0,$CD,$C9,$09                 ; $22D3
-        .byte   $F0,$C9,$BD,$18,$88,$10,$E0,$A9                 ; $22DB
-        .byte   $00,$9D,$20,$85,$60                             ; $22E3
+        lda     #$02                    ; Movement delta = +2
+        sta     ZP_04                   ; Store delta
+        ldy     #$2B                    ; Platform check offset (P1)
+        lda     INDEX2                  ; Get terrain index
+        beq     L22CF                   ; If zero, check level
+        ldy     #$53                    ; Platform check offset (P2)
+L22CF:
+        lda     ZP_25                   ; Get level variant
+        cmp     #$02                    ; Check type 2
+        bcc     L2294                   ; If < 2, handle timer (share code)
+        cmp     #$08                    ; Check type 8
+        beq     L22A6                   ; If type 8, check platform
+        cmp     #$09                    ; Check type 9
+        beq     L22A6                   ; If type 9, check platform
+        lda     $8818,x                 ; Get bubble timer
+        bpl     L22C2                   ; If positive, done
+        lda     #$00                    ; Set animation frame 0
+        sta     $8520,x
+        rts
+
+; --- Bubble release timer/animation ---
+; Handles the bubble release countdown and animation
+; Input: X = entity index
 D_22E8:
-        .byte   $BD,$24,$A8,$D0,$20,$BD,$18,$88                 ; $22E8
-        .byte   $10,$1B,$A9,$06,$9D,$18,$88,$BD                 ; $22F0
-        .byte   $20,$85,$29,$04,$4A,$9D,$CB,$AC                 ; $22F8
+        lda     $A824,x                 ; Get release counter
+        bne     L230D                   ; If non-zero, done
+        lda     $8818,x                 ; Get bubble timer
+        bpl     L230D                   ; If positive, done
+        lda     #$06                    ; Set timer to 6
+        sta     $8818,x                 ; Store timer
+        lda     $8520,x                 ; Get animation frame
+        and     #$04                    ; Mask direction bit
+        lsr     a                       ; Shift right
+        sta     $ACCB,x                 ; Save animation state
 D_2300:
-        .byte   $60                                             ; $2300
+        rts
+
+; --- Continue bubble animation update ---
+; Updates bubble animation based on timer state
+; Input: X = entity index, Y = timer value (from caller)
 D_2301:
-        .byte   $D0,$0B,$BD,$CB,$AC,$0A,$9D,$20                 ; $2301
-        .byte   $85,$DE,$18,$88,$60,$BD,$CB,$AC                 ; $2309
-        .byte   $18,$79,$C4,$AC,$9D,$20,$85,$DE                 ; $2311
-        .byte   $18,$88,$C0,$04,$D0,$EE,$A0,$11                 ; $2319
-        .byte   $B9,$CA,$00,$30,$04,$88,$10,$F8                 ; $2321
-        .byte   $60,$B5,$BA,$99,$0C,$AA,$38,$E9                 ; $2329
-        .byte   $14,$48,$29,$06,$4A,$99,$C4,$A9                 ; $2331
-        .byte   $68,$4A,$4A,$4A,$99,$DC,$00,$B5                 ; $2339
-        .byte   $C2,$99,$1E,$AA,$38,$E9,$15,$90                 ; $2341
-        .byte   $DF,$48,$29,$06,$99,$D6,$A9,$68                 ; $2349
-        .byte   $4A,$4A,$4A,$99,$EE,$00,$A9,$16                 ; $2351
-        .byte   $99,$CA,$00,$A9,$7D,$99,$FA,$A9                 ; $2359
-        .byte   $99,$E8,$A9,$BD,$7B,$A7,$9D,$24                 ; $2361
-        .byte   $A8,$BD,$81,$A7,$99,$42,$AA,$BD                 ; $2369
-        .byte   $7D,$A7,$99,$B2,$A9,$BD,$7F,$A7                 ; $2371
-        .byte   $99,$30,$AA,$BD,$20,$85,$C9,$09                 ; $2379
-        .byte   $D0,$14,$B9,$DC,$00,$18,$69,$01                 ; $2381
-        .byte   $99,$DC,$00,$B9,$0C,$AA,$69,$08                 ; $2389
-        .byte   $99,$0C,$AA,$A9,$00,$2C,$A9,$80                 ; $2391
-        .byte   $99,$93,$01,$BD,$A0,$87,$30,$17                 ; $2399
-        .byte   $A5,$24,$C9,$04,$90,$11,$B9,$EE                 ; $23A1
-        .byte   $00,$18,$69,$01,$99,$EE,$00,$B9                 ; $23A9
-        .byte   $1E,$AA,$69,$08,$99,$1E,$AA,$BD                 ; $23B1
-        .byte   $83,$A7,$30,$1A,$DE,$83,$A7,$B9                 ; $23B9
-        .byte   $93,$01,$30,$03,$A9,$02,$2C,$A9                 ; $23C1
-        .byte   $00,$99,$C4,$A9,$A9,$00,$99,$B2                 ; $23C9
-        .byte   $A9,$A9,$44,$99,$CA,$00,$B5,$65                 ; $23D1
-        .byte   $F0,$03,$20,$21,$7C                             ; $23D9
+        bne     L230E                   ; If Y != 0, use table
+        lda     $ACCB,x                 ; Get saved animation
+        asl     a                       ; Shift left
+        sta     $8520,x                 ; Store as frame
+        dec     $8818,x                 ; Decrement timer
+L230D:
+        rts
+
+L230E:
+        lda     $ACCB,x                 ; Get saved animation
+        clc
+        adc     $ACC4,y                 ; Add table value
+        sta     $8520,x                 ; Store as frame
+        dec     $8818,x                 ; Decrement timer
+        cpy     #$04                    ; Compare Y to 4
+        bne     L230D                   ; If not 4, done
+        ldy     #$11                    ; Check 18 entities
+L2321:
+        lda     PESSION,y               ; Get entity type
+        bmi     L232A                   ; If negative (free), use it
+        dey                             ; Next slot
+        bpl     L2321                   ; Loop if more
+L2329:
+        rts                             ; No free slot
+
+L232A:
+        lda     FA,x                    ; Get our X position
+        sta     $AA0C,y                 ; Store to captured X
+        sec
+        sbc     #$14                    ; Subtract $14
+        pha                             ; Save
+        and     #$06                    ; Mask to 0-6
+        lsr     a                       ; Divide by 2
+        sta     $A9C4,y                 ; Store sub-position
+        pla                             ; Restore
+        lsr     a                       ; Divide by 8
+        lsr     a
+        lsr     a
+        sta     ZP_DC,y                 ; Store screen column
+        lda     ZP_C2,x                 ; Get our Y position
+        sta     $AA1E,y                 ; Store to captured Y
+        sec
+        sbc     #$15                    ; Subtract $15
+        bcc     L2329                   ; If negative, abort
+        pha                             ; Save
+        and     #$06                    ; Mask to 0-6
+        sta     $A9D6,y                 ; Store sub-position
+        pla                             ; Restore
+        lsr     a                       ; Divide by 8
+        lsr     a
+        lsr     a
+        sta     ZP_EE,y                 ; Store screen row
+        lda     #$16                    ; Bubble entity type
+        sta     PESSION,y               ; Set entity type
+        lda     #$7D                    ; Initial state
+        sta     $A9FA,y                 ; Store state 1
+        sta     $A9E8,y                 ; Store state 2
+        lda     $A77B,x                 ; Get capture data
+        sta     $A824,x                 ; Store release counter
+        lda     $A781,x                 ; Get capture data
+        sta     $AA42,y                 ; Store to captured entity
+        lda     $A77D,x                 ; Get capture data
+        sta     $A9B2,y                 ; Store to captured entity
+        lda     $A77F,x                 ; Get capture data
+        sta     $AA30,y                 ; Store to captured entity
+        lda     $8520,x                 ; Get animation frame
+        cmp     #$09                    ; Check if frame 9
+        bne     L2397                   ; If not, skip adjustment
+        lda     ZP_DC,y                 ; Get screen column
+        clc
+        adc     #$01                    ; Add 1
+        sta     ZP_DC,y                 ; Store back
+        lda     $AA0C,y                 ; Get captured X
+        adc     #$08                    ; Add 8
+        sta     $AA0C,y                 ; Store back
+        lda     #$00                    ; Clear A
+        .byte   $2C                     ; Skip next instruction (BIT abs)
+L2397:
+        lda     #$80                    ; Set high bit
+        sta     $0193,y                 ; Store player state
+        lda     $87A0,x                 ; Get capture state
+        bmi     L23B8                   ; If captured, check P2
+        lda     INDEX2                  ; Get player index
+        cmp     #$04                    ; Compare to 4
+        bcc     L23B8                   ; If < 4, check P2
+        lda     ZP_EE,y                 ; Get screen row
+        clc
+        adc     #$01                    ; Add 1
+        sta     ZP_EE,y                 ; Store back
+        lda     $AA1E,y                 ; Get captured Y
+        adc     #$08                    ; Add 8
+        sta     $AA1E,y                 ; Store back
+L23B8:
+        lda     $A783,x                 ; Get spawn counter
+        bmi     L23D7                   ; If negative, check sound
+        dec     $A783,x                 ; Decrement spawn counter
+        lda     $0193,y                 ; Get player state
+        bmi     L23C8                   ; If negative, set zero
+        lda     #$02                    ; Animation 2
+        .byte   $2C                     ; Skip next instruction (BIT abs)
+L23C8:
+        lda     #$00                    ; Animation 0
+        sta     $A9C4,y                 ; Store sub-position
+        lda     #$00                    ; Clear
+        sta     $A9B2,y                 ; Clear state
+        lda     #$44                    ; Special bubble type
+        sta     PESSION,y               ; Set entity type
+L23D7:
+        lda     $65,x                   ; Get sound flag
+        beq     D_23DE                  ; If zero, skip sound
+        jsr     D_7C21                  ; Call collision handler
+
+; --- Set bubble sprite pointer based on player ---
 D_23DE:
-        .byte   $BD,$C7,$37,$10,$06,$8A,$09,$08                 ; $23DE
-        .byte   $99,$FA,$A9,$60                                 ; $23E6
+        lda     $37C7,x                 ; Get player sprite data
+        bpl     L23E9                   ; If positive, done
+        txa                             ; Transfer X to A
+        ora     #$08                    ; Set bit 3
+        sta     $A9FA,y                 ; Store to state
+L23E9:
+        rts
+
+; --- Bubble ascent handler ---
+; Handles vertical movement of captured enemy rising
+; Input: X = entity index
 D_23EA:
-        .byte   $F0,$15,$DE,$A0,$87,$A8,$B5,$C2                 ; $23EA
-        .byte   $38,$F9,$CD,$AC,$C9,$05,$B0,$02                 ; $23F2
-        .byte   $69,$F0,$95,$C2,$4C,$83,$24,$BD                 ; $23FA
-        .byte   $C8,$87,$10,$1D,$BD,$20,$85,$C9                 ; $2402
-        .byte   $02,$90,$11,$C9,$04,$90,$08,$C9                 ; $240A
-        .byte   $06,$90,$09,$C9,$08,$B0,$05,$29                 ; $2412
-        .byte   $05,$9D,$20,$85,$A9,$00,$9D,$C8                 ; $241A
-        .byte   $87,$C9,$10,$D0,$03,$4C,$19,$25                 ; $2422
-        .byte   $FE,$C8,$87,$A8,$B5,$C2,$18,$79                 ; $242A
-        .byte   $CD,$AC,$C9,$F5,$90,$02,$E9,$F0                 ; $2432
-        .byte   $95,$C2,$C9,$1F,$90,$43,$38,$E9                 ; $243A
-        .byte   $2D,$29,$07,$C5,$24,$B0,$3A,$20                 ; $2442
-        .byte   $B8,$E9,$A0,$29,$B1,$11,$30,$3B                 ; $244A
-        .byte   $C8,$B1,$11,$30,$36,$A5,$23,$F0                 ; $2452
-        .byte   $05,$C8,$B1,$11,$30,$2D,$A0,$51                 ; $245A
-        .byte   $B1,$11,$30,$0E,$C8,$B1,$11,$30                 ; $2462
-        .byte   $09,$A5,$23,$F0,$1E,$C8,$B1,$11                 ; $246A
-        .byte   $10,$19,$B5,$C2,$38,$E9,$2D,$29                 ; $2472
-        .byte   $F8,$18,$69,$2D,$95,$C2,$4C,$19                 ; $247A
-        .byte   $25                                             ; $2482
+        beq     L2401                   ; If zero, ascent complete
+        dec     $87A0,x                 ; Decrement capture state
+        tay                             ; Transfer to Y
+        lda     ZP_C2,x                 ; Get Y position
+        sec
+        sbc     $ACCD,y                 ; Subtract movement table value
+        cmp     #$05                    ; Check if < 5
+        bcs     L23FC                   ; If >= 5, store
+        adc     #$F0                    ; Wrap around
+L23FC:
+        sta     ZP_C2,x                 ; Store new Y
+        jmp     D_2483                  ; Continue horizontal movement
+
+L2401:
+        lda     $87C8,x                 ; Get vertical state
+        bpl     L2423                   ; If positive, check pop
+        lda     $8520,x                 ; Get animation frame
+        cmp     #$02                    ; Check frame 2-3
+        bcc     L241E                   ; If < 2, clear
+        cmp     #$04                    ; Check frame 4-5
+        bcc     L2419                   ; If < 4, fix animation
+        cmp     #$06                    ; Check frame 6-7
+        bcc     L241E                   ; If < 6, clear
+        cmp     #$08                    ; Check frame >= 8
+        bcs     L241E                   ; If >= 8, clear
+L2419:
+        and     #$05                    ; Keep bits 0 and 2
+        sta     $8520,x                 ; Store fixed frame
+L241E:
+        lda     #$00                    ; Clear state
+        sta     $87C8,x                 ; Store vertical state
+L2423:
+        cmp     #$10                    ; Check if state = $10
+        bne     L242A                   ; If not, continue
+        jmp     D_2519                  ; Handle bubble pop
+
+L242A:
+        inc     $87C8,x                 ; Increment vertical state
+        tay                             ; Transfer to Y
+        lda     ZP_C2,x                 ; Get Y position
+        clc
+        adc     $ACCD,y                 ; Add movement table value
+        cmp     #$F5                    ; Check upper bound
+        bcc     L243A                   ; If < $F5, store
+        sbc     #$F0                    ; Wrap around
+L243A:
+        sta     ZP_C2,x                 ; Store new Y
+        cmp     #$1F                    ; Check if >= $1F
+        bcc     D_2483                  ; If < $1F, continue
+        sec
+        sbc     #$2D                    ; Subtract $2D
+        and     #$07                    ; Mask to 0-7
+        cmp     INDEX2                  ; Compare to terrain index
+        bcs     D_2483                  ; If >=, continue
+        jsr     D_E9B8                  ; Get sprite animation frame
+        ldy     #$29                    ; Platform check offset
+        lda     (INPFLG),y              ; Check platform
+        bmi     L248D                   ; If blocked, check horizontal
+        iny
+        lda     (INPFLG),y              ; Check next byte
+        bmi     L248D                   ; If blocked, check horizontal
+        lda     ZP_23                   ; Get two-player flag
+        beq     L2460                   ; If single player, check upper
+        iny
+        lda     (INPFLG),y              ; Check P2 platform
+        bmi     L248D                   ; If blocked, check horizontal
+L2460:
+        ldy     #$51                    ; Upper platform offset
+        lda     (INPFLG),y              ; Check upper platform
+        bmi     L2474                   ; If blocked, snap to row
+        iny
+        lda     (INPFLG),y              ; Check next byte
+        bmi     L2474                   ; If blocked, snap to row
+        lda     ZP_23                   ; Get two-player flag
+        beq     L248D                   ; If single player, continue
+        iny
+        lda     (INPFLG),y              ; Check P2 upper platform
+        bpl     L248D                   ; If clear, continue
+L2474:
+        lda     ZP_C2,x                 ; Get Y position
+        sec
+        sbc     #$2D                    ; Subtract $2D
+        and     #$F8                    ; Mask to row boundary
+        clc
+        adc     #$2D                    ; Add $2D back
+        sta     ZP_C2,x                 ; Store snapped Y
+        jmp     D_2519                  ; Handle bubble pop
+
+; --- Horizontal bubble movement ---
+; Handles left/right movement of bubble based on direction flags
+; Input: X = entity index
 D_2483:
-        .byte   $B5,$61,$F0,$03,$20,$21,$7C,$20                 ; $2483
-        .byte   $B8,$E9,$BD,$40,$88,$10,$33,$B5                 ; $248B
-        .byte   $BA,$C9,$25,$90,$1D,$A0,$28,$A5                 ; $2493
-        .byte   $24,$F0,$02,$A0,$50,$B5,$C2,$C9                 ; $249B
-        .byte   $2D,$90,$1A,$A5,$23,$D0,$16,$B1                 ; $24A3
-        .byte   $11,$10,$12,$C8,$B1,$11,$30,$0D                 ; $24AB
-        .byte   $10,$04,$A9,$24,$95,$BA,$A9,$00                 ; $24B3
-        .byte   $9D,$40,$88,$F0,$3A,$D6,$BA,$4C                 ; $24BB
-        .byte   $FA,$24,$BD,$68,$88,$10,$30,$B5                 ; $24C3
-        .byte   $BA,$C9,$F4,$B0,$1D,$A0,$2B,$A5                 ; $24CB
-        .byte   $24,$F0,$02,$A0,$53,$B5,$C2,$C9                 ; $24D3
-        .byte   $2D,$90,$1A,$A5,$23,$D0,$16,$B1                 ; $24DB
-        .byte   $11,$10,$12,$88,$B1,$11,$30,$0D                 ; $24E3
-        .byte   $10,$04,$A9,$F4,$95,$BA,$A9,$00                 ; $24EB
-        .byte   $9D,$68,$88,$F0,$02,$F6,$BA,$FE                 ; $24F3
-        .byte   $10,$86,$BD,$10,$86,$C9,$02,$90                 ; $24FB
-        .byte   $14,$A9,$00,$9D,$10,$86,$BD,$20                 ; $2503
-        .byte   $85,$C9,$08,$B0,$08,$49,$01,$9D                 ; $250B
-        .byte   $20,$85,$4C,$F1,$25,$60                         ; $2513
+        lda     FAC,x                   ; Get entity state ($61,x)
+        beq     L248A                   ; If zero, skip
+        jsr     D_7C21                  ; Call collision handler
+L248A:
+        jsr     D_E9B8                  ; Get sprite animation frame
+L248D:
+        lda     $8840,x                 ; Get left movement flag
+        bpl     L24C5                   ; If positive, check right
+        lda     FA,x                    ; Get X position
+        cmp     #$25                    ; Check left boundary
+        bcc     L24B5                   ; If < $25, stop
+        ldy     #$28                    ; Platform check offset (P1)
+        lda     INDEX2                  ; Get terrain index
+        beq     L24A0                   ; If zero, check P1
+        ldy     #$50                    ; Platform check offset (P2)
+L24A0:
+        lda     ZP_C2,x                 ; Get Y position
+        cmp     #$2D                    ; Check Y threshold
+        bcc     L24C0                   ; If below, do movement
+        lda     ZP_23                   ; Get two-player flag
+        bne     L24C0                   ; If two-player, do movement
+        lda     (INPFLG),y              ; Check platform
+        bpl     L24C0                   ; If clear, do movement
+        iny
+        lda     (INPFLG),y              ; Check next byte
+        bmi     L24C0                   ; If blocked, do movement
+        bpl     L24B9                   ; Always branch
+L24B5:
+        lda     #$24                    ; Set X to left boundary
+        sta     FA,x
+L24B9:
+        lda     #$00                    ; Clear left flag
+        sta     $8840,x
+        beq     L24FA                   ; Always branch
+L24C0:
+        dec     FA,x                    ; Decrement X position
+        jmp     L24FA                   ; Continue
+
+L24C5:
+        lda     $8868,x                 ; Get right movement flag
+        bpl     L24FA                   ; If positive, skip
+        lda     FA,x                    ; Get X position
+        cmp     #$F4                    ; Check right boundary
+        bcs     L24ED                   ; If >= $F4, stop
+        ldy     #$2B                    ; Platform check offset (P1)
+        lda     INDEX2                  ; Get terrain index
+        beq     L24D8                   ; If zero, check P1
+        ldy     #$53                    ; Platform check offset (P2)
+L24D8:
+        lda     ZP_C2,x                 ; Get Y position
+        cmp     #$2D                    ; Check Y threshold
+        bcc     L24F8                   ; If below, do movement
+        lda     ZP_23                   ; Get two-player flag
+        bne     L24F8                   ; If two-player, do movement
+        lda     (INPFLG),y              ; Check platform
+        bpl     L24F8                   ; If clear, do movement
+        dey
+        lda     (INPFLG),y              ; Check previous byte
+        bmi     L24F8                   ; If blocked, do movement
+        bpl     L24F1                   ; Always branch
+L24ED:
+        lda     #$F4                    ; Set X to right boundary
+        sta     FA,x
+L24F1:
+        lda     #$00                    ; Clear right flag
+        sta     $8868,x
+        beq     L24FA                   ; Always branch
+L24F8:
+        inc     FA,x                    ; Increment X position
+
+L24FA:
+        inc     $8610,x                 ; Increment animation timer
+        lda     $8610,x                 ; Get timer
+        cmp     #$02                    ; Compare to 2
+        bcc     L2518                   ; If < 2, done
+        lda     #$00                    ; Reset timer
+        sta     $8610,x
+        lda     $8520,x                 ; Get animation frame
+        cmp     #$08                    ; Compare to 8
+        bcs     L2518                   ; If >= 8, done
+        eor     #$01                    ; Toggle bit 0
+        sta     $8520,x                 ; Store new frame
+        jmp     D_25F1                  ; Update animation
+
+L2518:
+        rts
+
+; --- Bubble reached top - check for pop ---
+; Handles bubble at top of screen, may pop or continue
+; Input: X = entity index
 D_2519:
-        .byte   $A9,$FF,$9D,$A0,$87,$9D,$C8,$87                 ; $2519
-        .byte   $BD,$20,$85,$C9,$04,$90,$10,$C9                 ; $2521
-        .byte   $08,$90,$04,$C9,$0A,$B0,$08,$B5                 ; $2529
-        .byte   $BA,$29,$FE,$95,$BA,$D0,$09,$B5                 ; $2531
-        .byte   $BA,$18,$69,$01,$29,$FE,$95,$BA                 ; $2539
-        .byte   $A0,$29,$B1,$11,$30,$22,$C8,$B1                 ; $2541
-        .byte   $11,$30,$1D,$A5,$23,$F0,$05,$C8                 ; $2549
-        .byte   $B1,$11,$30,$14,$A0,$51,$B1,$11                 ; $2551
-        .byte   $30,$20,$C8,$B1,$11,$30,$1B,$A5                 ; $2559
-        .byte   $23,$F0,$05,$C8,$B1,$11,$30,$12                 ; $2561
-        .byte   $A5,$10,$C9,$5B,$D0,$06,$B5,$C2                 ; $2569
-        .byte   $C9,$DD,$F0,$06,$FE,$F0,$87,$4C                 ; $2571
-        .byte   $3F,$EB,$60                                     ; $2579
+        lda     #$FF                    ; Mark state
+        sta     $87A0,x                 ; Set capture state
+        sta     $87C8,x                 ; Set vertical state
+        lda     $8520,x                 ; Get animation frame
+        cmp     #$04                    ; Check frame range
+        bcc     L2538                   ; If < 4, adjust X up
+        cmp     #$08                    ; Check frame range
+        bcc     L2530                   ; If < 8, adjust X down
+        cmp     #$0A                    ; Check frame range
+        bcs     L2538                   ; If >= 10, adjust X up
+L2530:
+        lda     FA,x                    ; Get X position
+        and     #$FE                    ; Clear low bit
+        sta     FA,x                    ; Store back
+        bne     L2541                   ; Continue if non-zero
+L2538:
+        lda     FA,x                    ; Get X position
+        clc
+        adc     #$01                    ; Add 1
+        and     #$FE                    ; Clear low bit
+        sta     FA,x                    ; Store back
+L2541:
+        ldy     #$29                    ; Platform check offset
+        lda     (INPFLG),y              ; Check platform
+        bmi     L2569                   ; If blocked, check special
+        iny
+        lda     (INPFLG),y              ; Check next byte
+        bmi     L2569                   ; If blocked, check special
+        lda     ZP_23                   ; Get two-player flag
+        beq     L2555                   ; If single player, check upper
+        iny
+        lda     (INPFLG),y              ; Check P2 platform
+        bmi     L2569                   ; If blocked, check special
+L2555:
+        ldy     #$51                    ; Upper platform offset
+        lda     (INPFLG),y              ; Check upper platform
+        bmi     L257B                   ; If blocked, done
+        iny
+        lda     (INPFLG),y              ; Check next byte
+        bmi     L257B                   ; If blocked, done
+        lda     ZP_23                   ; Get two-player flag
+        beq     L2569                   ; If single player, check special
+        iny
+        lda     (INPFLG),y              ; Check P2 upper platform
+        bmi     L257B                   ; If blocked, done
+L2569:
+        lda     SUBFLG                  ; Get current level
+        cmp     #$5B                    ; Check if level 91
+        bne     L2575                   ; If not, pop bubble
+        lda     ZP_C2,x                 ; Get Y position
+        cmp     #$DD                    ; Check Y threshold
+        beq     L257B                   ; If at threshold, done
+L2575:
+        inc     $87F0,x                 ; Increment ascent state
+        jmp     D_EB3F                  ; Handle bubble pop
+
+L257B:
+        rts
+
+; --- Bubble vertical movement (ascending) ---
+; Handles upward movement of bubble
+; Input: X = entity index
 D_257C:
-        .byte   $B5,$C2,$18,$69,$02,$95,$C2,$C9                 ; $257C
-        .byte   $F5,$D0,$05,$A9,$15,$95,$C2,$60                 ; $2584
-        .byte   $C9,$26,$90,$52,$38,$E9,$2D,$29                 ; $258C
-        .byte   $07,$D0,$4B,$A0,$51,$B1,$11,$30                 ; $2594
-        .byte   $45,$C8,$B1,$11,$30,$40,$A5,$23                 ; $259C
-        .byte   $F0,$05,$C8,$B1,$11,$30,$37,$A0                 ; $25A4
-        .byte   $79,$B1,$11,$30,$0E,$C8,$B1,$11                 ; $25AC
-        .byte   $30,$09,$A5,$23,$F0,$28,$C8,$B1                 ; $25B4
-        .byte   $11,$10,$23,$DE,$F0,$87,$BD,$20                 ; $25BC
-        .byte   $85,$C9,$04,$90,$0F,$C9,$08,$90                 ; $25C4
-        .byte   $04,$C9,$0A,$90,$07,$B5,$BA,$29                 ; $25CC
-        .byte   $FE,$95,$BA,$60,$B5,$BA,$18,$69                 ; $25D4
-        .byte   $01,$29,$FE,$95,$BA,$60                         ; $25DC
+        lda     ZP_C2,x                 ; Get Y position
+        clc
+        adc     #$02                    ; Add 2 (move up)
+        sta     ZP_C2,x                 ; Store new Y
+        cmp     #$F5                    ; Check upper bound
+        bne     L258C                   ; If not at top, check ceiling
+        lda     #$15                    ; Wrap to bottom
+        sta     ZP_C2,x
+        rts
+
+L258C:
+        cmp     #$26                    ; Check ceiling threshold
+        bcc     L_25E2                  ; If below, continue animation
+        sec
+        sbc     #$2D                    ; Subtract $2D
+        and     #$07                    ; Mask to 0-7
+        bne     L_25E2                  ; If not aligned, continue
+        ldy     #$51                    ; Platform check offset
+        lda     (INPFLG),y              ; Check platform
+        bmi     L_25E2                  ; If blocked, continue
+        iny
+        lda     (INPFLG),y              ; Check next byte
+        bmi     L_25E2                  ; If blocked, continue
+        lda     ZP_23                   ; Get two-player flag
+        beq     L25AB                   ; If single player, check upper
+        iny
+        lda     (INPFLG),y              ; Check P2 platform
+        bmi     L_25E2                  ; If blocked, continue
+L25AB:
+        ldy     #$79                    ; Upper boundary offset
+        lda     (INPFLG),y              ; Check boundary
+        bmi     L25BF                   ; If blocked, hit ceiling
+        iny
+        lda     (INPFLG),y              ; Check next byte
+        bmi     L25BF                   ; If blocked, hit ceiling
+        lda     ZP_23                   ; Get two-player flag
+        beq     L_25E2                  ; If single player, continue
+        iny
+        lda     (INPFLG),y              ; Check P2 boundary
+        bpl     L_25E2                  ; If clear, continue
+L25BF:
+        dec     $87F0,x                 ; Decrement ascent state
+        lda     $8520,x                 ; Get animation frame
+        cmp     #$04                    ; Check frame range
+        bcc     L25D8                   ; If < 4, adjust X up
+        cmp     #$08                    ; Check frame range
+        bcc     L25D1                   ; If < 8, adjust X down
+        cmp     #$0A                    ; Check frame range
+        bcc     L25D8                   ; If < 10, adjust X up
+L25D1:
+        lda     FA,x                    ; Get X position
+        and     #$FE                    ; Clear low bit
+        sta     FA,x                    ; Store back
+        rts
+
+L25D8:
+        lda     FA,x                    ; Get X position
+        clc
+        adc     #$01                    ; Add 1
+        and     #$FE                    ; Clear low bit
+        sta     FA,x                    ; Store back
+        rts
+
+; --- Animation counter increment ---
+; Increments animation counter and updates frame
+; Input: X = entity index
 L_25E2:
-        .byte   $FE,$10,$86,$BD,$10,$86,$C9,$02                 ; $25E2
-        .byte   $90,$50,$A9,$00,$9D,$10,$86                     ; $25EA
+        inc     $8610,x                 ; Increment animation timer
+        lda     $8610,x                 ; Get timer
+        cmp     #$02                    ; Compare to 2
+        bcc     L263C                   ; If < 2, done
+        lda     #$00                    ; Reset timer
+        sta     $8610,x
+
+; --- Animation frame update ---
+; Updates sprite animation and handles movement
+; Input: X = entity index
 D_25F1:
-        .byte   $20,$B8,$E9,$BD,$E8,$85,$29,$10                 ; $25F1
-        .byte   $D0,$03,$20,$E8,$22,$BD,$E8,$85                 ; $25F9
-        .byte   $29,$04,$D0,$38,$A5,$25,$C9,$04                 ; $2601
-        .byte   $90,$08,$C9,$08,$90,$0F,$C9,$0A                 ; $2609
-        .byte   $B0,$0B,$BD,$18,$88,$10,$24,$A9                 ; $2611
-        .byte   $04,$9D,$20,$85,$60,$B5,$BA,$C9                 ; $2619
-        .byte   $24,$F0,$18,$A0,$28,$A5,$24,$F0                 ; $2621
-        .byte   $08,$A0,$50,$B5,$C2,$C9,$2D,$90                 ; $2629
-        .byte   $08,$A5,$23,$D0,$04,$B1,$11,$30                 ; $2631
-        .byte   $02,$D6,$BA,$60,$BD,$E8,$85,$29                 ; $2639
-        .byte   $08,$D0,$F8,$A5,$25,$C9,$04,$90                 ; $2641
-        .byte   $13,$C9,$08,$F0,$0F,$C9,$09,$F0                 ; $2649
-        .byte   $0B,$BD,$18,$88,$10,$E5,$A9,$00                 ; $2651
-        .byte   $9D,$20,$85,$60,$B5,$BA,$C9,$F4                 ; $2659
-        .byte   $F0,$D9,$A0,$2B,$A5,$24,$F0,$08                 ; $2661
-        .byte   $A0,$53,$B5,$C2,$C9,$2D,$90,$08                 ; $2669
-        .byte   $A5,$23,$D0,$04,$B1,$11,$30,$C3                 ; $2671
-        .byte   $F6,$BA,$60,$DE,$18,$88,$10,$3E                 ; $2679
-        .byte   $A9,$03,$9D,$18,$88,$BD,$C8,$87                 ; $2681
-        .byte   $30,$14,$DE,$68,$88,$D0,$2F,$20                 ; $2689
-        .byte   $EA,$E9,$29,$07,$18,$69,$01,$09                 ; $2691
-        .byte   $80,$9D,$C8,$87,$D0,$20,$FE,$68                 ; $2699
-        .byte   $88,$BD,$68,$88,$09,$80,$DD,$C8                 ; $26A1
-        .byte   $87,$90,$13,$F0,$11,$B5,$BA,$29                 ; $26A9
-        .byte   $FE,$95,$BA,$B5,$C2,$09,$01,$95                 ; $26B1
-        .byte   $C2,$A9,$0C,$95,$B2,$60                         ; $26B9
+        jsr     D_E9B8                  ; Get sprite animation frame
+        lda     $85E8,x                 ; Get entity flags
+        and     #$10                    ; Check bit 4
+        bne     L25FE                   ; If set, skip bubble release
+        jsr     D_22E8                  ; Handle bubble release
+L25FE:
+        lda     $85E8,x                 ; Get entity flags
+        and     #$04                    ; Check left direction
+        bne     L263D                   ; If set, check right
+        lda     ZP_25                   ; Get level variant
+        cmp     #$04                    ; Check range
+        bcc     L2613                   ; If < 4, move left
+        cmp     #$08                    ; Check range
+        bcc     L261E                   ; If < 8, skip
+        cmp     #$0A                    ; Check range
+        bcs     L261E                   ; If >= 10, skip
+L2613:
+        lda     $8818,x                 ; Get bubble timer
+        bpl     L263C                   ; If positive, done
+        lda     #$04                    ; Set animation frame 4
+        sta     $8520,x
+        rts
+
+L261E:
+        lda     FA,x                    ; Get X position
+        cmp     #$24                    ; Check left boundary
+        beq     L263C                   ; If at boundary, done
+        ldy     #$28                    ; Platform check offset (P1)
+        lda     INDEX2                  ; Get terrain index
+        beq     L2632                   ; If zero, check P1
+        ldy     #$50                    ; Platform check offset (P2)
+        lda     ZP_C2,x                 ; Get Y position
+        cmp     #$2D                    ; Check Y threshold
+        bcc     L263A                   ; If below, do movement
+L2632:
+        lda     ZP_23                   ; Get two-player flag
+        bne     L263A                   ; If two-player, do movement
+        lda     (INPFLG),y              ; Check platform
+        bmi     L263C                   ; If blocked, done
+L263A:
+        dec     FA,x                    ; Decrement X position
+L263C:
+        rts
+
+L263D:
+        lda     $85E8,x                 ; Get entity flags
+        and     #$08                    ; Check right direction
+        bne     L263C                   ; If set, done
+        lda     ZP_25                   ; Get level variant
+        cmp     #$04                    ; Check range
+        bcc     L265D                   ; If < 4, move right
+        cmp     #$08                    ; Check type 8
+        beq     L265D                   ; If type 8, move right
+        cmp     #$09                    ; Check type 9
+        beq     L265D                   ; If type 9, move right
+        lda     $8818,x                 ; Get bubble timer
+        bpl     L263C                   ; If positive, done
+        lda     #$00                    ; Set animation frame 0
+        sta     $8520,x
+        rts
+
+L265D:
+        lda     FA,x                    ; Get X position
+        cmp     #$F4                    ; Check right boundary
+        beq     L263C                   ; If at boundary, done
+        ldy     #$2B                    ; Platform check offset (P1)
+        lda     INDEX2                  ; Get terrain index
+        beq     L2671                   ; If zero, check P1
+        ldy     #$53                    ; Platform check offset (P2)
+        lda     ZP_C2,x                 ; Get Y position
+        cmp     #$2D                    ; Check Y threshold
+        bcc     L2679                   ; If below, do movement
+L2671:
+        lda     ZP_23                   ; Get two-player flag
+        bne     L2679                   ; If two-player, do movement
+        lda     (INPFLG),y              ; Check platform
+        bmi     L263C                   ; If blocked, done
+L2679:
+        inc     FA,x                    ; Increment X position
+        rts
+
+; --- Bubble wobble/animation timer ---
+; Handles bubble wobble animation timing
+; Input: X = entity index
+L267B:
+        dec     $8818,x                 ; Decrement bubble timer
+        bpl     L26BF                   ; If positive, jump to end
+        lda     #$03                    ; Reset timer to 3
+        sta     $8818,x
+        lda     $87C8,x                 ; Get vertical state
+        bmi     L269F                   ; If negative, increment
+        dec     $8868,x                 ; Decrement right flag
+        bne     L26BF                   ; If non-zero, jump to end
+        jsr     D_E9EA                  ; Get random number
+        and     #$07                    ; Mask to 0-7
+        clc
+        adc     #$01                    ; Add 1 (1-8)
+        ora     #$80                    ; Set high bit
+        sta     $87C8,x                 ; Store vertical state
+        bne     L26BF                   ; Always branch
+L269F:
+        inc     $8868,x                 ; Increment right flag
+        lda     $8868,x                 ; Get right flag
+        ora     #$80                    ; Set high bit
+        cmp     $87C8,x                 ; Compare to vertical state
+        bcc     L26BF                   ; If less, jump to end
+        beq     L26BF                   ; If equal, jump to end
+        lda     FA,x                    ; Get X position
+        and     #$FE                    ; Clear low bit
+        sta     FA,x                    ; Store back
+        lda     ZP_C2,x                 ; Get Y position
+        ora     #$01                    ; Set low bit
+        sta     ZP_C2,x                 ; Store back
+        lda     #$0C                    ; Set entity state
+        sta     ESSION,x                ; Store state
+        rts
+
+L26BF:  ; End of file - external continuation point

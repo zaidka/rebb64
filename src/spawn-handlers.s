@@ -6,49 +6,264 @@
 
 .segment "CODE"
 
-        .byte   $AD,$54,$A7,$0A,$0A,$0A,$69,$14                 ; $284D
-        .byte   $95,$BA,$AD,$5F,$A7,$0A,$0A,$0A                 ; $2855
-        .byte   $69,$05,$95,$C2,$C9,$ED,$D0,$12                 ; $285D
-        .byte   $E0,$02,$90,$13,$A9,$07,$9D,$90                 ; $2865
-        .byte   $88,$D6,$B2,$C6,$4A,$A9,$0E,$9D                 ; $286D
-        .byte   $48,$85,$E0,$02,$90,$12,$60,$A9                 ; $2875
-        .byte   $64,$B4,$BA,$C0,$94,$90,$02,$A9                 ; $287D
-        .byte   $B4,$95,$BA,$A9,$01,$95,$B2,$60                 ; $2885
-        .byte   $BC,$18,$88,$30,$03,$20,$01,$23                 ; $288D
-        .byte   $BD,$E8,$85,$85,$02,$20,$0C,$22                 ; $2895
-        .byte   $A6,$22,$BD,$A0,$87,$10,$E4,$60                 ; $289D
-        .byte   $A9,$00,$9D,$28,$87,$BD,$D8,$86                 ; $28A5
-        .byte   $C9,$12,$F0,$0A,$A9,$12,$9D,$D8                 ; $28AD
-        .byte   $86,$A9,$20,$9D,$10,$86,$DE,$10                 ; $28B5
-        .byte   $86,$BD,$10,$86,$30,$26,$4A,$29                 ; $28BD
-        .byte   $03,$F0,$06,$BC,$40,$88,$18,$69                 ; $28C5
-        .byte   $0B,$9D,$20,$85,$BD,$A0,$87,$10                 ; $28CD
-        .byte   $05,$BD,$F0,$87,$30,$0D,$B5,$C2                 ; $28D5
-        .byte   $18,$69,$03,$C9,$F5,$90,$02,$A9                 ; $28DD
-        .byte   $15,$95,$C2,$60,$A8,$4A,$29,$03                 ; $28E5
-        .byte   $18,$69,$0F,$9D,$20,$85,$C0,$C8                 ; $28ED
-        .byte   $D0,$F1,$F6,$B2,$60,$20,$16,$29                 ; $28F5
-        .byte   $A6,$22,$A9,$01,$95,$B2,$20,$6C                 ; $28FD
-        .byte   $1E,$A6,$22,$A9,$18,$95,$B2,$60                 ; $2905
-        .byte   $DE,$88,$86,$D0,$04,$A9,$01,$95                 ; $290D
-        .byte   $B2,$BD,$48,$85,$49,$05,$9D,$48                 ; $2915
-        .byte   $85,$4C,$62,$21,$A9,$00,$D0,$70                 ; $291D
-        .byte   $EE,$22,$29,$BC,$90,$88,$B9,$90                 ; $2925
-        .byte   $A7,$A8,$F6,$B2,$A9,$C8,$9D,$A0                 ; $292D
-        .byte   $87,$8A,$9D,$20,$85,$A9,$F2,$9D                 ; $2935
-        .byte   $98,$85,$B9,$E4,$A8,$29,$07,$9D                 ; $293D
-        .byte   $48,$85,$A9,$00,$9D,$28,$87,$85                 ; $2945
-        .byte   $05,$B9,$92,$A8,$20,$9F,$2C,$BD                 ; $294D
-        .byte   $83,$A7,$8D,$70,$29,$8D,$8D,$29                 ; $2955
-        .byte   $BD,$89,$A7,$8D,$71,$29,$8D,$8E                 ; $295D
-        .byte   $29,$A0,$0F,$A2,$3D,$B1,$04,$20                 ; $2965
-        .byte   $96,$29,$9D,$00,$04,$CA,$CA,$CA                 ; $296D
-        .byte   $88,$10,$F2,$A5,$04,$18,$69,$10                 ; $2975
-        .byte   $85,$04,$90,$02,$E6,$05,$A0,$0F                 ; $297D
-        .byte   $A2,$3E,$B1,$04,$20,$96,$29,$9D                 ; $2985
-        .byte   $00,$04,$CA,$CA,$CA,$88,$10,$F2                 ; $298D
-        .byte   $60,$85,$02,$29,$80,$F0,$01,$4A                 ; $2995
-        .byte   $45,$02,$85,$02,$29,$20,$F0,$01                 ; $299D
-        .byte   $4A,$45,$02,$85,$02,$29,$08,$F0                 ; $29A5
-        .byte   $01,$4A,$45,$02,$85,$02,$29,$02                 ; $29AD
-        .byte   $F0,$01,$4A,$45,$02,$60                         ; $29B5
+; External references
+L1E6C           := $1E6C
+L2162           := $2162
+L220C           := $220C
+L2301           := $2301
+L2C9F           := $2C9F
+
+; -----------------------------------------------------------------------------
+; SPAWN_POSITION_INIT ($284D)
+; Initialize spawn position from level data
+; Calculates X,Y position from $A754/$A75F tables
+; -----------------------------------------------------------------------------
+spawn_position_init:                                    ; $284D
+        lda     $A754
+        asl     a
+        asl     a
+        asl     a
+        adc     #$14
+        sta     $BA,x                   ; Set X position
+        lda     $A75F
+        asl     a
+        asl     a
+        asl     a
+        adc     #$05
+        sta     $C2,x                   ; Set Y position
+        cmp     #$ED
+        bne     @L2877
+        cpx     #$02
+        bcc     @L287C
+        lda     #$07
+        sta     $8890,x
+        dec     $B2,x
+        dec     $4A
+        lda     #$0E
+        sta     $8548,x
+@L2877:                                                 ; $2877
+        cpx     #$02
+        bcc     @L288D
+        rts
+
+@L287C:                                                 ; $287C
+        lda     #$64
+        ldy     $BA,x
+        cpy     #$94
+        bcc     @L2886
+        lda     #$B4
+@L2886:                                                 ; $2886
+        sta     $BA,x
+@L2888:                                                 ; $2888
+        lda     #$01
+        sta     $B2,x
+        rts
+
+; -----------------------------------------------------------------------------
+; SPAWN_UPDATE ($288D)
+; Update spawn state based on animation timer
+; -----------------------------------------------------------------------------
+@L288D:                                                 ; $288D
+        ldy     $8818,x
+        bmi     @L2895
+        jsr     L2301
+@L2895:                                                 ; $2895
+        lda     $85E8,x
+        sta     $02
+        jsr     L220C
+        ldx     $22
+        lda     $87A0,x
+        bpl     @L2888
+        rts
+
+; -----------------------------------------------------------------------------
+; SPAWN_ANIMATION ($28A5)
+; Handle spawn animation state
+; -----------------------------------------------------------------------------
+spawn_animation:                                        ; $28A5
+        lda     #$00
+        sta     $8728,x
+        lda     $86D8,x
+        cmp     #$12
+        beq     @L28BB
+        lda     #$12
+        sta     $86D8,x
+        lda     #$20
+        sta     $8610,x
+@L28BB:                                                 ; $28BB
+        dec     $8610,x
+        lda     $8610,x
+        bmi     @L28E9
+        lsr     a
+        and     #$03
+        beq     @L28CE
+        ldy     $8840,x
+        clc
+        adc     #$0B
+@L28CE:                                                 ; $28CE
+        sta     $8520,x
+        lda     $87A0,x
+        bpl     @L28DB
+        lda     $87F0,x
+        bmi     @L28E8
+@L28DB:                                                 ; $28DB
+        lda     $C2,x
+        clc
+        adc     #$03
+        cmp     #$F5
+        bcc     @L28E6
+        lda     #$15
+@L28E6:                                                 ; $28E6
+        sta     $C2,x
+@L28E8:                                                 ; $28E8
+        rts
+
+@L28E9:                                                 ; $28E9
+        tay
+        lsr     a
+        and     #$03
+        clc
+        adc     #$0F
+        sta     $8520,x
+        cpy     #$C8
+        bne     @L28E8
+        inc     $B2,x
+        rts
+
+; -----------------------------------------------------------------------------
+; SPAWN_STATE_CHANGE ($28FB)
+; Handle spawn state transitions
+; -----------------------------------------------------------------------------
+spawn_state_change:                                     ; $28FB
+        jsr     L2916
+        ldx     $22
+        lda     #$01
+        sta     $B2,x
+        jsr     L1E6C
+        ldx     $22
+        lda     #$18
+        sta     $B2,x
+        rts
+
+; -----------------------------------------------------------------------------
+; SPAWN_TIMER ($290D)
+; Decrement spawn timer and toggle state
+; -----------------------------------------------------------------------------
+spawn_timer:                                            ; $290D
+        dec     $8688,x
+        bne     L2916
+        lda     #$01
+        sta     $B2,x
+L2916:                                                  ; $2916
+        lda     $8548,x
+        eor     #$05
+        sta     $8548,x
+        jmp     L2162
+
+; -----------------------------------------------------------------------------
+; SCORE_DISPLAY ($2921)
+; Display score from spawn pickup
+; Self-modifying code: modifies addresses at $2970/$2971 and $298D/$298E
+; -----------------------------------------------------------------------------
+; Self-modifying operand address
+smc_score_operand := score_display + 1                  ; $2922
+
+score_display:                                          ; $2921
+        .byte   $A9                     ; LDA immediate opcode
+        .byte   $00                     ; $2922 - self-modified operand
+        bne     @L2995
+        inc     smc_score_operand       ; Self-modify: inc $2922
+        ldy     $8890,x
+        lda     $A790,y
+        tay
+        inc     $B2,x
+        lda     #$C8
+        sta     $87A0,x
+        txa
+        sta     $8520,x
+        lda     #$F2
+        sta     $8598,x
+        lda     $A8E4,y
+        and     #$07
+        sta     $8548,x
+        lda     #$00
+        sta     $8728,x
+        sta     $05
+        lda     $A892,y
+        jsr     L2C9F
+        lda     $A783,x
+        sta     @L2970+1                ; Self-modify store address low
+        sta     @L298D                  ; Store low byte to $298D
+        lda     $A789,x
+        sta     @L2970+2                ; Self-modify store address high
+        sta     @L298E                  ; Store high byte to $298E
+        ldy     #$0F
+        ldx     #$3D
+@L296A:                                                 ; $296A
+        lda     ($04),y
+        jsr     @L2996
+@L2970:                                                 ; $2970 - self-modified STA abs,x
+        sta     $0400,x                 ; Address modified at runtime
+        dex
+        dex
+        dex
+        dey
+        bpl     @L296A
+        lda     $04
+        clc
+        adc     #$10
+        sta     $04
+        bcc     @L2983
+        inc     $05
+@L2983:                                                 ; $2983
+        ldy     #$0F
+        ldx     #$3E
+@L2987:                                                 ; $2987
+        lda     ($04),y
+        jsr     @L2996
+        .byte   $9D                     ; $298C - STA abs,x opcode
+@L298D:                                                 ; $298D - low byte of address (self-modified)
+        .byte   $00
+@L298E:                                                 ; $298E - high byte of address (self-modified)
+        .byte   $04
+        dex
+        dex
+        dex
+        dey
+        bpl     @L2987
+@L2995:                                                 ; $2995
+        rts
+
+; -----------------------------------------------------------------------------
+; BIT_MIRROR ($2996)
+; Mirror bits in accumulator for display purposes
+; Input: A = byte to mirror
+; Output: A = mirrored byte
+; -----------------------------------------------------------------------------
+@L2996:                                                 ; $2996
+        sta     $02
+        and     #$80
+        beq     @L299D
+        lsr     a
+@L299D:                                                 ; $299D
+        eor     $02
+        sta     $02
+        and     #$20
+        beq     @L29A6
+        lsr     a
+@L29A6:                                                 ; $29A6
+        eor     $02
+        sta     $02
+        and     #$08
+        beq     @L29AF
+        lsr     a
+@L29AF:                                                 ; $29AF
+        eor     $02
+        sta     $02
+        and     #$02
+        beq     @L29B8
+        lsr     a
+@L29B8:                                                 ; $29B8
+        eor     $02
+        rts
+

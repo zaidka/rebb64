@@ -166,7 +166,7 @@ next_item:
         
         ; All items collected - trigger special event
         lda     ZP_BE                   ; a5 be    - Get current game state
-        sta     D_119F                  ; 8d 9f 11 - Save it
+        sta     D_119F                  ; 8d 9f 11 - Save it (self-mod target)
         lda     #$09                    ; a9 09    - Set state to 9
         sta     ZP_BE                   ; 85 be
         lda     #$82                    ; a9 82    - Reset counter to 130
@@ -175,60 +175,256 @@ skip_item_check:
         rts                             ; 60       - Return ($118E)
 
 ; ============================================================================
-; REMAINING SPECIAL ENEMY CODE ($118F - $1318)
+; EXTENDED ITEM STATE HANDLER ($118F)
 ; ============================================================================
-; This section contains additional special item handlers and extended
-; enemy behavior routines. Keeping as .byte for now due to complexity.
+; Handles special item state 9 - controls sprite blinking and state reset.
+; Called when all items have been collected.
 ; ============================================================================
 
 skip_item_check_far:
-        .byte   $CE,$BF,$5B,$D0,$0F,$A9,$28,$8D                 ; $118F
-        .byte   $BF,$5B,$A9,$FF,$8D,$2A,$87,$A9                 ; $1197
-        .byte   $00,$85,$BE,$60,$AD,$BF,$5B,$C9                 ; $119F
-        .byte   $11,$B0,$E4,$29,$01,$D0,$E0,$AD                 ; $11A7
-        .byte   $15,$D0,$49,$FC,$8D,$15,$D0,$60                 ; $11AF
-        .byte   $BD,$D6,$A9,$49,$04,$9D,$D6,$A9                 ; $11B7
-        .byte   $F0,$11,$F6,$EE,$B5,$EE,$C9,$1D                 ; $11BF
-        .byte   $90,$06,$D6,$EE,$A9,$38,$95,$CA                 ; $11C7
-        .byte   $4C,$4A,$0D,$20,$FE,$7B,$A0,$00                 ; $11CF
-        .byte   $B1,$40,$30,$F4,$A0,$28,$B1,$40                 ; $11D7
-        .byte   $10,$EE,$A9,$38,$95,$CA,$A0,$04                 ; $11DF
-        .byte   $B9,$70,$A7,$30,$06,$88,$10,$F8                 ; $11E7
-        .byte   $4C,$4A,$0D,$8C,$5C,$12,$B5,$DC                 ; $11EF
-        .byte   $85,$42,$A9,$00,$85,$43,$20,$EA                 ; $11F7
-        .byte   $E9,$29,$0F,$85,$3C,$20,$EA,$E9                 ; $11FF
-        .byte   $29,$0F,$85,$3D,$18,$75,$DC,$C9                 ; $1207
-        .byte   $1E,$90,$04,$A9,$FF,$85,$3D,$A9                 ; $120F
-        .byte   $FF,$C6,$40,$C5,$40,$D0,$02,$C6                 ; $1217
-        .byte   $41,$A0,$00,$E6,$43,$B1,$40,$30                 ; $121F
-        .byte   $0C,$A0,$28,$B1,$40,$10,$06,$C6                 ; $1227
-        .byte   $42,$C6,$3C,$10,$E2,$A5,$3D,$30                 ; $122F
-        .byte   $23,$A5,$43,$18,$65,$40,$85,$40                 ; $1237
-        .byte   $90,$02,$E6,$41,$E6,$40,$D0,$02                 ; $123F
-        .byte   $E6,$41,$A0,$01,$B1,$40,$30,$0C                 ; $1247
-        .byte   $A0,$29,$B1,$40,$10,$06,$E6,$43                 ; $124F
-        .byte   $C6,$3D,$10,$E8,$A0,$00,$A5,$42                 ; $1257
-        .byte   $99,$61,$A7,$B5,$EE,$99,$66,$A7                 ; $125F
-        .byte   $A5,$43,$99,$6B,$A7,$A9,$06,$99                 ; $1267
-        .byte   $70,$A7,$4C,$4A,$0D,$20,$2B,$11                 ; $126F
-        .byte   $BC,$93,$01,$10,$06,$C9,$01,$D0                 ; $1277
-        .byte   $F1,$F0,$04,$C9,$00,$D0,$EB,$A9                 ; $127F
-        .byte   $3A,$8D,$AC,$12,$20,$FE,$7B,$BC                 ; $1287
-        .byte   $93,$01,$10,$0A,$A0,$4F,$B1,$40                 ; $128F
-        .byte   $30,$12,$D6,$DC,$10,$08,$A0,$52                 ; $1297
-        .byte   $B1,$40,$30,$08,$F6,$DC,$20,$2B                 ; $129F
-        .byte   $15,$4C,$4A,$0D,$A9,$3A,$95,$CA                 ; $12A7
-        .byte   $9D,$42,$AA,$D0,$F4,$A9,$60,$8D                 ; $12AF
-        .byte   $A8,$12,$20,$86,$12,$A9,$4C,$8D                 ; $12B7
-        .byte   $A8,$12,$FE,$C4,$A9,$BD,$C4,$A9                 ; $12BF
-        .byte   $29,$03,$9D,$C4,$A9,$B5,$CA,$C9                 ; $12C7
-        .byte   $3A,$D0,$0C,$A9,$2C,$95,$CA,$BD                 ; $12CF
-        .byte   $93,$01,$49,$80,$9D,$93,$01,$B5                 ; $12D7
-        .byte   $DC,$DD,$0C,$AA,$D0,$11,$BC,$1E                 ; $12DF
-        .byte   $AA,$A9,$64,$99,$90,$88,$A9,$FF                 ; $12E7
-        .byte   $99,$18,$88,$A9,$38,$95,$CA,$4C                 ; $12EF
-        .byte   $4A,$0D,$F6,$EE,$20,$2B,$15,$90                 ; $12F7
-        .byte   $04,$A9,$3A,$D0,$08,$B5,$EE,$C9                 ; $12FF
-        .byte   $1D,$D0,$EC,$A9,$38,$95,$CA,$BC                 ; $1307
-        .byte   $0C,$AA,$A9,$FF,$99,$18,$88,$4C                 ; $130F
-        .byte   $4A,$0D                                         ; $1317
+        dec     D_5BBF                  ; Decrement counter
+        bne     L11A3                   ; If not zero, continue blinking
+        lda     #$28                    ; Reset counter to 40
+        sta     D_5BBF
+        lda     #$FF                    ; Set special flag
+        sta     $872A
+        lda     #$00                    ; Clear game state
+        sta     ZP_BE
+        rts
+
+L11A3:
+        lda     D_5BBF                  ; Get counter
+        cmp     #$11                    ; Compare to 17
+        bcs     skip_item_check         ; If >= 17, return (branch to rts at $118E)
+        and     #$01                    ; Check if odd
+        bne     skip_item_check         ; If odd, return
+        lda     VIC_SPR_ENA             ; Get sprite enable register
+        eor     #$FC                    ; Toggle sprites 2-7
+        sta     VIC_SPR_ENA             ; Store back (blink effect)
+        rts
+
+; ============================================================================
+; FALLING ITEM HANDLER ($11B7)
+; ============================================================================
+; Handles items that fall after popping a bubble.
+; Toggles vertical movement and checks for platform collision.
+; ============================================================================
+
+L11B7:
+        lda     $A9D6,x                 ; Get vertical direction
+        eor     #$04                    ; Toggle bit 2
+        sta     $A9D6,x                 ; Store back
+        beq     L11D2                   ; If zero, check platform
+        inc     ZP_EE,x                 ; Increment row (fall down)
+        lda     ZP_EE,x                 ; Get row
+        cmp     #$1D                    ; At bottom?
+        bcc     L11CF                   ; If not, continue
+        dec     ZP_EE,x                 ; Undo increment
+        lda     #$38                    ; Transform to type $38 (collected)
+        sta     PESSION,x
+L11CF:
+        jmp     L_0D4A                  ; Return to AI loop
+
+; --- Check platform collision for falling item ---
+L11D2:
+        jsr     D_7BFE                  ; Get screen position
+        ldy     #$00                    ; Check tile above
+        lda     (DATLIN+1),y            ; Get tile
+        bmi     L11CF                   ; If solid, continue falling
+        ldy     #$28                    ; Check tile below (40 bytes down)
+        lda     (DATLIN+1),y            ; Get tile
+        bpl     L11CF                   ; If not solid, continue falling
+        lda     #$38                    ; Landed on platform
+        sta     PESSION,x               ; Transform to collected type
+        ldy     #$04                    ; Check for free spawn slot
+L11E7:
+        lda     $A770,y                 ; Get spawn slot
+        bmi     L11F2                   ; If negative (free), use it
+        dey                             ; Try next slot
+        bpl     L11E7                   ; Loop if more
+        jmp     L_0D4A                  ; No free slot, return
+
+; --- Setup bounce path for item ($11F2) ---
+L11F2:
+        sty     smc_bounce_y+1          ; Self-mod: store Y for later
+        lda     ZP_DC,x                 ; Get column
+        sta     DATPTR1                 ; Store in temp
+        lda     #$00                    ; Clear path length
+        sta     INPPTR                  ; Path counter
+        jsr     D_E9EA                  ; Random number
+        and     #$0F                    ; Mask to 0-15
+        sta     OLDLIN1                 ; Left path length
+        jsr     D_E9EA                  ; Random number
+        and     #$0F                    ; Mask to 0-15
+        sta     OLDTXT                  ; Right path length
+        clc
+        adc     ZP_DC,x                 ; Add to column
+        cmp     #$1E                    ; Check bounds (30)
+        bcc     L1216                   ; If in bounds, continue
+        lda     #$FF                    ; Out of bounds
+        sta     OLDTXT                  ; Mark invalid
+L1216:
+        lda     #$FF                    ; Decrement pointer
+        dec     DATLIN+1                ; Low byte
+        cmp     DATLIN+1                ; Check for underflow
+        bne     L1220
+        dec     DATPTR                  ; High byte underflow
+L1220:
+        ldy     #$00                    ; Check tile
+        inc     INPPTR                  ; Increment path counter
+        lda     (DATLIN+1),y            ; Get tile
+        bmi     L1234                   ; If solid, stop
+        ldy     #$28                    ; Check 40 bytes ahead
+        lda     (DATLIN+1),y            ; Get tile
+        bpl     L1234                   ; If not solid, stop
+        dec     DATPTR1                 ; Decrement column
+        dec     OLDLIN1                 ; Decrement left counter
+        bpl     L1216                   ; Loop if more
+L1234:
+        lda     OLDTXT                  ; Get right path length
+        bmi     L125B                   ; If invalid, done
+        lda     INPPTR                  ; Get path counter
+        clc
+        adc     DATLIN+1                ; Add to pointer
+        sta     DATLIN+1
+        bcc     L1243
+        inc     DATPTR                  ; Handle carry
+L1243:
+        inc     DATLIN+1                ; Move right
+        bne     L1249
+        inc     DATPTR                  ; Handle overflow
+L1249:
+        ldy     #$01                    ; Check tile to right
+        lda     (DATLIN+1),y            ; Get tile
+        bmi     L125B                   ; If solid, done
+        ldy     #$29                    ; Check diagonal
+        lda     (DATLIN+1),y            ; Get tile
+        bpl     L125B                   ; If not solid, done
+        inc     INPPTR                  ; Increment path
+        dec     OLDTXT                  ; Decrement right counter
+        bpl     L1243                   ; Loop if more
+
+L125B:
+smc_bounce_y:                           ; Self-modifying code target
+        ldy     #$00                    ; Operand modified at $11F2
+        lda     DATPTR1                 ; Get final column
+        sta     $A761,y                 ; Store bounce X target
+        lda     ZP_EE,x                 ; Get row
+        sta     $A766,y                 ; Store bounce Y target
+        lda     INPPTR                  ; Get path length
+        sta     $A76B,y                 ; Store bounce distance
+        lda     #$06                    ; Set bounce type
+        sta     $A770,y
+L1271:
+        jmp     L_0D4A                  ; Return to AI loop
+
+; ============================================================================
+; HORIZONTAL TRACKING ENEMY ($1274)
+; ============================================================================
+; Enemy that tracks and moves toward a player horizontally.
+; Checks which player to track based on $0193,x.
+; ============================================================================
+
+L1274:
+        jsr     toggle_enemy_direction  ; Toggle direction
+        ldy     D_0193,x                ; Get player tracking flag
+        bpl     L1282                   ; If positive, track P1
+        cmp     #$01                    ; Check if moving right
+        bne     L1271                   ; If not, return
+        beq     L1286                   ; If yes, do movement
+L1282:
+        cmp     #$00                    ; Check if moving left
+        bne     L1271                   ; If not, return
+
+; --- Move toward player ($1286) ---
+L1286:
+        lda     #$3A                    ; Default: collected type
+        sta     smc_collect_type+1      ; Self-mod: store type
+        jsr     D_7BFE                  ; Get screen position
+        ldy     D_0193,x                ; Get player tracking
+        bpl     L129D                   ; If positive, check right
+        ldy     #$4F                    ; Check left boundary (79)
+        lda     (DATLIN+1),y            ; Get tile
+        bmi     L12AB                   ; If solid, collect item
+        dec     ZP_DC,x                 ; Move left
+        bpl     L12A5                   ; If still positive, check collision
+L129D:
+        ldy     #$52                    ; Check right boundary (82)
+        lda     (DATLIN+1),y            ; Get tile
+        bmi     L12AB                   ; If solid, collect item
+        inc     ZP_DC,x                 ; Move right
+L12A5:
+        jsr     L152B                   ; Check player collision
+L12A8:
+        jmp     L_0D4A                  ; Return to AI loop
+
+; --- Item collected ---
+L12AB:
+smc_collect_type:                       ; Self-modifying code target
+        lda     #$3A                    ; Operand modified at $1288
+        sta     PESSION,x               ; Set collected type
+        sta     D_AA42,x                ; Save type
+        bne     L12A8                   ; Return (always branches)
+
+; ============================================================================
+; OSCILLATING ENEMY ($12B5)
+; ============================================================================
+; Enemy that oscillates back and forth, tracking player.
+; Uses self-modifying code to alternate between RTS and JMP.
+; ============================================================================
+
+L12B5:
+        lda     #$60                    ; RTS opcode
+        sta     L12A8                   ; Self-mod: change JMP to RTS
+        jsr     L1286                   ; Do one movement (returns)
+        lda     #$4C                    ; JMP opcode
+        sta     L12A8                   ; Self-mod: restore JMP
+        inc     $A9C4,x                 ; Increment animation counter
+        lda     $A9C4,x                 ; Get counter
+        and     #$03                    ; Mask to 0-3
+        sta     $A9C4,x                 ; Store back
+        lda     PESSION,x               ; Get enemy type
+        cmp     #$3A                    ; Is it collected?
+        bne     L12DE                   ; If not, continue
+        lda     #$2C                    ; Change to type $2C
+        sta     PESSION,x
+        lda     D_0193,x                ; Get player tracking
+        eor     #$80                    ; Toggle direction
+        sta     D_0193,x
+L12DE:
+        lda     ZP_DC,x                 ; Get column
+        cmp     D_AA0C,x                ; Compare to target X
+        bne     L12F6                   ; If not at target, continue
+        ldy     D_AA1E,x                ; Get target entity
+        lda     #$64                    ; Set timer to 100
+        sta     $8890,y                 ; Store in entity timer
+        lda     #$FF                    ; Set capture flag
+        sta     $8818,y                 ; Store in bubble timer
+        lda     #$38                    ; Transform to collected
+        sta     PESSION,x
+L12F6:
+        jmp     L_0D4A                  ; Return to AI loop
+
+; ============================================================================
+; VERTICALLY FALLING ENEMY ($12F9)
+; ============================================================================
+; Enemy that falls vertically and checks for collision.
+; ============================================================================
+
+L12F9:
+        inc     ZP_EE,x                 ; Move down one row
+        jsr     L152B                   ; Check player collision
+        bcc     L1304                   ; If no collision, continue
+        lda     #$3A                    ; Collected type
+        bne     L130C                   ; Store and return
+L1304:
+        lda     ZP_EE,x                 ; Get row
+        cmp     #$1D                    ; At bottom (29)?
+        bne     L12F6                   ; If not, return
+        lda     #$38                    ; At bottom, transform
+L130C:
+        sta     PESSION,x               ; Store type
+        ldy     D_AA0C,x                ; Get target X
+        lda     #$FF                    ; Set capture flag
+        sta     $8818,y                 ; Store in bubble timer
+        jmp     L_0D4A                  ; Return to AI loop

@@ -114,35 +114,44 @@ L_4852:
         .byte   $FF,$00,$00,$FF,$BF,$D1,$00         ; $4879
         .byte   $FF,$EF,$00,$00                     ; $4880 - D_4880 (level layout buffer)
 
+;-------------------------------------------------------------------------------
+; Runtime Buffers ($4884-$48FF)
+;-------------------------------------------------------------------------------
+; These are WRITABLE BUFFERS that get populated at runtime during level loading.
+; Initial values here are overwritten by level-renderer.s and sprites-display.s.
+;-------------------------------------------------------------------------------
+
+; Unreferenced buffer space (36 bytes)
 D_4884:
-        .byte   $FF,$FF,$00,$00,$FF,$FF,$00,$00     ; $4884
-        .byte   $FF,$FF,$00,$00,$FF,$FF,$00,$00     ; $488C
-        .byte   $FF,$FF,$00,$00,$FF,$FF,$00,$00     ; $4894
-        .byte   $FF,$FF,$00,$00,$FF,$FF,$00,$00     ; $489C
-        .byte   $FF,$FF,$00,$00                     ; $48A4
+        .byte   $FF,$FF,$00,$00, $FF,$FF,$00,$00         ; $4884
+        .byte   $FF,$FF,$00,$00, $FF,$FF,$00,$00         ; $488C
+        .byte   $FF,$FF,$00,$00, $FF,$FF,$00,$00         ; $4894
+        .byte   $FF,$FF,$00,$00, $FF,$FF,$00,$00         ; $489C
+        .byte   $FF,$FF,$00,$00                          ; $48A4
 
+; Level header buffer (8 bytes) - written by level-renderer.s L_E021
 D_48A8:
-        .byte   $FF,$FF,$00,$00,$FF,$FF,$00,$00     ; $48A8
+        .byte   $FF,$FF,$00,$00, $FF,$FF,$00,$00         ; $48A8
 
+; Sidebar character buffers (8 bytes each)
+; Written by level-renderer.s L_E051 and L_E060
 D_48B0:
-        .byte   $FF,$FF,$00,$00,$FF,$FF,$00,$00     ; $48B0
-
+        .byte   $FF,$FF,$00,$00, $FF,$FF,$00,$00         ; $48B0
 D_48B8:
-        .byte   $FF,$FF,$00,$00,$FF,$EF,$00,$00     ; $48B8
-
+        .byte   $FF,$FF,$00,$00, $FF,$EF,$00,$00         ; $48B8
 D_48C0:
-        .byte   $FF,$FF,$00,$00,$FF,$F7,$00,$00     ; $48C0
-
+        .byte   $FF,$FF,$00,$00, $FF,$F7,$00,$00         ; $48C0
 D_48C8:
-        .byte   $FF,$FF,$00,$00,$FF,$FF,$00,$00     ; $48C8
+        .byte   $FF,$FF,$00,$00, $FF,$FF,$00,$00         ; $48C8
 
+; Character set data buffer (48 bytes) - written by copy_charset_data
 D_48D0:
-        .byte   $FF,$FF,$00,$00,$FF,$FF,$00,$00     ; $48D0
-        .byte   $FF,$FF,$00,$00,$FF,$FF,$00,$00     ; $48D8
-        .byte   $FF,$FF,$00,$00,$FF,$FF,$00,$00     ; $48E0
-        .byte   $FD,$FF,$00,$00,$FF,$FF,$00,$00     ; $48E8
-        .byte   $EF,$FF,$00,$00,$FF,$FF,$00,$00     ; $48F0
-        .byte   $FF,$FF,$00,$00,$FF,$BF,$40,$00     ; $48F8
+        .byte   $FF,$FF,$00,$00, $FF,$FF,$00,$00         ; $48D0
+        .byte   $FF,$FF,$00,$00, $FF,$FF,$00,$00         ; $48D8
+        .byte   $FF,$FF,$00,$00, $FF,$FF,$00,$00         ; $48E0
+        .byte   $FD,$FF,$00,$00, $FF,$FF,$00,$00         ; $48E8
+        .byte   $EF,$FF,$00,$00, $FF,$FF,$00,$00         ; $48F0
+        .byte   $FF,$FF,$00,$00, $FF,$BF,$40,$00         ; $48F8
 
 ;===============================================================================
 ; End of bb-init-routines.s

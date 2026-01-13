@@ -2,133 +2,617 @@
 ; BUBBLE BOBBLE - ENEMY AI & MOVEMENT ($0CF2-$10D2)
 ; ============================================================================
 
-; ============================================================================
-; ENEMY_AI_UPDATE ($0CF2) - Main enemy update loop
-; ============================================================================
-        .byte   $A2,$11,$B5,$CA,$C9,$24,$B0,$54                 ; $0CF2
-        .byte   $BD,$B2,$A9,$F0,$03,$4C,$48,$0F                 ; $0CFA
-        .byte   $A0,$01,$B9,$B2,$00,$F0,$3C,$C9                 ; $0D02
-        .byte   $0E,$F0,$38,$C9,$0F,$F0,$34,$B9                 ; $0D0A
-        .byte   $BA,$00,$18,$69,$02,$38,$FD,$0C                 ; $0D12
-        .byte   $AA,$B0,$04,$49,$FF,$69,$01,$C9                 ; $0D1A
-        .byte   $10,$B0,$20,$B9,$C2,$00,$38,$FD                 ; $0D22
-        .byte   $1E,$AA,$B0,$04,$49,$FF,$69,$01                 ; $0D2A
-        .byte   $C9,$10,$B0,$0F,$98,$9D,$93,$01                 ; $0D32
-        .byte   $B5,$CA,$9D,$42,$AA,$A9,$34,$95                 ; $0D3A
-        .byte   $CA,$D0,$05,$88,$10,$BC,$30,$3C                 ; $0D42
-        .byte   $CA,$10,$A7,$60,$C9,$34,$B0,$26                 ; $0D4A
-        .byte   $E9,$23,$A8,$A5,$67,$D0,$F1,$B9                 ; $0D52
-        .byte   $68,$0D,$8D,$66,$0D,$B9,$69,$0D                 ; $0D5A
-        .byte   $8D,$67,$0D,$4C,$00,$04,$B7,$11                 ; $0D62
-        .byte   $D6,$10,$14,$7C,$74,$12,$B4,$12                 ; $0D6A
-        .byte   $73,$14,$73,$14,$F9,$12,$C9,$44                 ; $0D72
-        .byte   $D0,$03,$4C,$D3,$10,$C9,$4C,$D0                 ; $0D7A
-        .byte   $C7,$4C,$C5,$0E,$20,$EA,$E9,$C9                 ; $0D82
-        .byte   $EA,$B0,$73,$A0,$11,$86,$3C,$C4                 ; $0D8A
-        .byte   $3C,$F0,$68,$B9,$B2,$A9,$D0,$63                 ; $0D92
-        .byte   $B9,$CA,$00,$C9,$24,$B0,$5C,$BD                 ; $0D9A
-        .byte   $0C,$AA,$38,$F9,$0C,$AA,$B0,$04                 ; $0DA2
-        .byte   $49,$FF,$69,$01,$C9,$10,$B0,$4B                 ; $0DAA
-        .byte   $BD,$1E,$AA,$38,$F9,$1E,$AA,$B0                 ; $0DB2
-        .byte   $04,$49,$FF,$69,$01,$C9,$10,$B0                 ; $0DBA
-        .byte   $3A,$20,$EA,$E9,$C9,$1E,$B0,$1A                 ; $0DC2
-        .byte   $B5,$EE,$C9,$04,$B0,$04,$A9,$02                 ; $0DCA
-        .byte   $D0,$4F,$C9,$1C,$90,$04,$A9,$00                 ; $0DD2
-        .byte   $F0,$47,$20,$EA,$E9,$29,$02,$4C                 ; $0DDA
-        .byte   $23,$0E,$B5,$DC,$C9,$02,$B0,$04                 ; $0DE2
-        .byte   $A9,$01,$D0,$35,$C9,$1C,$90,$04                 ; $0DEA
-        .byte   $A9,$03,$D0,$2D,$20,$EA,$E9,$09                 ; $0DF2
-        .byte   $01,$D0,$26,$88,$10,$91,$B4,$EE                 ; $0DFA
-        .byte   $C0,$04,$B0,$02,$A0,$04,$C0,$1D                 ; $0E02
-        .byte   $90,$02,$A0,$1C,$B9,$1E,$AD,$18                 ; $0E0A
-        .byte   $75,$DC,$85,$40,$B9,$3D,$AD,$29                 ; $0E12
-        .byte   $03,$69,$85,$85,$41,$A0,$29,$B1                 ; $0E1A
-        .byte   $40,$29,$03,$D0,$2B,$DE,$D6,$A9                 ; $0E22
-        .byte   $DE,$D6,$A9,$DE,$1E,$AA,$DE,$1E                 ; $0E2A
-        .byte   $AA,$BD,$D6,$A9,$29,$07,$9D,$D6                 ; $0E32
-        .byte   $A9,$D0,$12,$D6,$EE,$10,$0E,$A9                 ; $0E3A
-        .byte   $1A,$95,$EE,$B5,$CA,$C9,$18,$B0                 ; $0E42
-        .byte   $04,$A9,$38,$95,$CA,$4C,$4A,$0D                 ; $0E4A
-        .byte   $C9,$01,$D0,$1B,$BD,$0C,$AA,$69                 ; $0E52
-        .byte   $01,$9D,$0C,$AA,$FE,$C4,$A9,$BD                 ; $0E5A
-        .byte   $C4,$A9,$C9,$04,$D0,$5A,$A9,$00                 ; $0E62
-        .byte   $9D,$C4,$A9,$F6,$DC,$D0,$51,$C9                 ; $0E6A
-        .byte   $02,$D0,$38,$FE,$D6,$A9,$FE,$D6                 ; $0E72
-        .byte   $A9,$FE,$1E,$AA,$FE,$1E,$AA,$BD                 ; $0E7A
-        .byte   $D6,$A9,$C9,$08,$D0,$08,$A9,$00                 ; $0E82
-        .byte   $9D,$D6,$A9,$4C,$4A,$0D,$C9,$02                 ; $0E8A
-        .byte   $D0,$2E,$F6,$EE,$B5,$EE,$C9,$1D                 ; $0E92
-        .byte   $D0,$26,$A9,$00,$95,$EE,$B5,$CA                 ; $0E9A
-        .byte   $C9,$18,$B0,$A9,$A9,$38,$95,$CA                 ; $0EA2
-        .byte   $4C,$4A,$0D,$BD,$0C,$AA,$38,$E9                 ; $0EAA
-        .byte   $02,$9D,$0C,$AA,$DE,$C4,$A9,$10                 ; $0EB2
-        .byte   $07,$A9,$03,$9D,$C4,$A9,$D6,$DC                 ; $0EBA
-        .byte   $4C,$4A,$0D,$A9,$00,$BC,$D6,$A9                 ; $0EC2
-        .byte   $D0,$2E,$B5,$EE,$0A,$A8,$B9,$01                 ; $0ECA
-        .byte   $AC,$75,$DC,$85,$40,$B9,$02,$AC                 ; $0ED2
-        .byte   $69,$85,$85,$41,$A0,$78,$B1,$40                 ; $0EDA
-        .byte   $30,$19,$C8,$B1,$40,$30,$14,$F6                 ; $0EE2
-        .byte   $EE,$A9,$04,$B4,$EE,$C0,$1D,$D0                 ; $0EEA
-        .byte   $07,$A9,$38,$95,$CA,$4C,$4A,$0D                 ; $0EF2
-        .byte   $9D,$D6,$A9,$B5,$DC,$0A,$0A,$0A                 ; $0EFA
-        .byte   $69,$14,$85,$40,$B5,$EE,$0A,$0A                 ; $0F02
-        .byte   $0A,$69,$15,$85,$41,$A0,$01,$B9                 ; $0F0A
-        .byte   $B2,$00,$F0,$2C,$B9,$BA,$00,$38                 ; $0F12
-        .byte   $E5,$40,$B0,$04,$49,$FF,$69,$01                 ; $0F1A
-        .byte   $C9,$10,$B0,$1C,$B9,$C2,$00,$38                 ; $0F22
-        .byte   $E5,$41,$B0,$04,$49,$FF,$69,$01                 ; $0F2A
-        .byte   $C9,$10,$B0,$0C,$B9,$51,$AB,$A8                 ; $0F32
-        .byte   $A9,$70,$20,$26,$7C,$4C,$F3,$0E                 ; $0F3A
-        .byte   $88,$10,$CC,$4C,$4A,$0D,$20,$61                 ; $0F42
-        .byte   $0F,$B5,$CA,$C9,$0C,$B0,$0D,$BD                 ; $0F4A
-        .byte   $42,$AA,$10,$08,$BD,$B2,$A9,$F0                 ; $0F52
-        .byte   $03,$20,$61,$0F,$4C,$4A,$0D,$DE                 ; $0F5A
-        .byte   $B2,$A9,$29,$7F,$A8,$BD,$30,$AA                 ; $0F62
-        .byte   $10,$07,$98,$4A,$A8,$D0,$02,$A0                 ; $0F6A
-        .byte   $01,$4C,$91,$0F,$BD,$FA,$A9,$C9                 ; $0F72
-        .byte   $0A,$B0,$14,$FE,$FA,$A9,$B9,$B6                 ; $0F7A
-        .byte   $AC,$95,$CA,$C9,$04,$D0,$04,$A9                 ; $0F82
-        .byte   $0A,$95,$CA,$A9,$0A,$D0,$07,$B9                 ; $0F8A
-        .byte   $B6,$AC,$95,$CA,$A9,$04,$85,$38                 ; $0F92
+; External references
+L10D3           := $10D3                ; Baron Von Blubba handler
+L7BFE           := $7BFE                ; Platform collision check
+L7C26           := $7C26                ; Apply damage/effect
+LE9EA           := $E9EA                ; Random number generator
 
-; Bubble capture movement
-        .byte   $B5,$DC,$85,$39,$BD,$0C,$AA,$85                 ; $0F9A
-        .byte   $3A,$BD,$93,$01,$10,$29,$D6,$DC                 ; $0FA2
-        .byte   $BD,$0C,$AA,$38,$E9,$08,$9D,$0C                 ; $0FAA
-        .byte   $AA,$20,$5B,$10,$B5,$CA,$C9,$06                 ; $0FB2
-        .byte   $B0,$4E,$20,$FE,$7B,$F0,$06,$A0                 ; $0FBA
-        .byte   $00,$B1,$40,$30,$44,$A0,$29,$B1                 ; $0FC2
-        .byte   $40,$30,$3E,$A0,$50,$D0,$2D,$B5                 ; $0FCA
-        .byte   $DC,$C9,$1C,$F0,$34,$F6,$DC,$BD                 ; $0FD2
-        .byte   $0C,$AA,$18,$69,$08,$9D,$0C,$AA                 ; $0FDA
-        .byte   $20,$5B,$10,$B5,$CA,$C9,$06,$B0                 ; $0FE2
-        .byte   $1F,$20,$FE,$7B,$F0,$06,$A0,$01                 ; $0FEA
-        .byte   $B1,$40,$30,$15,$A0,$28,$B1,$40                 ; $0FF2
-        .byte   $30,$0F,$A0,$51,$B1,$40,$30,$09                 ; $0FFA
-        .byte   $BD,$B2,$A9,$29,$7F,$9D,$B2,$A9                 ; $1002
-        .byte   $60,$A5,$3A,$38,$E9,$14,$29,$F8                 ; $100A
-        .byte   $69,$13,$9D,$0C,$AA,$A5,$39,$95                 ; $1012
-        .byte   $DC,$A5,$38,$BC,$B2,$A9,$10,$2E                 ; $101A
-        .byte   $A0,$00,$A5,$BB,$38,$FD,$0C,$AA                 ; $1022
-        .byte   $B0,$04,$49,$FF,$69,$01,$C9,$10                 ; $102A
-        .byte   $B0,$11,$A5,$C3,$38,$FD,$1E,$AA                 ; $1032
-        .byte   $B0,$04,$49,$FF,$69,$01,$C9,$10                 ; $103A
-        .byte   $B0,$01,$C8,$98,$9D,$93,$01,$A5                 ; $1042
-        .byte   $38,$9D,$42,$AA,$A9,$34,$95,$CA                 ; $104A
-        .byte   $A9,$00,$9D,$C4,$A9,$9D,$B2,$A9                 ; $1052
-        .byte   $60,$A0,$05,$B9,$B4,$00,$F0,$2A                 ; $105A
-        .byte   $C9,$16,$B0,$04,$C9,$0B,$B0,$22                 ; $1062
-        .byte   $B9,$BC,$00,$38,$FD,$0C,$AA,$B0                 ; $106A
-        .byte   $04,$49,$FF,$69,$01,$C9,$10,$B0                 ; $1072
-        .byte   $11,$B9,$C4,$00,$38,$FD,$1E,$AA                 ; $107A
-        .byte   $B0,$04,$49,$FF,$69,$01,$C9,$10                 ; $1082
-        .byte   $90,$04,$88,$10,$CE,$60,$98,$0A                 ; $108A
-        .byte   $69,$18,$95,$CA,$B9,$B4,$00,$C9                 ; $1092
-        .byte   $0A,$F0,$04,$C9,$16,$90,$10,$B9                 ; $109A
-        .byte   $A2,$87,$48,$A9,$FF,$99,$A2,$87                 ; $10A2
-        .byte   $99,$CA,$87,$99,$F2,$87,$68,$9D                 ; $10AA
-        .byte   $30,$AA,$48,$A9,$00,$99,$B4,$00                 ; $10B2
-        .byte   $99,$3A,$86,$9D,$B2,$A9,$A9,$FF                 ; $10BA
-        .byte   $99,$C2,$85,$A9,$A0,$9D,$FA,$A9                 ; $10C2
-        .byte   $68,$A8,$B9,$81,$AB,$9D,$42,$AA                 ; $10CA
-        .byte   $60                                             ; $10D2
+; ============================================================================
+; ENEMY_AI_UPDATE ($0CF2) - Main enemy AI loop
+; Iterates through all enemies and handles their behavior
+; ============================================================================
+enemy_ai_update:                                        ; $0CF2
+        ldx     #$11                    ; Start with entity 17
+L0CF4:                                                  ; $0CF4
+        lda     $CA,x                   ; Get entity type
+        cmp     #$24                    ; Is it a special type?
+        bcs     L0D4E                   ; Yes, handle special
+        lda     $A9B2,x                 ; Get AI state
+        beq     L0D02                   ; If zero, check for player collision
+        jmp     L0F48                   ; Otherwise handle movement
+
+; -----------------------------------------------------------------------------
+; Check for player collision ($0D02)
+; -----------------------------------------------------------------------------
+L0D02:                                                  ; $0D02
+        ldy     #$01                    ; Check player 2 first
+L0D04:                                                  ; $0D04
+        lda     $B2,y                   ; Get player state
+        beq     L0D45                   ; Skip if inactive
+        cmp     #$0E
+        beq     L0D45                   ; Skip if dying
+        cmp     #$0F
+        beq     L0D45                   ; Skip if dead
+        lda     $BA,y                   ; Get player X
+        clc
+        adc     #$02
+        sec
+        sbc     $AA0C,x                 ; Subtract enemy X
+        bcs     L0D21
+        eor     #$FF                    ; Absolute value
+        adc     #$01
+L0D21:                                                  ; $0D21
+        cmp     #$10                    ; Within 16 pixels?
+        bcs     L0D45                   ; No, skip
+        lda     $C2,y                   ; Get player Y
+        sec
+        sbc     $AA1E,x                 ; Subtract enemy Y
+        bcs     L0D32
+        eor     #$FF                    ; Absolute value
+        adc     #$01
+L0D32:                                                  ; $0D32
+        cmp     #$10                    ; Within 16 pixels?
+        bcs     L0D45                   ; No, skip
+        tya
+        sta     $0193,x                 ; Store player index
+        lda     $CA,x
+        sta     $AA42,x                 ; Store entity type
+        lda     #$34                    ; Set captured state
+        sta     $CA,x
+        bne     L0D4A
+L0D45:                                                  ; $0D45
+        dey
+        bpl     L0D04                   ; Check next player
+        bmi     L0D86                   ; No collision, do AI
+L0D4A:                                                  ; $0D4A
+        dex
+        bpl     L0CF4                   ; Next entity
+        rts
+
+; -----------------------------------------------------------------------------
+; Handle special entity types ($0D4E)
+; -----------------------------------------------------------------------------
+L0D4E:                                                  ; $0D4E
+        cmp     #$34
+        bcs     L0D78
+        sbc     #$23                    ; Convert to table index
+        tay
+        lda     $67                     ; Check game state
+        bne     L0D4A
+        lda     jump_table_lo,y         ; Get jump address low
+        sta     L0D66
+        lda     jump_table_hi,y         ; Get jump address high
+        sta     L0D67
+        .byte   $4C                     ; JMP opcode
+L0D66:                                                  ; $0D66 - self-modified address
+        .byte   $00
+L0D67:                                                  ; $0D67
+        .byte   $04
+
+; Jump table for entity types $24-$33
+; Interleaved low/high bytes: lo0,hi0,lo1,hi1,...
+jump_table_lo := *                                      ; $0D68
+jump_table_hi := * + 1                                  ; $0D69
+        .byte   $B7,$11                 ; $24: $11B7
+        .byte   $D6,$10                 ; $25: $10D6
+        .byte   $14,$7C                 ; $26: $7C14
+        .byte   $74,$12                 ; $27: $1274
+        .byte   $B4,$12                 ; $28: $12B4
+        .byte   $73,$14                 ; $29: $1473
+        .byte   $73,$14                 ; $2A: $1473
+        .byte   $F9,$12                 ; $2B: $12F9
+
+L0D78:                                                  ; $0D78
+        cmp     #$44                    ; Baron Von Blubba?
+        bne     L0D7F
+        jmp     L10D3                   ; Handle Baron
+
+L0D7F:                                                  ; $0D7F
+        cmp     #$4C
+L0D81:                                                  ; $0D81
+        bne     L0D4A
+        jmp     L0EC5
+
+; -----------------------------------------------------------------------------
+; Enemy AI behavior ($0D86)
+; Called when no player collision detected
+; -----------------------------------------------------------------------------
+L0D86:                                                  ; $0D86
+        jsr     LE9EA                   ; Get random number
+        cmp     #$EA
+        bcs     L0E00                   ; High value, use position-based AI
+        ldy     #$11
+        stx     $3C                     ; Save current entity index
+L0D91:                                                  ; $0D91
+        cpy     $3C
+        beq     L0DFD                   ; Skip self
+        lda     $A9B2,y
+        bne     L0DFD                   ; Skip if entity has AI state
+        lda     $CA,y
+        cmp     #$24
+        bcs     L0DFD                   ; Skip special types
+        lda     $AA0C,x                 ; Get X position
+        sec
+        sbc     $AA0C,y
+        bcs     L0DAE
+        eor     #$FF
+        adc     #$01
+L0DAE:                                                  ; $0DAE
+        cmp     #$10                    ; Within 16 pixels?
+        bcs     L0DFD
+        lda     $AA1E,x                 ; Get Y position
+        sec
+        sbc     $AA1E,y
+        bcs     L0DBF
+        eor     #$FF
+        adc     #$01
+L0DBF:                                                  ; $0DBF
+        cmp     #$10
+        bcs     L0DFD
+        jsr     LE9EA                   ; Random direction
+        cmp     #$1E
+        bcs     L0DE4
+        lda     $EE,x                   ; Get row position
+        cmp     #$04
+        bcs     L0DD4
+        lda     #$02                    ; Move down
+        bne     L0E23
+L0DD4:                                                  ; $0DD4
+        cmp     #$1C
+        bcc     L0DDC
+        lda     #$00                    ; Move up
+        beq     L0E23
+L0DDC:                                                  ; $0DDC
+        jsr     LE9EA
+        and     #$02
+        jmp     L0E23
+
+L0DE4:                                                  ; $0DE4
+        lda     $DC,x                   ; Get column position
+        cmp     #$02
+        bcs     L0DEE
+        lda     #$01                    ; Move right
+        bne     L0E23
+L0DEE:                                                  ; $0DEE
+        cmp     #$1C
+        bcc     L0DF6
+        lda     #$03                    ; Move left
+        bne     L0E23
+L0DF6:                                                  ; $0DF6
+        jsr     LE9EA
+        ora     #$01
+        bne     L0E23
+L0DFD:                                                  ; $0DFD
+        dey
+        bpl     L0D91
+
+; -----------------------------------------------------------------------------
+; Position-based AI ($0E00)
+; Use level layout to determine movement
+; -----------------------------------------------------------------------------
+L0E00:                                                  ; $0E00
+        ldy     $EE,x
+        cpy     #$04
+        bcs     L0E08
+        ldy     #$04
+L0E08:                                                  ; $0E08
+        cpy     #$1D
+        bcc     L0E0E
+        ldy     #$1C
+L0E0E:                                                  ; $0E0E
+        lda     $AD1E,y
+        clc
+        adc     $DC,x
+        sta     $40
+        lda     $AD3D,y
+        and     #$03
+        adc     #$85
+        sta     $41
+        ldy     #$29
+        lda     ($40),y                 ; Read level data
+
+; -----------------------------------------------------------------------------
+; Apply movement direction ($0E23)
+; A = direction (0=up, 1=right, 2=down, 3=left)
+; -----------------------------------------------------------------------------
+L0E23:                                                  ; $0E23
+        and     #$03
+        bne     L0E52
+        ; Direction 0: Move up
+        dec     $A9D6,x
+        dec     $A9D6,x
+        dec     $AA1E,x
+        dec     $AA1E,x
+        lda     $A9D6,x
+        and     #$07
+        sta     $A9D6,x
+        bne     L0E4F
+        dec     $EE,x
+        bpl     L0E4F
+        lda     #$1A
+        sta     $EE,x
+        lda     $CA,x
+        cmp     #$18
+        bcs     L0E4F
+        lda     #$38
+        sta     $CA,x
+L0E4F:                                                  ; $0E4F
+        jmp     L0D4A
+
+L0E52:                                                  ; $0E52
+        cmp     #$01
+        bne     L0E71
+        ; Direction 1: Move right
+        lda     $AA0C,x
+        adc     #$01
+        sta     $AA0C,x
+        inc     $A9C4,x
+        lda     $A9C4,x
+        cmp     #$04
+        bne     L0EC2
+        lda     #$00
+        sta     $A9C4,x
+        inc     $DC,x
+        bne     L0EC2
+
+L0E71:                                                  ; $0E71
+        cmp     #$02
+        bne     L0EAD
+        ; Direction 2: Move down
+        inc     $A9D6,x
+        inc     $A9D6,x
+        inc     $AA1E,x
+        inc     $AA1E,x
+        lda     $A9D6,x
+        cmp     #$08
+        bne     L0E90
+        lda     #$00
+        sta     $A9D6,x
+        jmp     L0D4A
+
+L0E90:                                                  ; $0E90
+        cmp     #$02
+        bne     L0EC2
+        inc     $EE,x
+        lda     $EE,x
+        cmp     #$1D
+        bne     L0EC2
+        lda     #$00
+        sta     $EE,x
+        lda     $CA,x
+        cmp     #$18
+        bcs     L0E4F
+        lda     #$38
+        sta     $CA,x
+        jmp     L0D4A
+
+L0EAD:                                                  ; $0EAD
+        ; Direction 3: Move left
+        lda     $AA0C,x
+        sec
+        sbc     #$02
+        sta     $AA0C,x
+        dec     $A9C4,x
+        bpl     L0EC2
+        lda     #$03
+        sta     $A9C4,x
+        dec     $DC,x
+L0EC2:                                                  ; $0EC2
+        jmp     L0D4A
+
+; -----------------------------------------------------------------------------
+; Special enemy behavior ($0EC5)
+; Handles type $4C enemies
+; -----------------------------------------------------------------------------
+L0EC5:                                                  ; $0EC5
+        lda     #$00
+        ldy     $A9D6,x
+        bne     L0EFA
+        lda     $EE,x
+        asl     a
+        tay
+        lda     $AC01,y
+        adc     $DC,x
+        sta     $40
+        lda     $AC02,y
+        adc     #$85
+        sta     $41
+        ldy     #$78
+        lda     ($40),y
+        bmi     L0EFD
+        iny
+        lda     ($40),y
+        bmi     L0EFD
+        inc     $EE,x
+        lda     #$04
+        ldy     $EE,x
+        cpy     #$1D
+        bne     L0EFA
+L0EF3:                                                  ; $0EF3
+        lda     #$38
+        sta     $CA,x
+        jmp     L0D4A
+
+L0EFA:                                                  ; $0EFA
+        sta     $A9D6,x
+L0EFD:                                                  ; $0EFD
+        lda     $DC,x
+        asl     a
+        asl     a
+        asl     a
+        adc     #$14
+        sta     $40
+        lda     $EE,x
+        asl     a
+        asl     a
+        asl     a
+        adc     #$15
+        sta     $41
+        ldy     #$01
+L0F11:                                                  ; $0F11
+        lda     $B2,y
+        beq     L0F42
+        lda     $BA,y
+        sec
+        sbc     $40
+        bcs     L0F22
+        eor     #$FF
+        adc     #$01
+L0F22:                                                  ; $0F22
+        cmp     #$10
+        bcs     L0F42
+        lda     $C2,y
+        sec
+        sbc     $41
+        bcs     L0F32
+        eor     #$FF
+        adc     #$01
+L0F32:                                                  ; $0F32
+        cmp     #$10
+        bcs     L0F42
+        lda     $AB51,y
+        tay
+        lda     #$70
+        jsr     L7C26                   ; Apply effect
+        jmp     L0EF3
+
+L0F42:                                                  ; $0F42
+        dey
+        bpl     L0F11
+        jmp     L0D4A
+
+; -----------------------------------------------------------------------------
+; Enemy movement handler ($0F48)
+; Called when enemy has AI state set
+; -----------------------------------------------------------------------------
+L0F48:                                                  ; $0F48
+        jsr     L0F61
+        lda     $CA,x
+        cmp     #$0C
+        bcs     L0F5E
+        lda     $AA42,x
+        bpl     L0F5E
+        lda     $A9B2,x
+        beq     L0F5E
+        jsr     L0F61
+L0F5E:                                                  ; $0F5E
+        jmp     L0D4A
+
+L0F61:                                                  ; $0F61
+        dec     $A9B2,x
+        and     #$7F
+        tay
+        lda     $AA30,x
+        bpl     L0F73
+        tya
+        lsr     a
+        tay
+        bne     L0F73
+        ldy     #$01
+L0F73:                                                  ; $0F73
+        jmp     L0F91
+
+; Unreachable code / alternate entry point
+        lda     $A9FA,x
+        cmp     #$0A
+        bcs     L0F91
+        inc     $A9FA,x
+        lda     $ACB6,y
+        sta     $CA,x
+        cmp     #$04
+        bne     L0F8D
+        lda     #$0A
+        sta     $CA,x
+L0F8D:                                                  ; $0F8D
+        lda     #$0A
+        bne     L0F98
+L0F91:                                                  ; $0F91
+        lda     $ACB6,y
+        sta     $CA,x
+        lda     #$04
+L0F98:                                                  ; $0F98
+        sta     $38
+        lda     $DC,x
+        sta     $39
+        lda     $AA0C,x
+        sta     $3A
+        lda     $0193,x
+        bpl     L0FD1
+        ; Negative player index - move left
+        dec     $DC,x
+        lda     $AA0C,x
+        sec
+        sbc     #$08
+        sta     $AA0C,x
+        jsr     L105B                   ; Check bubble collision
+        lda     $CA,x
+        cmp     #$06
+        bcs     L100A
+        jsr     L7BFE                   ; Check platform
+        beq     L0FC7
+        ldy     #$00
+        lda     ($40),y
+        bmi     L100B
+L0FC7:                                                  ; $0FC7
+        ldy     #$29
+        lda     ($40),y
+        bmi     L100B
+        ldy     #$50
+        bne     L0FFE
+
+L0FD1:                                                  ; $0FD1
+        ; Positive player index - move right
+        lda     $DC,x
+        cmp     #$1C
+        beq     L100B
+        inc     $DC,x
+        lda     $AA0C,x
+        clc
+        adc     #$08
+        sta     $AA0C,x
+        jsr     L105B                   ; Check bubble collision
+        lda     $CA,x
+        cmp     #$06
+        bcs     L100A
+        jsr     L7BFE                   ; Check platform
+        beq     L0FF6
+        ldy     #$01
+        lda     ($40),y
+        bmi     L100B
+L0FF6:                                                  ; $0FF6
+        ldy     #$28
+        lda     ($40),y
+        bmi     L100B
+        ldy     #$51
+L0FFE:                                                  ; $0FFE
+        lda     ($40),y
+        bmi     L100B
+        lda     $A9B2,x
+        and     #$7F
+        sta     $A9B2,x
+L100A:                                                  ; $100A
+        rts
+
+L100B:                                                  ; $100B
+        ; Collision detected - reset position
+        lda     $3A
+        sec
+        sbc     #$14
+        and     #$F8
+        adc     #$13
+        sta     $AA0C,x
+        lda     $39
+        sta     $DC,x
+        lda     $38
+        ldy     $A9B2,x
+        bpl     L1050
+        ldy     #$00
+        lda     $BB
+        sec
+        sbc     $AA0C,x
+        bcs     L1030
+        eor     #$FF
+        adc     #$01
+L1030:                                                  ; $1030
+        cmp     #$10
+        bcs     L1045
+        lda     $C3
+        sec
+        sbc     $AA1E,x
+        bcs     L1040
+        eor     #$FF
+        adc     #$01
+L1040:                                                  ; $1040
+        cmp     #$10
+        bcs     L1045
+        iny
+L1045:                                                  ; $1045
+        tya
+        sta     $0193,x
+        lda     $38
+        sta     $AA42,x
+        lda     #$34
+L1050:                                                  ; $1050
+        sta     $CA,x
+        lda     #$00
+        sta     $A9C4,x
+        sta     $A9B2,x
+        rts
+
+; -----------------------------------------------------------------------------
+; Check bubble collision ($105B)
+; Checks if enemy collides with any bubbles
+; -----------------------------------------------------------------------------
+L105B:                                                  ; $105B
+        ldy     #$05
+L105D:                                                  ; $105D
+        lda     $B4,y                   ; Get bubble state
+        beq     L108C                   ; Skip if empty
+        cmp     #$16
+        bcs     L106A
+        cmp     #$0B
+        bcs     L108C
+L106A:                                                  ; $106A
+        lda     $BC,y                   ; Bubble X
+        sec
+        sbc     $AA0C,x                 ; Enemy X
+        bcs     L1077
+        eor     #$FF
+        adc     #$01
+L1077:                                                  ; $1077
+        cmp     #$10
+        bcs     L108C
+        lda     $C4,y                   ; Bubble Y
+        sec
+        sbc     $AA1E,x                 ; Enemy Y
+        bcs     L1088
+        eor     #$FF
+        adc     #$01
+L1088:                                                  ; $1088
+        cmp     #$10
+        bcc     L1090                   ; Collision!
+L108C:                                                  ; $108C
+        dey
+        bpl     L105D
+        rts
+
+; -----------------------------------------------------------------------------
+; Handle bubble capture ($1090)
+; Enemy captured by bubble
+; -----------------------------------------------------------------------------
+L1090:                                                  ; $1090
+        tya
+        asl     a
+        adc     #$18
+        sta     $CA,x                   ; Set captured state
+        lda     $B4,y
+        cmp     #$0A
+        beq     L10A1
+        cmp     #$16
+        bcc     L10B1
+L10A1:                                                  ; $10A1
+        lda     $87A2,y
+        pha
+        lda     #$FF
+        sta     $87A2,y
+        sta     $87CA,y
+        sta     $87F2,y
+        pla
+L10B1:                                                  ; $10B1
+        sta     $AA30,x
+        pha
+        lda     #$00
+        sta     $B4,y                   ; Clear bubble
+        sta     $863A,y
+        sta     $A9B2,x
+        lda     #$FF
+        sta     $85C2,y
+        lda     #$A0
+        sta     $A9FA,x
+        pla
+        tay
+        lda     $AB81,y
+        sta     $AA42,x
+        rts
+
