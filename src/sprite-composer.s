@@ -428,6 +428,7 @@ L_E931:
 
 ; D_E968 is defined as forward reference in bb-master.s
     ; Entity inactive - advance screen position
+D_E968:
     lda  $3C                ; D_E968 - OLDLIN+1
     clc
     adc  #$09
@@ -450,6 +451,7 @@ D_E973:
     inc  CURLIN                ; CURLIN
 
 ; D_E97A is defined as forward reference in bb-master.s
+D_E97A:
     dex                        ; D_E97A
     bpl  L_E931                ; Loop for all entities
 

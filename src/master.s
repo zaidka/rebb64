@@ -263,10 +263,7 @@ D_8B63      = $8B63     ; Level decompression buffer +$63
 D_8D00      = $8D00     ; Screen buffer page 2
 D_8E00      = $8E00     ; Screen buffer page 3
 D_C58E      = $C58E     ; Level hole/bubble current metadata (100 bytes)
-; NOTE: D_FF30: and D_FF94: labels in final-data.s are off by 1 due to padding bytes
-; Use these explicit equates for the correct addresses
-D_FF30      = $FF30     ; Level background color metadata (100 bytes)  
-D_FF94      = $FF94     ; Level symmetry/sidebar index metadata (100 bytes)
+; D_FF30 and D_FF94 are now defined as labels in final-data.s
 D_AB41      = $AB41     ; Entity sprite page table
 D_AB49      = $AB49     ; Entity sprite page high table
 D_AB51      = $AB51     ; Player score offset table
@@ -420,8 +417,6 @@ D_3AF0      = $3AF0     ; Self-modifying code target (screen scroll)
 D_3BA1      = $3BA1     ; Self-modifying code target (screen scroll)
 D_3BFA      = $3BFA     ; Self-modifying code target (screen scroll)
 D_3D1E      = $3D1E     ; Screen scroll output buffer 2
-; NOTE: D_3CB2:, D_3CBB:, etc. labels in entity-state-tables.s are at wrong positions
-; Use these explicit equates for correct addresses (similar to D_FF30 issue)
 D_3CB2      = $3CB2     ; Screen scroll data buffer 1
 D_3CBB      = $3CBB     ; Screen scroll color buffer
 D_3CC4      = $3CC4     ; Screen scroll saved data 1
@@ -594,14 +589,14 @@ D_E861      = $E861     ; Sprite pointer 3 high
 ; $E9xx - Entity/RNG routines
 D_E90E      = $E90E     ; Update game state
 D_E966      = $E966     ; Self-modifying: sprite frame offset
-D_E968      = $E968     ; Entity processing continuation
+; D_E968 now defined as label in sprite-composer.s
 D_E96F      = $E96F     ; Entity loop continuation
-D_E97A      = $E97A     ; Entity handler continuation
+; D_E97A now defined as label in sprite-composer.s
 D_E9B8      = $E9B8     ; Get sprite animation frame
 D_E9EA      = $E9EA     ; Random number generator (RNG)
 
 ; $EBxx - Entity state handlers
-L_EB0F      = $EB0F     ; Default state handler
+; L_EB0F now defined as label in entity-bubble-handler.s
 D_EB34      = $EB34     ; Alternate state handler
 D_EB3F      = $EB3F     ; Falling through floor handler
 D_EB94      = $EB94     ; Self-modifying: jump instruction
@@ -612,11 +607,11 @@ D_EBC4      = $EBC4     ; Reset velocities handler
 D_EBD9      = $EBD9     ; Platform physics handler
 
 ; $ECxx - Entity movement
-L_EC0C      = $EC0C     ; Next section continuation
+; L_EC0C now defined as label in entity-movement.s
 D_EC2C      = $EC2C     ; Alternate movement table load
 D_EC3C      = $EC3C     ; Platform collision check after climb
 D_EC7C      = $EC7C     ; Exit climbing state
-D_EC87      = $EC87     ; Continue processing after descent
+; D_EC87 now defined as label in entity-movement.s
 ; D_ECDF now defined as label in entity-movement.s
 
 ; $EDxx - Entity input handlers
@@ -634,7 +629,7 @@ D_EC87      = $EC87     ; Continue processing after descent
 D_EEB4      = $EEB4     ; Entity movement handler
 ; D_EEC8 now defined as label in entity-ai.s
 ; D_EEDF now defined as label in entity-ai.s
-D_EEEB      = $EEEB     ; Check platforms for left movement
+; D_EEEB now defined as label in entity-ai.s
 
 ; $EFxx - Entity physics
 D_EF15      = $EF15     ; Self-modified RTS
@@ -642,7 +637,7 @@ D_EF15      = $EF15     ; Self-modified RTS
 D_EF3B      = $EF3B     ; Right movement platform check
 ; D_EF4C now defined as label in entity-ai.s
 D_EFA0      = $EFA0     ; Normal vertical movement
-L_EFBC      = $EFBC     ; Next section start (platform check)
+; L_EFBC now defined as label in entity-physics-cont.s
 ; D_EFEA now defined as label in entity-physics-cont.s
 D_A9C6      = $A9C6     ; Projectile state array 1
 D_A9D8      = $A9D8     ; Projectile state array 2
@@ -669,8 +664,8 @@ D_F0FF      = $F0FF     ; Title screen text data
 D_F100      = $F100     ; Title screen text data
 L_F1A8      = $F1A8     ; Title screen data (appears as illegal opcodes)
 D_F1AC      = $F1AC     ; Credits/score check routine
-L_F201      = $F201     ; Music selection
-L_F20A      = $F20A     ; Credits handler return
+; L_F201 now defined as label in credits-handler-partial.s
+; L_F20A now defined as label in credits-handler-partial.s
 ; D_F20B, D_F211, D_F217 are now defined in credits-handler-partial.s
 ; D_F256 and D_F2AE are now defined as labels in music-tables.s
 
@@ -678,7 +673,7 @@ L_F20A      = $F20A     ; Credits handler return
 ; D_F3B9 and D_F418 are now aliases to FREQ_TABLE_LO and FREQ_TABLE_HI
 ; which are labels defined within the MUSICFREQS segment
 D_4CF3      = $4CF3     ; External routine (called from sound engine)
-L_F846      = $F846     ; Forward reference within sound code flow
+; L_F846 now defined as label in sound-engine.s
 D_F477      = $F477     ; Initialize sound tables
 D_F4BD      = $F4BD     ; Sound init routine
 D_F53C      = $F53C     ; Sound update routine (called every frame)
@@ -704,6 +699,7 @@ D_F31C      = $F31C     ; Sound/music data byte
 D_F31D      = $F31D     ; Sound/music data byte
 D_F31E      = $F31E     ; Sound/music data byte
 D_F31F      = $F31F     ; Sound/music data byte
+D_F320      = $F320     ; Sound/music data byte
 D_F321      = $F321     ; Sound/music data byte
 D_F322      = $F322     ; Sound/music data byte
 D_F323      = $F323     ; Sound frequency/pitch table
@@ -959,7 +955,6 @@ D_8CA9      = $8CA9     ; Item setup routine
 ; CODE START - $0400
 ; ============================================================================
 .segment "CODE"
-.org $0400
 
 ; ============================================================================
 ; [DATA] GAME VARIABLES ($0400-$045B)
@@ -1560,7 +1555,6 @@ D_0786:
 
 ; Code section $4800-$4AFF
 .segment "CODE_4800"
-.org $4800
 .include "init-routines.s"
 .include "loader.s"
 
@@ -1573,7 +1567,6 @@ D_0786:
 
 ; Level renderer and screen setup
 .segment "CODE_E000"
-.org $E000
 .include "level-renderer.s"
 
 ; Sprite display and animation system ($E3A7-$E553, 430 bytes)
@@ -1605,26 +1598,21 @@ D_0786:
 
 ; Music tables ($F240-$F2C3, 132 bytes)
 .segment "MUSICTABLES"
-.org $F240
 .include "music-tables.s"
 
 ; Music command handlers ($7305-$743F, 315 bytes)
 ; Previously embedded in level-data.bin, now proper code
 .segment "MUSICHANDLERS"
-.org $7305
 .include "music-command-handlers.s"
 
 ; Music & sound effect data tables
 .segment "CODE_F2C4"
-.org $F2C4
 .include "music-sound-data.s"
 
 ; Sound engine - SID music and effects system
 .segment "CODE_F4BC"
-.org $F4BC
 .include "sound-engine.s"
 
 ; Final data section
 .segment "CODE_FE00"
-.org $FE00
 .include "final-data.s"

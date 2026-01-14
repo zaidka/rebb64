@@ -235,6 +235,7 @@ D_EEDF:
     rts
     
 ; Check platform cells for leftward movement - D_EEEB
+D_EEEB:
     sty  D_EF15                 ; Store Y (self-modifying: changes RTS below to different opcode)
     lda  ZP_23                  ; Load level index
     bne  L_EF08                 ; If non-zero, move without checks

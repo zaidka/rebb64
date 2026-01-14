@@ -208,6 +208,7 @@ L_EB08:
     jmp  D_EBC4                 ; Handle movement bit 2 (reset velocities)
 
 ; Animation frame update at $EB0F
+L_EB0F:
     inc  D_8610,x               ; Increment animation counter
     lda  D_8610,x
     cmp  #$02                   ; Every 2 frames?

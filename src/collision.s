@@ -473,14 +473,15 @@ L_0C74:
 D_0C9C:
         jmp     D_0CC1                          ; $0C9C - Choose enemy type (self-modifying)
 
-        ; ALTERNATE SPAWN LOGIC (unused in normal gameplay)
-        .byte   $c6                             ; $0C9F - Opcode byte (DEC)
-D_0CA0:
-        .byte   $4c,$10,$05                     ; $0CA0 - JMP $0510 (alternate handler)
+        ; ALTERNATE SPAWN LOGIC (unreachable - dead code)
+        ; This code is never executed but exists in the original binary
+        dec     ZP_4C                           ; $0C9F - Decrement temp storage
+        bpl     L_0CA8_random_spawn             ; $0CA1 - Branch if still positive
 
         ; Self-modifying spawn type selector
         lda     #$4c                            ; $0CA3 - JMP opcode
         sta     D_0C9C                          ; $0CA5 - Modify jump at $0C9C
+L_0CA8_random_spawn:
         jsr     D_E9EA                          ; $0CA8 - Get random number
         clc                                     ; $0CAB
         adc     D_5BFF                          ; $0CAC - Add to level seed

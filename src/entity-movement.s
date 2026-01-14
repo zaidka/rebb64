@@ -16,6 +16,7 @@
 ; Continuation from platform climbing handler (jumped to from D_EBD9 via beq)
 ; This handles the climbing state counter and Y position updates
 ; Entry at L_EC0C
+L_EC0C:
     ldy  D_87C8,x               ; Load secondary collision state
     bpl  L_EC17                 ; If positive, use as-is
     lda  #$00                   ; Reset to zero if negative
@@ -101,6 +102,7 @@ L_EC70:
     jmp  L_EB0F                 ; Jump to animation update
 
 ; Horizontal movement handler - processes left/right velocity - D_EC87
+D_EC87:
     lda  D_8840,x               ; Load horizontal velocity
     bpl  L_ECB0                 ; If positive/zero, check right movement
     

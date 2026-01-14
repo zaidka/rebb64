@@ -180,15 +180,12 @@ D_FE8F:
     .byte $00                    ; $FEF7
     .byte $FC, $CC, $CC, $CC     ; $FEF8
     .byte $CC, $CC, $CC          ; $FEFC
-
-D_FEFF:
     .byte $00                    ; $FEFF
 
 ; Letter E (enclosed shape)
-D_FF00:
     .byte $F0, $CC, $CC, $CC     ; $FF00
     .byte $CC, $CC, $F0          ; $FF04
-    
+
 ; Letter F
     .byte $00                    ; $FF07
     .byte $FC, $C0, $C0, $F0     ; $FF08
@@ -222,12 +219,13 @@ D_FF00:
 
 L_FF2F:                              ; Label at $FF2F (padding byte before D_FF30 table)
     .byte $00                    ; $FF2F (padding/alignment)
-    .byte $21, $87, $27, $9D     ; $FF30 - bgColors table starts here (use D_FF30 equate)
+
+; Level background color metadata table (100 bytes)
+D_FF30:
+    .byte $21, $87, $27, $9D     ; $FF30 - bgColors table starts here
     .byte $5D, $98, $63, $C1     ; $FF34
     .byte $87, $63, $BF, $63     ; $FF38
     .byte $21, $63, $BF          ; $FF3C
-
-D_FF3F:
     .byte $41, $97, $27, $41     ; $FF3F
     .byte $C1, $6E, $63, $BF     ; $FF43
     .byte $63, $87, $BF, $87     ; $FF47
@@ -246,26 +244,20 @@ D_FF3F:
     .byte $21, $63, $21, $27     ; $FF7B
     .byte $41, $41, $27, $BF     ; $FF7F
     .byte $27, $A1, $27, $21     ; $FF83
-
-D_FF87:
     .byte $87, $C1, $24, $F1     ; $FF87
     .byte $C1, $E1, $C1, $63     ; $FF8B
     .byte $BF, $6E, $27, $87     ; $FF8F
     .byte $27                    ; $FF93
 
-L_FF93:                              ; Label at $FF93 (padding byte before D_FF94 table)  
-    .byte $FF, $80, $81, $FF     ; $FF94 - symmetry/sidebarIndex table starts here (use D_FF94 equate)
+; Level symmetry/sidebar index metadata table (100 bytes)
+; NOTE: No padding byte - D_FF94 starts immediately after D_FF87
+D_FF94:
+    .byte $FF, $80, $81, $FF     ; $FF94 - symmetry/sidebarIndex table starts here
     .byte $02, $03, $84, $85     ; $FF98
     .byte $86, $87, $88, $89     ; $FF9C
-
-D_FFA0:
     .byte $0A, $0B, $0C, $8D     ; $FFA0
     .byte $0E, $8F               ; $FFA4
-
-D_FFA6:
     .byte $FF                    ; $FFA6
-
-D_FFA7:
     .byte $10, $91, $92, $93     ; $FFA7
     .byte $14, $15, $96, $97     ; $FFAB
     .byte $98, $7F, $99, $1A     ; $FFAF
@@ -286,8 +278,6 @@ D_FFA7:
     .byte $B3, $FF, $7F, $34     ; $FFEB
     .byte $7F, $7F, $35, $B6     ; $FFEF
     .byte $B7, $38, $39, $7F     ; $FFF3
-
-D_FFF7:
     .byte $BA, $29, $00          ; $FFF7
 
 ; Note: The PRG file ends at $FFFA, not $FFFB

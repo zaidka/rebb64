@@ -13,7 +13,6 @@
 
 ; First part of game init code
         .segment "GAMEINIT1"
-        .org $A428
 
 ;-------------------------------------------------------------------------------
 ; Game Initialization Routine ($A428-$A47D)
@@ -109,7 +108,6 @@ D_A428:
 ;-------------------------------------------------------------------------------
 
         .segment "GAMEINIT2"
-        .org $A5A0
 
 D_A5A0:
         jsr     D_0885              ; 20 85 08 - Clear/setup routine

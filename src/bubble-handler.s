@@ -156,8 +156,7 @@ L_3E58_set_player:
         jmp     D_3E94                              ; $3E5B - Jump to sprite setup
 
 L_3E5E_check_type_08:
-        .byte   $C9                                 ; $3E5E - CMP #$08 (incomplete)
-        php                                         ; $3E5F - (Data or PHP instruction?)
+        cmp     #$08                                ; $3E5E - Is it type $08?
         bne     L_3E6E_reset_state                  ; $3E60
         
         ; Type $08: Deactivate entity

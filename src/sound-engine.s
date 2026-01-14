@@ -105,11 +105,12 @@ L_F54C:
 L_F557:
     dex                         ; ca           $f557  ; Next voice
     bpl  L_F542                 ; 10 e8        $f558  ; Loop all 3 voices
+L_F55A:
     rts                         ; 60           $f55a
 D_F55B:
-    .byte $d6                   ; $f55b
-    ldy  #$d0                   ; a0 d0        $f55c
-    .byte $FB, $B5, $8A        ; fb b5 8a     $f55e (illegal isc)
+    dec  $a0,x                  ; d6 a0        $f55b
+    bne  L_F55A                 ; d0 fb        $f55d
+    lda  $8a,x                  ; b5 8a        $f55f
     sta  $85                    ; 85 85        $f561
     lda  $8d,x                  ; b5 8d        $f563
     sta  $86                    ; 85 86        $f565
@@ -133,8 +134,7 @@ L_F581:
     cmp  #$5f                   ; c9 5f        $f583
     bcs  L_F57E                 ; b0 f7        $f585
     adc  $87,x                  ; 75 87        $f587
-    .byte $85                   ; $f589
-    sei                         ; 78           $f58a
+    sta  $78                    ; 85 78        $f589
     lda  D_F305,x               ; bd 05 f3     $f58b
     beq  L_F57E                 ; f0 ee        $f58e
     lda  #$08                   ; a9 08        $f590
@@ -239,6 +239,7 @@ D_F659:
     lda  D_F334,y               ; b9 34 f3     $f660
     sta  TESSION,x              ; 95 9b        $f663
     sta  $7b                    ; 85 7b        $f665
+D_F667:
     lda  D_F326,y               ; b9 26 f3     $f667
     sta  D_F33B,y               ; 99 3b f3     $f66a
     lda  D_F325,y               ; b9 25 f3     $f66d
@@ -267,8 +268,7 @@ D_F68D:
     rts                         ; 60           $f6a4
 D_F6A5:
     lda  D_F335,y               ; b9 35 f3     $f6a5
-    .byte $29                   ; $f6a8
-    php                         ; 08           $f6a9
+    and  #$08                   ; 29 08        $f6a8
     beq  L_F6C2                 ; f0 16        $f6aa
     lda  $a0,x                  ; b5 a0        $f6ac
     cmp  D_F336,y               ; d9 36 f3     $f6ae
@@ -381,8 +381,7 @@ D_F776:
 L_F78A:
     lda  D_F328,y               ; b9 28 f3     $f78a
     beq  L_F7FA                 ; f0 6b        $f78d
-    .byte $29                   ; $f78f
-    php                         ; 08           $f790
+    and  #$08                   ; 29 08        $f78f
     beq  L_F7E0                 ; f0 4d        $f791
     cpx  #$02                   ; e0 02        $f793
     beq  L_F7E0                 ; f0 49        $f795
@@ -456,9 +455,7 @@ L_F814:
     sbc  #$01                   ; e9 01        $f81a
     sta  D_F339,y               ; 99 39 f3     $f81c
 D_F81F:
-    .byte $a5                   ; $f81f
-D_F820:
-    .byte $7a                   ; $f820 - NOP (non-canonical opcode $7a)
+    lda  $7a                    ; a5 7a        $f81f
     clc                         ; 18           $f821
     adc  D_F31D,y               ; 79 1d f3     $f822
     sta  TXTPTR                 ; 85 7a        $f825
@@ -474,11 +471,12 @@ L_F82D:
     clc                         ; 18           $f83a
     adc  D_F31F,y               ; 79 1f f3     $f83b
     sta  TXTPTR                 ; 85 7a        $f83e
-    .byte $b9                   ; $f840
-    jsr  D_4CF3                 ; 20 f3 4c     $f841
-    .byte $5c, $f8, $b9         ; $f844 - NOP (non-canonical opcode $5c)
-    .byte $3B, $F3, $F0        ; 3b f3 f0     $f847 (illegal rla)
-    .byte $27, $38             ; 27 38        $f84a (illegal rla)
+    lda  D_F320,y               ; b9 20 f3     $f840
+    jmp  D_F85C                 ; 4c 5c f8     $f843
+L_F846:
+    lda  D_F33B,y               ; b9 3b f3     $f846
+    beq  L_F872                 ; f0 27        $f849
+    sec                         ; 38           $f84b
     sbc  #$01                   ; e9 01        $f84c
     sta  D_F33B,y               ; 99 3b f3     $f84e
 L_F851:
@@ -490,6 +488,7 @@ L_F851:
 D_F85C:
     adc  $7b                    ; 65 7b        $f85c
     sta  $7b                    ; 85 7b        $f85e
+L_F860:
     ldy  D_7436,x               ; bc 36 74     $f860
     lda  TXTPTR                 ; a5 7a        $f863
     sta  DFLTN,x                ; 95 98        $f865
@@ -497,10 +496,18 @@ D_F85C:
     lda  $7b                    ; a5 7b        $f86a
     sta  TESSION,x              ; 95 9b        $f86c
     sta  SID_V1_FREQ_HI,y       ; 99 01 d4     $f86e - SID_V1_FREQ_HI
+L_F871:
     rts                         ; 60           $f871
-    .byte $b9, $28, $f3, $29, $81, $f0, $e7, $10; $f872
-    .byte $06, $20, $59, $f6, $4c, $fb, $f7, $20; $f87a
-    .byte $67, $f6, $4c, $fb, $f7; $f882
+L_F872:
+    lda  D_F328,y               ; b9 28 f3     $f872
+    and  #$81                   ; 29 81        $f875
+    beq  L_F860                 ; f0 e7        $f877
+    bpl  L_F881                 ; 10 06        $f879
+    jsr  D_F659                 ; 20 59 f6     $f87b
+    jmp  L_F7FB                 ; 4c fb f7     $f87e
+L_F881:
+    jsr  D_F667                 ; 20 67 f6     $f881
+    jmp  L_F7FB                 ; 4c fb f7     $f884
 
 ; D_F887: Music/mode initialization routine
 D_F887:

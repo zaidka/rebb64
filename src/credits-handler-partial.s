@@ -90,11 +90,13 @@ L_F1F9:
     sta  $B0                    ; Clear status flag
 
     ; L_F201 - Music/mode selection handler (branch target from F1F7)
+L_F201:
     lda  D_F20B,x               ; Load music index from table
     ldy  D_F211,x               ; Load music parameter from table
     jmp  D_F887                 ; Jump to music handler
 
     ; L_F20A - Return point (branch target from F1DC and F1FB)
+L_F20A:
     rts                         ; Return from subroutine
 
 ; ==============================================================================
