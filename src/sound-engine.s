@@ -117,7 +117,7 @@ D_F55B:
 D_F56A:
     lda  #$01                   ; a9 01        $f56a
 D_F56C:
-    jsr  D_7420                 ; 20 20 74     $f56c
+    jsr  music_add_offset       ; 20 20 74     $f56c
 D_F56F:
     ldy  #$00                   ; a0 00        $f56f
     lda  ($85),y                ; b1 85        $f571
@@ -226,7 +226,7 @@ D_F63B:
 L_F649:
     sta  $a0,x                  ; 95 a0        $f649
     lda  #$02                   ; a9 02        $f64b
-    jsr  D_7420                 ; 20 20 74     $f64d
+    jsr  music_add_offset       ; 20 20 74     $f64d
     lda  $85                    ; a5 85        $f650
     sta  $8a,x                  ; 95 8a        $f652
     lda  $86                    ; a5 86        $f654

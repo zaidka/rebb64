@@ -238,13 +238,8 @@ D_0117      = $0117     ; Stack page temp buffer
 D_011F      = $011F     ; Stack page temp buffer
 D_0200      = $0200     ; Level pointer table (low bytes, 100 entries)
 D_0300      = $0300     ; Level pointer table (high bytes, 100 entries)
-D_7357      = $7357     ; Data table
-D_735A      = $735A     ; Data table
-D_7420      = $7420     ; Data table
-D_742D      = $742D     ; Data table offset
-D_7430      = $7430     ; Data table offset
-D_7436      = $7436     ; Data table
-D_7437      = $7437     ; Data table
+; D_7305-$7429: Music command handlers - now defined in music-command-handlers.s
+; D_742A-$743F: Music data tables - now defined in music-command-handlers.s
 D_A9A8      = $A9A8     ; Graphics composite dest 1 (9 bytes)
 D_A9B0      = $A9B0     ; Graphics mode flag
 D_A9B1      = $A9B1     ; Hurry-up timer
@@ -677,8 +672,7 @@ D_F1AC      = $F1AC     ; Credits/score check routine
 L_F201      = $F201     ; Music selection
 L_F20A      = $F20A     ; Credits handler return
 ; D_F20B, D_F211, D_F217 are now defined in credits-handler-partial.s
-D_F256      = $F256     ; Music data (in music-tables.bin)
-D_F2AE      = $F2AE     ; Music data (in music-tables.bin)
+; D_F256 and D_F2AE are now defined as labels in music-tables.s
 
 ; Frequency tables - defined in music-freqs.s (relocatable)
 ; D_F3B9 and D_F418 are now aliases to FREQ_TABLE_LO and FREQ_TABLE_HI
@@ -959,7 +953,7 @@ D_8CA9      = $8CA9     ; Item setup routine
 ; Binary data files - memory positions defined in linker config
 ; ============================================================================
 ; Included here so labels (e.g., FREQ_TABLE_LO) are defined before use
-.include "data/binaries.s"
+.include "binaries.s"
 
 ; ============================================================================
 ; CODE START - $0400
@@ -1608,6 +1602,17 @@ D_0786:
 
 ; Credits handler, music tables & level init ($F1AC-$F23F, 148 bytes)
 .include "credits-handler-partial.s"
+
+; Music tables ($F240-$F2C3, 132 bytes)
+.segment "MUSICTABLES"
+.org $F240
+.include "music-tables.s"
+
+; Music command handlers ($7305-$743F, 315 bytes)
+; Previously embedded in level-data.bin, now proper code
+.segment "MUSICHANDLERS"
+.org $7305
+.include "music-command-handlers.s"
 
 ; Music & sound effect data tables
 .segment "CODE_F2C4"
