@@ -428,9 +428,9 @@ D_045C      = $045C     ; Check player state routine
 D_47F8      = $47F8     ; Item table 1
 D_4FF8      = $4FF8     ; Item table 2
 D_58BF      = $58BF     ; Global level flag
-D_7BA6      = $7BA6     ; Screen setup routine
-D_7AE3      = $7AE3     ; Level 99 special handler
-D_7BC8      = $7BC8     ; Wait routine with delay
+; D_7BA6 - now defined as label in level-data-part2.s
+; D_7AE3 - now defined as label in level-data-part2.s
+; D_7BC8 - now defined as label in level-data-part2.s
 D_7D00      = $7D00     ; Level data destination
 D_A854      = $A854     ; Level data source
 ; D_48D0 defined as label in init-routines.s
@@ -525,24 +525,24 @@ D_ACED      = $ACED     ; Jump table
 D_ADB1      = $ADB1     ; Character mask table 1
 D_ADF9      = $ADF9     ; Character mask table 2
 
-; $7Bxx - Level/screen routines (in level-data.bin, not source)
+; $7Bxx - Level/screen routines - NOW IN level-data-part2.s
 ; D_05AD defined as label in master.s (code section)
-D_7BB3      = $7BB3     ; Bank RAM under I/O
-D_7BC3      = $7BC3     ; Wait for frame sync
-D_7BE8      = $7BE8     ; Game over sequence
-D_7BFE      = $7BFE     ; Terrain check routine
+; D_7BB3 - now defined as label in level-data-part2.s
+; D_7BC3 - now defined as label in level-data-part2.s
+; D_7BE8 - now defined as label in level-data-part2.s
+; D_7BFE - now defined as label in level-data-part2.s
 
-; $7Cxx - Score/collision routines
-D_7C21      = $7C21     ; Collision handler routine
-D_7C26      = $7C26     ; Add score routine
+; $7Cxx - Score/collision routines - NOW IN level-data-part2.s
+; D_7C21 - now defined as label in level-data-part2.s
+D_7C26      = $7C26     ; Add score routine (alias for D_7C24)
 
-; $7Exx - Input/pause routines
-D_7E80      = $7E80     ; Check for SPACE (pause)
-D_7EB3      = $7EB3     ; Read joystick/keyboard input
-D_7EC1      = $7EC1     ; Check for RUN/STOP (quit)
+; $7Exx - Input/pause routines - NOW IN level-data-part2.s
+; D_7E80 - now defined as label in level-data-part2.s
+; D_7EB3 - now defined as label in level-data-part2.s
+; D_7EC1 - now defined as label in level-data-part2.s
 
-; $7Fxx - Player death routines
-D_7F53      = $7F53     ; Player death handler
+; $7Fxx - Player death routines - NOW IN level-data-part2.s
+; D_7F53 - now defined as label in level-data-part2.s
 
 ; $87xx - Animation data
 D_8778      = $8778     ; Animation frame mask array
@@ -826,7 +826,7 @@ D_0A3A      = $0A3A     ; Bonus level data
 D_7F83      = $7F83     ; Bonus level handler
 D_A936      = $A936     ; Enemy score value table
 D_A965      = $A965     ; Special item score value table
-D_7C3C      = $7C3C     ; Bonus level score handler
+; D_7C3C - now defined as label in level-data-part2.s
 
 ; --- Special Item Effects Forward References ---
 ; D_2D65, D_2D88, D_2DAB, D_2DB2, D_2DAC are defined in bb-special-item-effects.s
@@ -940,8 +940,8 @@ D_9EE0      = $9EE0     ; Enemy template ROM table 5
 D_A804      = $A804     ; Player bonus data location
 D_A80D      = $A80D     ; "EXTEND" character table
 D_A988      = $A988     ; Enemy state temporary storage
-D_7B53      = $7B53     ; Unknown routine
-D_7BC6      = $7BC6     ; Wait for frame variant
+; D_7B53 - now defined as label in level-data-part2.s
+; D_7BC6 - now defined as label in level-data-part2.s
 L_A474      = $A474     ; READY label
 D_8CA9      = $8CA9     ; Item setup routine
 
@@ -1604,6 +1604,9 @@ D_0786:
 .segment "MUSICTABLES"
 .include "music-tables.s"
 
+; Level data part 2 ($7440-$7FFF, 3008 bytes)
+.include "level-data-part2.s"
+
 ; Music command handlers ($7305-$743F, 315 bytes)
 ; Previously embedded in level-data.bin, now proper code
 .segment "MUSICHANDLERS"
@@ -1613,9 +1616,15 @@ D_0786:
 .segment "CODE_F2C4"
 .include "music-sound-data.s"
 
+; Music frequency tables and related code
+.include "music-freqs-tables.s"
+
 ; Sound engine - SID music and effects system
-.segment "CODE_F4BC"
+.segment "CODE_F4BD"
 .include "sound-engine.s"
+
+; Sound Effects and Music Sequence Data
+.include "sfx-music-data.s"
 
 ; Final data section
 .segment "CODE_FE00"

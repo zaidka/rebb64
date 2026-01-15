@@ -180,9 +180,9 @@ D_FE8F:
     .byte $00                    ; $FEF7
     .byte $FC, $CC, $CC, $CC     ; $FEF8
     .byte $CC, $CC, $CC          ; $FEFC
-    .byte $00                    ; $FEFF
 
 ; Letter E (enclosed shape)
+    .byte $00                    ; $FEFF
     .byte $F0, $CC, $CC, $CC     ; $FF00
     .byte $CC, $CC, $F0          ; $FF04
 

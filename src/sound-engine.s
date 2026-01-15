@@ -1,7 +1,7 @@
 ; ============================================================================
 ; rebb64 - Sound Engine
 ; ============================================================================
-; Address Range: $F4BC-$F921 (1,126 bytes)
+; Address Range: $F4BD-$F921 (1,125 bytes)
 ;
 ; This is the complete SID sound and music system.
 ; Major routines:
@@ -9,9 +9,6 @@
 ;   - D_F53C (sound_update): Called every frame to update all 3 voices
 ;   - D_F887: Music/mode initialization (called from credits handler)
 ; ============================================================================
-
-; First byte at $F4BC - RTS from previous routine
-    rts                         ; 60           $f4bc
 
 ; ============================================================================
 ; SOUND_INIT ($F4BD)
