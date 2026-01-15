@@ -436,7 +436,7 @@ D_A854      = $A854     ; Level data source
 ; D_48D0 defined as label in init-routines.s
 D_4300      = $4300     ; Enemy template data table 1 (RAM copy)
 D_4400      = $4400     ; Enemy template data table 2 (RAM copy)
-D_4460      = $4460     ; Main game code entry point
+; D_4460 defined as label in game-init-early.s (Main game code entry point)
 D_4500      = $4500     ; Enemy template data table 3 (RAM copy)
 D_4600      = $4600     ; Platform Y position table / Enemy template data table 4
 D_4648      = $4648     ; Graphics work buffer (72 bytes)
@@ -1552,6 +1552,10 @@ D_0786:
 .include "bubble-handler.s"
 .include "sprite-init.s"
 .include "sprite-helpers.s"
+
+; Code section $4460-$47FF (early initialization and title screen)
+.segment "CODE_4460"
+.include "game-init-early.s"
 
 ; Code section $4800-$4AFF
 .segment "CODE_4800"
