@@ -27,6 +27,8 @@
 ; 3. Comparing and updating high score if needed
 ; ============================================================================
 ; D_E3A7 defined in bb-master.s
+.segment "CODE_E000"
+
 update_sprite_animations:
         lda     $30                     ; Get screen page
         eor     #$04                    ; Toggle between pages

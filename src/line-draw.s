@@ -20,6 +20,8 @@
 ; Uses Bresenham algorithm to draw lines between previous and current positions
 ; Creates motion blur / animation trail effect for player sprites
 ; ============================================================================
+.segment "CODE_E000"
+
 draw_animated_sprite:
         lda     #$60                    ; RTS opcode
         sta     L_E539                  ; Disable sprite display during draw

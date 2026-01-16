@@ -27,6 +27,8 @@
 ;   $0C-$15 = Various enemy types in bubbles
 ;   $18-$23 = Captured enemy sprites
 
+.segment "CODE"
+
 routine_3DB0:
         ldy     PESSION,x                           ; $3DB0 - Get entity state
         cpy     #$34                                ; $3DB2 - Is it bubble state?

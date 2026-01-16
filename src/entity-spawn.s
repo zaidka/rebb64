@@ -14,6 +14,8 @@
 ; Called from level initialization
 ; Input: A = entity count, ($02) = pointer to spawn data
 ;-------------------------------------------------------------------------------
+.segment "CODE"
+
 D_39D2:
         tay                         ; Transfer count to Y
         sta     D_8638              ; Store in data tables

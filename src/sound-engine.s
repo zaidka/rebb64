@@ -18,6 +18,8 @@
 
 ; sound_init: (descriptive name from reference)
 ; D_F4BD: (label defined in bb-master.s)
+.segment "CODE_F4BD"
+
     ldx  #$16                   ; a2 16        $f4bd  ; 23 SID registers to clear
 ; sound_init_loop: (descriptive name from reference)
 L_F4BF:

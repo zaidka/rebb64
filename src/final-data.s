@@ -20,6 +20,8 @@
 ; Pattern: [note, duration, note, duration, ...]
 ; Special bytes: $80/$82 = commands, $96/$98 = sequence control
 
+.segment "CODE_FE00"
+
 D_FE00:
     .byte $C4, $FD               ; $FE00 - Sequence pointer/reference
     .byte $80, $02               ; $FE02 - Command

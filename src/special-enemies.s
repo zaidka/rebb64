@@ -411,6 +411,8 @@ L12F6:
 ; Enemy that falls vertically and checks for collision.
 ; ============================================================================
 
+.segment "CODE"
+
 L12F9:
         inc     ZP_EE,x                 ; Move down one row
         jsr     L152B                   ; Check player collision

@@ -15,6 +15,8 @@
 ; ============================================================================
 
 ; D_F2C4 - Sound channel data table (accessed at $F5BB)
+.segment "CODE_F2C4"
+
     .byte $00                   ; $F2C4
 
 ; D_F2C5 - Sound parameter table (accessed at $F5C0)

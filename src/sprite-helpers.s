@@ -17,6 +17,8 @@
 ; Conditional sprite data writer
 ; Checks flags and writes space character if conditions are met
 
+.segment "CODE"
+
 D_3FB0:
         bne     L_3FBD                              ; $3FB0 - Exit if not zero
         bit     DATPTR+1                            ; $3FB2 - Test bit 7 of $42

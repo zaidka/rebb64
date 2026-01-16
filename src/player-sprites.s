@@ -170,6 +170,8 @@ next_bubble:
 ; player collision detection.
 ; ============================================================================
 
+.segment "CODE"
+
 ; External reference: L0D4A ($0D4A) defined in enemy-ai.s
 
 enemy_timer_handler:                                    ; $13BE

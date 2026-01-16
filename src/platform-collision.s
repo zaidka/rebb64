@@ -86,6 +86,8 @@
 ; These addresses point to operand bytes within instructions that are modified at runtime.
 ; WARNING: If code changes, these addresses must be updated!
 ;-------------------------------------------------------------------------------
+.segment "CODE"
+
 D_31B2 = $31B2      ; Operand high byte of JSR at $31B1 (modified at $3196)
 D_31B3 = $31B3      ; Operand low byte of JSR at $31B1 (modified at $319C)
 D_3200 = $3200      ; Operand byte of LDA #$xx at $31FF (modified at $319F)

@@ -18,6 +18,8 @@
 
 ; D_F1AC - Credit/score check routine
 ; Checks two player scores (X = 1 down to 0)
+.segment "CODE_E000"
+
     ldx  #$01                   ; Start with player 1
 
 L_F1AE:

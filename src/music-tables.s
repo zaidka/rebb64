@@ -23,6 +23,8 @@
 ; ============================================================================
 ; 17 pointers to music command handler routines in the $73xx range
 ; These point to CODE in music-command-handlers.s, not to music data!
+.segment "MUSICTABLES"
+
 music_track_pointers:               ; Historical name - actually command handlers
         .word   music_handler_00    ; $F240: Handler 0 - Set music parameter
         .word   music_handler_01    ; $F242: Handler 1 - Decrement and loop

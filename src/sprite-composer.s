@@ -22,6 +22,8 @@
 ;-------------------------------------------------------------------------------
 
 ; Entry at $E752 - Start composing sprite with character offset $38
+.segment "CODE_E000"
+
     ldy  #$00
     lda  #$38
     bne  L_E75D

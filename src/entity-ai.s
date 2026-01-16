@@ -15,6 +15,8 @@
 ;===============================================================================
 
 ; L_EDC7: Continuation from projectile spawn - jumped here when spawn aborted
+.segment "CODE_E000"
+
 L_EDC7:
     ldy  $02                    ; Restore Y register
     lda  #$FF                   ; Set value to $FF

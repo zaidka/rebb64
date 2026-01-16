@@ -16,6 +16,8 @@
 ;   $B631 - Item spawn positions C (upper nibble) + bubble spawns (lower nibble, 100 bytes)
 ; ==============================================================================
 
+.segment "CODE"
+
 ; Main level setup entry point
 setup_level_data:
 D_2B31:

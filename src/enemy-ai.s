@@ -12,6 +12,8 @@ LE9EA           := $E9EA                ; Random number generator
 ; ENEMY_AI_UPDATE ($0CF2) - Main enemy AI loop
 ; Iterates through all enemies and handles their behavior
 ; ============================================================================
+
+.segment "CODE"
 enemy_ai_update:                                        ; $0CF2
 D_0CF2 = enemy_ai_update                                ; Alias for external references
 D_CF2 = enemy_ai_update                                 ; Alias (alternate name)

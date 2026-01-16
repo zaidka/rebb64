@@ -17,6 +17,8 @@
 ; These appear to be fragments of entity state machine code or jump table data
 ; They are referenced by code in bb-screen-scroll.s
 
+.segment "CODE"
+
 L_3CB2:                                             ; Label at byte before D_3CB2 table
         .byte   $B5,$CA,$38,$E9,$18                 ; $3CB2
         .byte   $4A,$A8,$BD                         ; $3CB7

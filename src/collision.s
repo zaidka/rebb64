@@ -302,6 +302,8 @@ L_0BE8:
 ; ============================================================================
 ; ENEMY_SPAWN_HANDLER ($0BED)
 ; ============================================================================
+
+.segment "CODE"
 ; Handles spawning new enemies into the level.
 ; Uses self-modifying code for spawn timer countdown.
 ;

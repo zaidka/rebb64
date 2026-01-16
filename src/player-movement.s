@@ -5,6 +5,8 @@
 ; -----------------------------------------------------------------------------
 
 ; Entry point: $26BF - Player horizontal movement handler
+.segment "CODE"
+
 L_26BF:
         lda  D_87F0,x               ; bd f0 87     $26bf
         bne  L_26D9                 ; d0 15        $26c2

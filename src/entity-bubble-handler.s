@@ -15,6 +15,8 @@
 
 ; Entry point at $E9FD - Main bubble entity handler
 ; X register holds entity index
+.segment "CODE_E000"
+
     jsr  D_EDCD                 ; Update entity position
     lda  D_8818,x               ; Load animation frame data
     bmi  L_EA08                 ; If negative, process bubble physics

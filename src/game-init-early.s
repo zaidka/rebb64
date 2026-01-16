@@ -30,6 +30,8 @@
 ; Sets up random seed, copies game data, and initializes lookup tables.
 ;-------------------------------------------------------------------------------
 
+.segment "CODE_4460"
+
 D_4460:
         sei                                         ; Disable interrupts
 

@@ -558,6 +558,8 @@ animation_frame_loop:                   ; $17D5 - Loop back point (after initial
 ;   - Sets sprite pointer from D_8520,X (animation frame)
 ; ============================================================================
 
+.segment "CODE"
+
 update_sprite_positions:
         ldx     #$07                    ; a2 07    - 8 sprites (7 down to 0)
         ldy     #$0e                    ; a0 0e    - VIC offset (sprite 7 Y = $D00E)

@@ -14,6 +14,8 @@
 ; Creates a smooth vertical scrolling animation when entering a new level.
 ; Uses self-modifying code and double buffering for the effect.
 ;-------------------------------------------------------------------------------
+.segment "CODE"
+
         jsr     D_E494              ; Wait for frame sync
         
         ; Setup self-modifying code addresses (store screen page)

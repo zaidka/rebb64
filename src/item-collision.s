@@ -10,6 +10,8 @@
 ; - Clears entity state when collected
 ; ==============================================================================
 
+.segment "CODE"
+
 ; Entry point at $29BB - appears to be data/unused
 .byte   $de                             ; de           $29bb
 

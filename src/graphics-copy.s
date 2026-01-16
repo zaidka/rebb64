@@ -13,6 +13,8 @@
 ; Address: $3C01-$3CB1
 ; Initializes graphics state and composites sprite data
 ;-------------------------------------------------------------------------------
+.segment "CODE"
+
 D_3C01:
         lda     #$13                ; Graphics mode
         sta     D_A9B0

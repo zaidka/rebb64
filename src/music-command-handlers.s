@@ -42,6 +42,8 @@
 ; Handler 0 ($7305) - Set music parameter and update
 ; ============================================================================
 ; Loads a byte from music data and stores it in the F292 table
+.segment "MUSICHANDLERS"
+
 music_handler_00:
         lda     ($85),y                 ; b1 85        $7305
         ldy     $82,x                   ; b4 82        $7307

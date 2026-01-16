@@ -21,6 +21,8 @@
 ; ==============================================================================
 
 ; Title screen text data with embedded control codes
+.segment "CODE_E000"
+
     .byte $1F, $0B              ; Position control
 
     ; D_F0F0 - Special codes + £

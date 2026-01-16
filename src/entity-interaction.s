@@ -49,6 +49,8 @@
 ;   $ACCD,y - Vertical movement table
 ; ============================================================================
 
+.segment "CODE"
+
 ; --- Main bubble/entity interaction check ---
 ; Called to check if an entity should capture an enemy in a bubble
 ; Input: X = entity index

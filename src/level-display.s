@@ -16,6 +16,8 @@
 ;===============================================================================
 ; Two-byte storage area used for level completion bonus tracking
 ; D_37C7 is already declared as an equate in bb-master.s
+.segment "CODE"
+
         .byte   $00,$00                                         ; $37C7
 
 ;===============================================================================

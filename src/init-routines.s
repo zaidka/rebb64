@@ -25,6 +25,8 @@
 ; - Configures CIA chip
 ;-------------------------------------------------------------------------------
 
+.segment "CODE_4800"
+
 D_4800:
         sei                                         ; $4800 - Disable interrupts
         lda     R6510                               ; $4801 - Get CPU port config

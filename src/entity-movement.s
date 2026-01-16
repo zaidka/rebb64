@@ -16,6 +16,8 @@
 ; Continuation from platform climbing handler (jumped to from D_EBD9 via beq)
 ; This handles the climbing state counter and Y position updates
 ; Entry at L_EC0C
+.segment "CODE_E000"
+
 L_EC0C:
     ldy  D_87C8,x               ; Load secondary collision state
     bpl  L_EC17                 ; If positive, use as-is

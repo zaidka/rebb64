@@ -104,6 +104,8 @@ D_2D88:
 ; SPECIAL ITEM EFFECT HANDLERS
 ; ==============================================================================
 
+.segment "CODE"
+
 ; --- Set item type to 3 ($2DAB) ---
 ; Sets basic item properties
 ; Input: X = entity index

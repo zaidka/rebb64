@@ -22,6 +22,8 @@
 
 ; L_EFBC - Platform collision check with Y offset $51
 ; Jumps to L_EF7D (earlier routine) for actual collision detection
+.segment "CODE_E000"
+
 L_EFBC:
     ldy  #$51                   ; Cell offset for platform check
     bne  L_EF7D                 ; Always branch to collision handler

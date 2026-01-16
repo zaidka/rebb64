@@ -15,6 +15,8 @@
 ; 3. Ensures byte-perfect accuracy
 ; ==============================================================================
 
+.segment "CODE"
+
 ; Data/code fragment at $2A18-$2A27 (16 bytes)
 ; Appears to be position update code fragments
 .byte   $b5, $ba, $18, $7d, $a3, $a7, $95, $ba  ; $2a18

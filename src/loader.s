@@ -23,6 +23,8 @@
 ;   Y = Destination address high
 ;-------------------------------------------------------------------------------
 
+.segment "CODE_4800"
+
 D_4900:
         sei                                         ; $4900 - Disable interrupts
         sta     BSOUR                               ; $4901 - Store load ID

@@ -34,6 +34,8 @@
 ;   $31 - Bit counter (8 bits per byte)
 ;   $07 - Current byte being processed
 ; ============================================================================
+.segment "CODE_E000"
+
 setup_level_screen:
         ; Initialize screen pointer to $5448
         lda     #$48
