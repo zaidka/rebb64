@@ -13,6 +13,8 @@ LE9EA           := $E9EA                ; Random number generator
 ; Iterates through all enemies and handles their behavior
 ; ============================================================================
 enemy_ai_update:                                        ; $0CF2
+D_0CF2 = enemy_ai_update                                ; Alias for external references
+D_CF2 = enemy_ai_update                                 ; Alias (alternate name)
         ldx     #$11                    ; Start with entity 17
 L0CF4:                                                  ; $0CF4
         lda     $CA,x                   ; Get entity type
@@ -66,6 +68,7 @@ L0D45:                                                  ; $0D45
         bpl     L0D04                   ; Check next player
         bmi     L0D86                   ; No collision, do AI
 L0D4A:                                                  ; $0D4A
+L_0D4A = L0D4A                                          ; Alias for external references
         dex
         bpl     L0CF4                   ; Next entity
         rts
@@ -411,6 +414,7 @@ L0F61:                                                  ; $0F61
         bne     L0F73
         ldy     #$01
 L0F73:                                                  ; $0F73
+D_0F73 = L0F73                                          ; Alias for external references
         jmp     L0F91
 
 ; Unreachable code / alternate entry point
@@ -545,6 +549,7 @@ L1050:                                                  ; $1050
 ; Checks if enemy collides with any bubbles
 ; -----------------------------------------------------------------------------
 L105B:                                                  ; $105B
+D_105B = L105B                                          ; Alias for external references
         ldy     #$05
 L105D:                                                  ; $105D
         lda     $B4,y                   ; Get bubble state

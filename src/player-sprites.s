@@ -173,6 +173,7 @@ next_bubble:
 ; External reference: L0D4A ($0D4A) defined in enemy-ai.s
 
 enemy_timer_handler:                                    ; $13BE
+D_13BE = enemy_timer_handler                            ; Alias for external references
         ldx     #$11                    ; Process all 18 entities
 L13C0:                                                  ; $13C0
         dec     $A9FA,x                 ; Decrement timer

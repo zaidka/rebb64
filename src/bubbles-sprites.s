@@ -487,7 +487,8 @@ congratulations_text:
 
         .byte   $10                     ; $17BD - Dead byte (possibly padding)
 
-game_complete_sequence:                 ; $17BE - D_17BE defined in master.s (entry point)
+game_complete_sequence:                 ; $17BE - Entry point for game completion
+D_17BE = game_complete_sequence                         ; Alias for external references
 save_entity_init:
         ldx     #$05                    ; a2 05    - Loop counter
 
