@@ -272,10 +272,10 @@ D_05C5:
         inx                             ; X = 4
         stx     $8521                   ; Store to entity array
         inx                             ; X = 5
-        stx     $8548                   ; Store to entity array
-        lda     $8729                   ; Get saved state high
+        stx     D_8548                  ; Store to entity array
+        lda     D_8729                  ; Get saved state high
         pha                             ; Save on stack
-        lda     $8728                   ; Get saved state low
+        lda     D_8728                  ; Get saved state low
         pha                             ; Save on stack
         ldy     #$0B                    ; Default Y offset = 11
         lda     SUBFLG                  ; Get current level
@@ -294,22 +294,22 @@ L05F3:
         ldx     #$07                    ; Initialize 8 entities
 L05F5:
         lda     #$FF                    ; Value $FF
-        sta     $87A0,x                 ; Clear bubble state
-        sta     $87C8,x                 ; Clear vertical state
-        sta     $87F0,x                 ; Clear ascent state
-        sta     $8818,x                 ; Clear bubble timer
+        sta     D_87A0,x                ; Clear bubble state
+        sta     D_87C8,x                ; Clear vertical state
+        sta     D_87F0,x                ; Clear ascent state
+        sta     D_8818,x                ; Clear bubble timer
         lda     #$00                    ; Value $00
-        sta     $86D8,x                 ; Clear entity array
-        sta     $8700,x                 ; Clear entity array
-        sta     $8728,x                 ; Clear entity array
+        sta     D_86D8,x                ; Clear entity array
+        sta     D_8700,x                ; Clear entity array
+        sta     D_8728,x                ; Clear entity array
         txa                             ; Transfer X to A
-        sta     $86B0,x                 ; Store index
+        sta     D_86B0,x                ; Store index
         dex                             ; Next entity
         bpl     L05F5                   ; Loop if more
         pla                             ; Restore saved state low
-        sta     $8728                   ; Store back
+        sta     D_8728                  ; Store back
         pla                             ; Restore saved state high
-        sta     $8729                   ; Store back
+        sta     D_8729                  ; Store back
         txa                             ; X = $FF after loop
         ldx     #$11                    ; Clear 18 entity types
 L0620:
@@ -323,13 +323,13 @@ L062B:
         sta     ZP_DC,x                 ; Clear screen column array
         dex                             ; Next byte
         bpl     L062B                   ; Loop if more
-        sta     $8520                   ; Clear animation frame
+        sta     D_8520                  ; Clear animation frame
         sta     ZP_21                   ; Clear level complete flag
         sta     $46                     ; Clear temp
         sta     $47                     ; Clear temp
-        sta     $58FF                   ; Clear game buffer
-        sta     $593F                   ; Clear game buffer
-        sta     $58BF                   ; Clear game buffer
+        sta     D_58FF                  ; Clear game buffer
+        sta     D_593F                  ; Clear game buffer
+        sta     D_58BF                  ; Clear game buffer
         sta     SESSION                 ; Clear animation flag ($67)
         sta     ZP_68                   ; Clear timer
         sta     ARG                     ; Clear score value ($69)
@@ -337,7 +337,7 @@ L062B:
         sta     ZP_B0                   ; Clear temp
         ldx     #$48                    ; Clear 73 bytes
 L064E:
-        sta     $015D,x                 ; Clear buffer
+        sta     D_015D,x                ; Clear buffer
         dex                             ; Next byte
         bpl     L064E                   ; Loop if more
         ldx     #$05                    ; Clear 6 bytes
@@ -345,21 +345,21 @@ L0656:
         sta     FAC,x                   ; Clear FAC area ($61-$66)
         dex                             ; Next byte
         bpl     L0656                   ; Loop if more
-        stx     $A783                   ; Store $FF
-        stx     $A784                   ; Store $FF
+        stx     D_A783                  ; Store $FF
+        stx     D_A784                  ; Store $FF
         stx     VIC_SPR_ENA             ; Disable all sprites
         stx     ZP_6A                   ; Clear temp
         lda     #$10                    ; Value 16
-        sta     $5A7F                   ; Set buffer
+        sta     D_5A7F                  ; Set buffer
         lda     #$0A                    ; Value 10
-        sta     $5ABF                   ; Set buffer
+        sta     D_5ABF                  ; Set buffer
         jsr     D_F217                  ; Call sound routine
-        lda     $59BF                   ; Get level state
+        lda     D_59BF                  ; Get level state
         cmp     SUBFLG                  ; Compare to current level
         bne     L0692                   ; If different, skip
-        adc     $59FF                   ; Add offset
-        sta     $59BF                   ; Store back
-        inc     $59FF                   ; Increment offset
+        adc     D_59FF                  ; Add offset
+        sta     D_59BF                  ; Store back
+        inc     D_59FF                  ; Increment offset
         lda     SUBFLG                  ; Get level number
         asl     a                       ; Multiply by 2
         adc     #$09                    ; Add 9
@@ -382,9 +382,9 @@ clear_screen_buffers:
         ldx     #$00                    ; Clear index
         txa                             ; A = 0
 L069E:
-        sta     $7D00,x                 ; Clear screen buffer 1
-        sta     $7D80,x                 ; Clear screen buffer 2
-        sta     $7E00,x                 ; Clear screen buffer 3
+        sta     D_7D00,x                ; Clear screen buffer 1
+        sta     D_7D80,x                ; Clear screen buffer 2
+        sta     D_7E00,x                ; Clear screen buffer 3
         inx                             ; Next byte
         bpl     L069E                   ; Loop for 128 bytes
         rts

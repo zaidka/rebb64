@@ -22,7 +22,7 @@ L0CF4:                                                  ; $0CF4
         lda     $CA,x                   ; Get entity type
         cmp     #$24                    ; Is it a special type?
         bcs     L0D4E                   ; Yes, handle special
-        lda     $A9B2,x                 ; Get AI state
+        lda     D_A9B2,x                ; Get AI state
         beq     L0D02                   ; If zero, check for player collision
         jmp     L0F48                   ; Otherwise handle movement
 
@@ -42,7 +42,7 @@ L0D04:                                                  ; $0D04
         clc
         adc     #$02
         sec
-        sbc     $AA0C,x                 ; Subtract enemy X
+        sbc     D_AA0C,x                ; Subtract enemy X
         bcs     L0D21
         eor     #$FF                    ; Absolute value
         adc     #$01
@@ -51,7 +51,7 @@ L0D21:                                                  ; $0D21
         bcs     L0D45                   ; No, skip
         lda     $C2,y                   ; Get player Y
         sec
-        sbc     $AA1E,x                 ; Subtract enemy Y
+        sbc     D_AA1E,x                ; Subtract enemy Y
         bcs     L0D32
         eor     #$FF                    ; Absolute value
         adc     #$01
@@ -59,9 +59,9 @@ L0D32:                                                  ; $0D32
         cmp     #$10                    ; Within 16 pixels?
         bcs     L0D45                   ; No, skip
         tya
-        sta     $0193,x                 ; Store player index
+        sta     D_0193,x                 ; Store player index
         lda     $CA,x
-        sta     $AA42,x                 ; Store entity type
+        sta     D_AA42,x                ; Store entity type
         lda     #$34                    ; Set captured state
         sta     $CA,x
         bne     L0D4A
@@ -99,14 +99,14 @@ L0D67:                                                  ; $0D67
 ; Interleaved low/high bytes: lo0,hi0,lo1,hi1,...
 jump_table_lo := *                                      ; $0D68
 jump_table_hi := * + 1                                  ; $0D69
-        .byte   $B7,$11                 ; $24: $11B7
-        .byte   $D6,$10                 ; $25: $10D6
-        .byte   $14,$7C                 ; $26: $7C14
-        .byte   $74,$12                 ; $27: $1274
-        .byte   $B4,$12                 ; $28: $12B4
-        .byte   $73,$14                 ; $29: $1473
-        .byte   $73,$14                 ; $2A: $1473
-        .byte   $F9,$12                 ; $2B: $12F9
+        .byte   <L11B7,           >L11B7            ; $24: Falling item handler
+        .byte   <baron_skip_toggle,>baron_skip_toggle ; $25: Baron (skip toggle)
+        .byte   <D_7C14,          >D_7C14           ; $26: Platform collision check
+        .byte   <L1274,           >L1274            ; $27: Horizontal tracking enemy
+        .byte   <oscillating_enemy,>oscillating_enemy ; $28: Oscillating enemy
+        .byte   <player_death_handler,>player_death_handler ; $29: Player death
+        .byte   <player_death_handler,>player_death_handler ; $2A: Player death (duplicate)
+        .byte   <L12F9,           >L12F9            ; $2B: Vertically falling enemy
 
 L0D78:                                                  ; $0D78
         cmp     #$44                    ; Baron Von Blubba?
@@ -132,23 +132,23 @@ L0D86:                                                  ; $0D86
 L0D91:                                                  ; $0D91
         cpy     $3C
         beq     L0DFD                   ; Skip self
-        lda     $A9B2,y
+        lda     D_A9B2,y
         bne     L0DFD                   ; Skip if entity has AI state
         lda     $CA,y
         cmp     #$24
         bcs     L0DFD                   ; Skip special types
-        lda     $AA0C,x                 ; Get X position
+        lda     D_AA0C,x                ; Get X position
         sec
-        sbc     $AA0C,y
+        sbc     D_AA0C,y
         bcs     L0DAE
         eor     #$FF
         adc     #$01
 L0DAE:                                                  ; $0DAE
         cmp     #$10                    ; Within 16 pixels?
         bcs     L0DFD
-        lda     $AA1E,x                 ; Get Y position
+        lda     D_AA1E,x                ; Get Y position
         sec
-        sbc     $AA1E,y
+        sbc     D_AA1E,y
         bcs     L0DBF
         eor     #$FF
         adc     #$01
@@ -206,11 +206,11 @@ L0E08:                                                  ; $0E08
         bcc     L0E0E
         ldy     #$1C
 L0E0E:                                                  ; $0E0E
-        lda     $AD1E,y
+        lda     D_AD1E,y
         clc
         adc     $DC,x
         sta     $40
-        lda     $AD3D,y
+        lda     D_AD3D,y
         and     #$03
         adc     #$85
         sta     $41
@@ -225,13 +225,13 @@ L0E23:                                                  ; $0E23
         and     #$03
         bne     L0E52
         ; Direction 0: Move up
-        dec     $A9D6,x
-        dec     $A9D6,x
-        dec     $AA1E,x
-        dec     $AA1E,x
-        lda     $A9D6,x
+        dec     D_A9D6,x
+        dec     D_A9D6,x
+        dec     D_AA1E,x
+        dec     D_AA1E,x
+        lda     D_A9D6,x
         and     #$07
-        sta     $A9D6,x
+        sta     D_A9D6,x
         bne     L0E4F
         dec     $EE,x
         bpl     L0E4F
@@ -249,15 +249,15 @@ L0E52:                                                  ; $0E52
         cmp     #$01
         bne     L0E71
         ; Direction 1: Move right
-        lda     $AA0C,x
+        lda     D_AA0C,x
         adc     #$01
-        sta     $AA0C,x
-        inc     $A9C4,x
-        lda     $A9C4,x
+        sta     D_AA0C,x
+        inc     D_A9C4,x
+        lda     D_A9C4,x
         cmp     #$04
         bne     L0EC2
         lda     #$00
-        sta     $A9C4,x
+        sta     D_A9C4,x
         inc     $DC,x
         bne     L0EC2
 
@@ -265,15 +265,15 @@ L0E71:                                                  ; $0E71
         cmp     #$02
         bne     L0EAD
         ; Direction 2: Move down
-        inc     $A9D6,x
-        inc     $A9D6,x
-        inc     $AA1E,x
-        inc     $AA1E,x
-        lda     $A9D6,x
+        inc     D_A9D6,x
+        inc     D_A9D6,x
+        inc     D_AA1E,x
+        inc     D_AA1E,x
+        lda     D_A9D6,x
         cmp     #$08
         bne     L0E90
         lda     #$00
-        sta     $A9D6,x
+        sta     D_A9D6,x
         jmp     L0D4A
 
 L0E90:                                                  ; $0E90
@@ -294,14 +294,14 @@ L0E90:                                                  ; $0E90
 
 L0EAD:                                                  ; $0EAD
         ; Direction 3: Move left
-        lda     $AA0C,x
+        lda     D_AA0C,x
         sec
         sbc     #$02
-        sta     $AA0C,x
-        dec     $A9C4,x
+        sta     D_AA0C,x
+        dec     D_A9C4,x
         bpl     L0EC2
         lda     #$03
-        sta     $A9C4,x
+        sta     D_A9C4,x
         dec     $DC,x
 L0EC2:                                                  ; $0EC2
         jmp     L0D4A
@@ -312,15 +312,15 @@ L0EC2:                                                  ; $0EC2
 ; -----------------------------------------------------------------------------
 L0EC5:                                                  ; $0EC5
         lda     #$00
-        ldy     $A9D6,x
+        ldy     D_A9D6,x
         bne     L0EFA
         lda     $EE,x
         asl     a
         tay
-        lda     $AC01,y
+        lda     D_AC01,y
         adc     $DC,x
         sta     $40
-        lda     $AC02,y
+        lda     D_AC02,y
         adc     #$85
         sta     $41
         ldy     #$78
@@ -340,7 +340,7 @@ L0EF3:                                                  ; $0EF3
         jmp     L0D4A
 
 L0EFA:                                                  ; $0EFA
-        sta     $A9D6,x
+        sta     D_A9D6,x
 L0EFD:                                                  ; $0EFD
         lda     $DC,x
         asl     a
@@ -376,7 +376,7 @@ L0F22:                                                  ; $0F22
 L0F32:                                                  ; $0F32
         cmp     #$10
         bcs     L0F42
-        lda     $AB51,y
+        lda     D_AB51,y
         tay
         lda     #$70
         jsr     L7C26                   ; Apply effect
@@ -396,19 +396,19 @@ L0F48:                                                  ; $0F48
         lda     $CA,x
         cmp     #$0C
         bcs     L0F5E
-        lda     $AA42,x
+        lda     D_AA42,x
         bpl     L0F5E
-        lda     $A9B2,x
+        lda     D_A9B2,x
         beq     L0F5E
         jsr     L0F61
 L0F5E:                                                  ; $0F5E
         jmp     L0D4A
 
 L0F61:                                                  ; $0F61
-        dec     $A9B2,x
+        dec     D_A9B2,x
         and     #$7F
         tay
-        lda     $AA30,x
+        lda     D_AA30,x
         bpl     L0F73
         tya
         lsr     a
@@ -420,11 +420,11 @@ D_0F73 = L0F73                                          ; Alias for external ref
         jmp     L0F91
 
 ; Unreachable code / alternate entry point
-        lda     $A9FA,x
+        lda     D_A9FA,x
         cmp     #$0A
         bcs     L0F91
-        inc     $A9FA,x
-        lda     $ACB6,y
+        inc     D_A9FA,x
+        lda     D_ACB6,y
         sta     $CA,x
         cmp     #$04
         bne     L0F8D
@@ -434,23 +434,23 @@ L0F8D:                                                  ; $0F8D
         lda     #$0A
         bne     L0F98
 L0F91:                                                  ; $0F91
-        lda     $ACB6,y
+        lda     D_ACB6,y
         sta     $CA,x
         lda     #$04
 L0F98:                                                  ; $0F98
         sta     $38
         lda     $DC,x
         sta     $39
-        lda     $AA0C,x
+        lda     D_AA0C,x
         sta     $3A
-        lda     $0193,x
+        lda     D_0193,x
         bpl     L0FD1
         ; Negative player index - move left
         dec     $DC,x
-        lda     $AA0C,x
+        lda     D_AA0C,x
         sec
         sbc     #$08
-        sta     $AA0C,x
+        sta     D_AA0C,x
         jsr     L105B                   ; Check bubble collision
         lda     $CA,x
         cmp     #$06
@@ -473,10 +473,10 @@ L0FD1:                                                  ; $0FD1
         cmp     #$1C
         beq     L100B
         inc     $DC,x
-        lda     $AA0C,x
+        lda     D_AA0C,x
         clc
         adc     #$08
-        sta     $AA0C,x
+        sta     D_AA0C,x
         jsr     L105B                   ; Check bubble collision
         lda     $CA,x
         cmp     #$06
@@ -494,9 +494,9 @@ L0FF6:                                                  ; $0FF6
 L0FFE:                                                  ; $0FFE
         lda     ($40),y
         bmi     L100B
-        lda     $A9B2,x
+        lda     D_A9B2,x
         and     #$7F
-        sta     $A9B2,x
+        sta     D_A9B2,x
 L100A:                                                  ; $100A
         rts
 
@@ -507,16 +507,16 @@ L100B:                                                  ; $100B
         sbc     #$14
         and     #$F8
         adc     #$13
-        sta     $AA0C,x
+        sta     D_AA0C,x
         lda     $39
         sta     $DC,x
         lda     $38
-        ldy     $A9B2,x
+        ldy     D_A9B2,x
         bpl     L1050
         ldy     #$00
         lda     $BB
         sec
-        sbc     $AA0C,x
+        sbc     D_AA0C,x
         bcs     L1030
         eor     #$FF
         adc     #$01
@@ -525,7 +525,7 @@ L1030:                                                  ; $1030
         bcs     L1045
         lda     $C3
         sec
-        sbc     $AA1E,x
+        sbc     D_AA1E,x
         bcs     L1040
         eor     #$FF
         adc     #$01
@@ -535,15 +535,15 @@ L1040:                                                  ; $1040
         iny
 L1045:                                                  ; $1045
         tya
-        sta     $0193,x
+        sta     D_0193,x
         lda     $38
-        sta     $AA42,x
+        sta     D_AA42,x
         lda     #$34
 L1050:                                                  ; $1050
         sta     $CA,x
         lda     #$00
-        sta     $A9C4,x
-        sta     $A9B2,x
+        sta     D_A9C4,x
+        sta     D_A9B2,x
         rts
 
 ; -----------------------------------------------------------------------------
@@ -563,7 +563,7 @@ L105D:                                                  ; $105D
 L106A:                                                  ; $106A
         lda     $BC,y                   ; Bubble X
         sec
-        sbc     $AA0C,x                 ; Enemy X
+        sbc     D_AA0C,x                ; Enemy X
         bcs     L1077
         eor     #$FF
         adc     #$01
@@ -572,7 +572,7 @@ L1077:                                                  ; $1077
         bcs     L108C
         lda     $C4,y                   ; Bubble Y
         sec
-        sbc     $AA1E,x                 ; Enemy Y
+        sbc     D_AA1E,x                ; Enemy Y
         bcs     L1088
         eor     #$FF
         adc     #$01
@@ -599,27 +599,27 @@ L1090:                                                  ; $1090
         cmp     #$16
         bcc     L10B1
 L10A1:                                                  ; $10A1
-        lda     $87A2,y
+        lda     D_87A2,y
         pha
         lda     #$FF
-        sta     $87A2,y
-        sta     $87CA,y
-        sta     $87F2,y
+        sta     D_87A2,y
+        sta     D_87CA,y
+        sta     D_87F2,y
         pla
 L10B1:                                                  ; $10B1
-        sta     $AA30,x
+        sta     D_AA30,x
         pha
         lda     #$00
         sta     $B4,y                   ; Clear bubble
-        sta     $863A,y
-        sta     $A9B2,x
+        sta     D_863A,y
+        sta     D_A9B2,x
         lda     #$FF
-        sta     $85C2,y
+        sta     D_85C2,y
         lda     #$A0
-        sta     $A9FA,x
+        sta     D_A9FA,x
         pla
         tay
-        lda     $AB81,y
-        sta     $AA42,x
+        lda     D_AB81,y
+        sta     D_AA42,x
         rts
 

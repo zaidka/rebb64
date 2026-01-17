@@ -26,6 +26,7 @@
 
 baron_von_blubba:
         jsr     toggle_enemy_direction  ; 20 2b 11 - Flip direction flag
+baron_skip_toggle:                      ; $10D6 - Entry point for jump table (skips toggle)
         lda     D_0193,x                ; bd 93 01 - Which player captured?
         bmi     move_baron_left         ; 30 18    - Negative = move left
         
@@ -187,7 +188,7 @@ skip_item_check_far:
         lda     #$28                    ; Reset counter to 40
         sta     D_5BBF
         lda     #$FF                    ; Set special flag
-        sta     $872A
+        sta     D_872A
         lda     #$00                    ; Clear game state
         sta     ZP_BE
         rts
@@ -211,9 +212,9 @@ L11A3:
 ; ============================================================================
 
 L11B7:
-        lda     $A9D6,x                 ; Get vertical direction
+        lda     D_A9D6,x                ; Get vertical direction
         eor     #$04                    ; Toggle bit 2
-        sta     $A9D6,x                 ; Store back
+        sta     D_A9D6,x                ; Store back
         beq     L11D2                   ; If zero, check platform
         inc     ZP_EE,x                 ; Increment row (fall down)
         lda     ZP_EE,x                 ; Get row
@@ -238,7 +239,7 @@ L11D2:
         sta     PESSION,x               ; Transform to collected type
         ldy     #$04                    ; Check for free spawn slot
 L11E7:
-        lda     $A770,y                 ; Get spawn slot
+        lda     D_A770,y                ; Get spawn slot
         bmi     L11F2                   ; If negative (free), use it
         dey                             ; Try next slot
         bpl     L11E7                   ; Loop if more
@@ -308,13 +309,13 @@ L125B:
 smc_bounce_y:                           ; Self-modifying code target
         ldy     #$00                    ; Operand modified at $11F2
         lda     DATPTR1                 ; Get final column
-        sta     $A761,y                 ; Store bounce X target
+        sta     D_A761,y                ; Store bounce X target
         lda     ZP_EE,x                 ; Get row
-        sta     $A766,y                 ; Store bounce Y target
+        sta     D_A766,y                ; Store bounce Y target
         lda     INPPTR                  ; Get path length
-        sta     $A76B,y                 ; Store bounce distance
+        sta     D_A76B,y                ; Store bounce distance
         lda     #$06                    ; Set bounce type
-        sta     $A770,y
+        sta     D_A770,y
 L1271:
         jmp     L_0D4A                  ; Return to AI loop
 
@@ -367,22 +368,23 @@ smc_collect_type:                       ; Self-modifying code target
         bne     L12A8                   ; Return (always branches)
 
 ; ============================================================================
-; OSCILLATING ENEMY ($12B5)
+; OSCILLATING ENEMY ($12B4)
 ; ============================================================================
 ; Enemy that oscillates back and forth, tracking player.
 ; Uses self-modifying code to alternate between RTS and JMP.
+; Entry point from enemy AI jump table.
 ; ============================================================================
 
-L12B5:
+oscillating_enemy:                      ; $12B4 - Jump table entry point
         lda     #$60                    ; RTS opcode
         sta     L12A8                   ; Self-mod: change JMP to RTS
         jsr     L1286                   ; Do one movement (returns)
         lda     #$4C                    ; JMP opcode
         sta     L12A8                   ; Self-mod: restore JMP
-        inc     $A9C4,x                 ; Increment animation counter
-        lda     $A9C4,x                 ; Get counter
+        inc     D_A9C4,x                ; Increment animation counter
+        lda     D_A9C4,x                ; Get counter
         and     #$03                    ; Mask to 0-3
-        sta     $A9C4,x                 ; Store back
+        sta     D_A9C4,x                ; Store back
         lda     PESSION,x               ; Get enemy type
         cmp     #$3A                    ; Is it collected?
         bne     L12DE                   ; If not, continue
@@ -397,9 +399,9 @@ L12DE:
         bne     L12F6                   ; If not at target, continue
         ldy     D_AA1E,x                ; Get target entity
         lda     #$64                    ; Set timer to 100
-        sta     $8890,y                 ; Store in entity timer
+        sta     D_8890,y                ; Store in entity timer
         lda     #$FF                    ; Set capture flag
-        sta     $8818,y                 ; Store in bubble timer
+        sta     D_8818,y                ; Store in bubble timer
         lda     #$38                    ; Transform to collected
         sta     PESSION,x
 L12F6:
@@ -428,5 +430,5 @@ L130C:
         sta     PESSION,x               ; Store type
         ldy     D_AA0C,x                ; Get target X
         lda     #$FF                    ; Set capture flag
-        sta     $8818,y                 ; Store in bubble timer
+        sta     D_8818,y                ; Store in bubble timer
         jmp     L_0D4A                  ; Return to AI loop

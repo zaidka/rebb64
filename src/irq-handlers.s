@@ -104,7 +104,7 @@ L072E:
         and     ENDCHR                  ; AND with frame counter
         bne     L_078C                  ; If non-zero, skip animation
 L0746:
-        lda     $53F8,x                 ; Get sprite pointer
+        lda     D_53F8,x                ; Get sprite pointer
         cmp     #$D5                    ; Compare to threshold
         bcs     L0751                   ; If >= $D5, subtract
         adc     #$04                    ; Add 4
@@ -112,7 +112,7 @@ L0746:
 L0751:
         sbc     #$04                    ; Subtract 4
 L0753:
-        sta     $53F8,x                 ; Store sprite pointer
+        sta     D_53F8,x                ; Store sprite pointer
         dex                             ; Next sprite
         bpl     L0746                   ; Loop for all 8
         bmi     L_078C                  ; Always branch to exit
@@ -132,9 +132,9 @@ D_0768:
         jmp     D_077C                  ; Jump to next section (or skip)
 
         lda     #$95                    ; IRQ vector low
-        sta     $FFFE                   ; Set IRQ vector
+        sta     IRQ_VEC                 ; Set IRQ vector
         lda     #$07                    ; IRQ vector high
-        sta     $FFFF                   ; Set IRQ vector
+        sta     IRQ_VEC_HI              ; Set IRQ vector
         lda     ROESSION                ; Get super bonus Y ($BD)
         adc     #$1E                    ; Add 30
         sta     VIC_RASTER              ; Set raster line

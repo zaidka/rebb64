@@ -111,7 +111,7 @@ D_2D88:
 ; Input: X = entity index
 D_2DAB:
         lda     #$03                    ; Item type 3
-        sta     $A77B,x                 ; Store item type
+        sta     D_A77B,x                ; Store item type
         bne     L_2DD2                  ; Always branch to finish
 
 ; --- Set item effect to $8C ($2DB2) ---
@@ -119,9 +119,9 @@ D_2DAB:
 ; Input: X = entity index
 D_2DB2:
         lda     #$8C                    ; Effect value
-        sta     $A77D,x                 ; Store effect type
+        sta     D_A77D,x                ; Store effect type
         lda     #$FF                    ; Flag value
-        sta     $A77F,x                 ; Store flag
+        sta     D_A77F,x                ; Store flag
         bne     L_2DD2                  ; Always branch to finish
 
 ; --- Chain multiple effect calls ($2DBE) ---
@@ -134,7 +134,7 @@ D_2DBE:
         jsr     D_2DAB                  ; Call set item type
         jsr     D_2DB2                  ; Call set effect
         lda     #$FF                    ; Flag value
-        sta     $A781,x                 ; Store additional flag
+        sta     D_A781,x                ; Store additional flag
 
 ; --- Set effect flag and return ($2DD2) ---
 ; Common exit point for effect handlers

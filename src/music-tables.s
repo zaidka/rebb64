@@ -61,11 +61,15 @@ music_timing_data:
 ; ============================================================================
 ; Working RAM / state storage with initial values
 ; Accessed as indexed arrays:
-;   $F28A,y - Music pointer save slots (low bytes)
-;   $F28E,y - Music pointer save slots (high bytes)
-;   $F292,y - Music parameter storage
+;   D_F28A,y - Music pointer save slots (low bytes)
+;   D_F28E,y - Music pointer save slots (high bytes)
+;   D_F292,y - Music parameter storage
 music_control_data:
-        .byte   $D8, $39, $00, $00, $71, $8B, $00, $00  ; $F28A
+D_F28A:                             ; Music pointer save slots (low bytes)
+        .byte   $D8, $39, $00, $00
+D_F28E:                             ; Music pointer save slots (high bytes)
+        .byte   $71, $8B, $00, $00
+D_F292:                             ; Music parameter storage
         .byte   $00, $00, $00, $00, $07, $10, $47, $00  ; $F292
         .byte   $72, $71, $71, $00, $00, $00, $00, $00  ; $F29A
         .byte   $1E, $98, $98, $00, $72, $71, $8D, $00  ; $F2A2
@@ -76,6 +80,17 @@ music_control_data:
 ; ============================================================================
 D_F2AE:                             ; Used by lda D_F2AE,y at $F607
 sound_effect_table:
-        .byte   $00, $00, $00, $00, $01, $00, $03, $00  ; $F2AE
-        .byte   $76, $F2, $00, $03, $00, $08, $08, $08  ; $F2B6
-        .byte   $06, $05, $80, $FF, $40, $00            ; $F2BE
+        .byte   $00, $00, $00, $00, $01, $00, $03, $00  ; $F2AE-$F2B5 (8 bytes)
+D_F2B6:                             ; $F2B6
+        .byte   $76                                     ; $F2B6
+D_F2B7:                             ; $F2B7
+        .byte   $F2                                     ; $F2B7
+        .byte   $00, $03                                ; $F2B8-$F2B9
+        .byte   $00                                     ; $F2BA
+D_F2BB:                             ; $F2BB
+        .byte   $08                                     ; $F2BB
+        .byte   $08                                     ; $F2BC
+        .byte   $08                                     ; $F2BD
+        .byte   $06                                     ; $F2BE
+D_F2BF:                             ; $F2BF
+        .byte   $05, $80, $FF, $40, $00                 ; $F2BF-$F2C3

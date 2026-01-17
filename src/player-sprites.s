@@ -178,12 +178,12 @@ enemy_timer_handler:                                    ; $13BE
 D_13BE = enemy_timer_handler                            ; Alias for external references
         ldx     #$11                    ; Process all 18 entities
 L13C0:                                                  ; $13C0
-        dec     $A9FA,x                 ; Decrement timer
+        dec     D_A9FA,x                ; Decrement timer
         bne     L1413                   ; Skip if not expired
         lda     $CA,x                   ; Get entity type
         cmp     #$04
         bne     L13D2
-        sta     $AA42,x                 ; Store original type
+        sta     D_AA42,x                ; Store original type
         lda     #$3A                    ; Set to released state
         bne     L1406
 
@@ -196,7 +196,7 @@ L13D2:                                                  ; $13D2
         sbc     #$18
         lsr     a
         tay                             ; Y = bubble slot
-        lda     $5ABF                   ; Get bubble state
+        lda     D_5ABF                  ; Get bubble state
         sta     $B4,y
         lda     $C4,y
         ora     #$01
@@ -205,11 +205,11 @@ L13D2:                                                  ; $13D2
         and     #$FE
         sta     $BC,y
         lda     #$FF
-        sta     $872A,y
-        lda     $AA30,x
-        sta     $87A2,y
+        sta     D_872A,y
+        lda     D_AA30,x
+        sta     D_87A2,y
         lda     #$00
-        sta     $8522,y
+        sta     D_8522,y
         lda     #$38
 L1406:                                                  ; $1406
         sta     $CA,x
@@ -222,7 +222,7 @@ L140B:                                                  ; $140B
         bmi     L1406
 
 L1413:                                                  ; $1413
-        lda     $A9FA,x
+        lda     D_A9FA,x
         cmp     #$11
         bcs     L1443
         and     #$01
@@ -245,9 +245,9 @@ L142E:                                                  ; $142E
         sbc     #$18
         lsr     a
         tay
-        lda     $AB55,y                 ; Sprite enable mask
-        eor     $D015                   ; Toggle sprite
-        sta     $D015
+        lda     D_AB55,y                ; Sprite enable mask
+        eor     VIC_SPR_ENA             ; Toggle sprite
+        sta     VIC_SPR_ENA
 
 L1443:                                                  ; $1443
         dex
@@ -276,7 +276,7 @@ L1461:                                                  ; $1461
         lda     $CA,x
         cmp     #$04
         bne     L146F
-        sta     $AA42,x
+        sta     D_AA42,x
         lda     #$3A
         sta     $CA,x
 L146E:                                                  ; $146E
@@ -297,7 +297,7 @@ player_death_handler:                                   ; $1473
 L1479:                                                  ; $1479
         lda     #$3A
         sta     $CA,x
-        sta     $AA42,x
+        sta     D_AA42,x
         txa
         eor     #$01
         tay                             ; Other player
@@ -322,25 +322,25 @@ L1496:                                                  ; $1496
         inc     L1545
         dec     L1549
         bcs     L1479
-        lda     $AA42,x
+        lda     D_AA42,x
         and     #$7F
         bne     L14CB
-        inc     $AA30,x
-        lda     $AA30,x
+        inc     D_AA30,x
+        lda     D_AA30,x
         and     #$0F
         bne     L14BB
-        dec     $AA30,x
+        dec     D_AA30,x
 L14BB:                                                  ; $14BB
-        lda     $AA30,x
+        lda     D_AA30,x
         eor     #$80
-        sta     $AA30,x
-        sta     $AA42,x
+        sta     D_AA30,x
+        sta     D_AA42,x
         lda     #$1E
-        sta     $A775,x
+        sta     D_A775,x
 L14CB:                                                  ; $14CB
-        lda     $A775,x
+        lda     D_A775,x
         beq     L14D6
-        dec     $A775,x
+        dec     D_A775,x
         jmp     L0D4A
 
 L14D6:                                                  ; $14D6
@@ -357,7 +357,7 @@ L14D6:                                                  ; $14D6
         ldy     #$02
 L14E8:                                                  ; $14E8
         tya
-        sta     $E765,x
+        sta     D_E765,x
         lda     $C2,x
         sec
         sbc     #$15
@@ -365,7 +365,7 @@ L14E8:                                                  ; $14E8
         lsr     a
         lsr     a
         sta     $41
-        dec     $AA42,x
+        dec     D_AA42,x
         bpl     L150F
         ; Move horizontally
         lda     #$01
@@ -396,7 +396,7 @@ L151C:                                                  ; $151C
 
 L1523:                                                  ; $1523
         lda     #$00
-        sta     $AA42,x
+        sta     D_AA42,x
         jmp     L0D4A
 
 ; -----------------------------------------------------------------------------

@@ -19,13 +19,13 @@ L2C9F           := $2C9F
 ; Calculates X,Y position from $A754/$A75F tables
 ; -----------------------------------------------------------------------------
 spawn_position_init:                                    ; $284D
-        lda     $A754
+        lda     D_A754
         asl     a
         asl     a
         asl     a
         adc     #$14
         sta     $BA,x                   ; Set X position
-        lda     $A75F
+        lda     D_A75F
         asl     a
         asl     a
         asl     a
@@ -36,11 +36,11 @@ spawn_position_init:                                    ; $284D
         cpx     #$02
         bcc     @L287C
         lda     #$07
-        sta     $8890,x
+        sta     D_8890,x
         dec     $B2,x
         dec     $4A
         lda     #$0E
-        sta     $8548,x
+        sta     D_8548,x
 @L2877:                                                 ; $2877
         cpx     #$02
         bcc     @L288D
@@ -64,15 +64,15 @@ spawn_position_init:                                    ; $284D
 ; Update spawn state based on animation timer
 ; -----------------------------------------------------------------------------
 @L288D:                                                 ; $288D
-        ldy     $8818,x
+        ldy     D_8818,x
         bmi     @L2895
         jsr     L2301
 @L2895:                                                 ; $2895
-        lda     $85E8,x
+        lda     D_85E8,x
         sta     $02
         jsr     L220C
         ldx     $22
-        lda     $87A0,x
+        lda     D_87A0,x
         bpl     @L2888
         rts
 
@@ -82,29 +82,29 @@ spawn_position_init:                                    ; $284D
 ; -----------------------------------------------------------------------------
 spawn_animation:                                        ; $28A5
         lda     #$00
-        sta     $8728,x
-        lda     $86D8,x
+        sta     D_8728,x
+        lda     D_86D8,x
         cmp     #$12
         beq     @L28BB
         lda     #$12
-        sta     $86D8,x
+        sta     D_86D8,x
         lda     #$20
-        sta     $8610,x
+        sta     D_8610,x
 @L28BB:                                                 ; $28BB
-        dec     $8610,x
-        lda     $8610,x
+        dec     D_8610,x
+        lda     D_8610,x
         bmi     @L28E9
         lsr     a
         and     #$03
         beq     @L28CE
-        ldy     $8840,x
+        ldy     D_8840,x
         clc
         adc     #$0B
 @L28CE:                                                 ; $28CE
-        sta     $8520,x
-        lda     $87A0,x
+        sta     D_8520,x
+        lda     D_87A0,x
         bpl     @L28DB
-        lda     $87F0,x
+        lda     D_87F0,x
         bmi     @L28E8
 @L28DB:                                                 ; $28DB
         lda     $C2,x
@@ -124,7 +124,7 @@ spawn_animation:                                        ; $28A5
         and     #$03
         clc
         adc     #$0F
-        sta     $8520,x
+        sta     D_8520,x
         cpy     #$C8
         bne     @L28E8
         inc     $B2,x
@@ -150,14 +150,14 @@ spawn_state_change:                                     ; $28FB
 ; Decrement spawn timer and toggle state
 ; -----------------------------------------------------------------------------
 spawn_timer:                                            ; $290D
-        dec     $8688,x
+        dec     D_8688,x
         bne     L2916
         lda     #$01
         sta     $B2,x
 L2916:                                                  ; $2916
-        lda     $8548,x
+        lda     D_8548,x
         eor     #$05
-        sta     $8548,x
+        sta     D_8548,x
         jmp     L2162
 
 ; -----------------------------------------------------------------------------
@@ -173,28 +173,28 @@ score_display:                                          ; $2921
         .byte   $00                     ; $2922 - self-modified operand
         bne     @L2995
         inc     smc_score_operand       ; Self-modify: inc $2922
-        ldy     $8890,x
-        lda     $A790,y
+        ldy     D_8890,x
+        lda     D_A790,y
         tay
         inc     $B2,x
         lda     #$C8
-        sta     $87A0,x
+        sta     D_87A0,x
         txa
-        sta     $8520,x
+        sta     D_8520,x
         lda     #$F2
-        sta     $8598,x
-        lda     $A8E4,y
+        sta     D_8598,x
+        lda     D_A8E4,y
         and     #$07
-        sta     $8548,x
+        sta     D_8548,x
         lda     #$00
-        sta     $8728,x
+        sta     D_8728,x
         sta     $05
-        lda     $A892,y
+        lda     D_A892,y
         jsr     L2C9F
-        lda     $A783,x
+        lda     D_A783,x
         sta     @L2970+1                ; Self-modify store address low
         sta     @L298D                  ; Store low byte to $298D
-        lda     $A789,x
+        lda     D_A789,x
         sta     @L2970+2                ; Self-modify store address high
         sta     @L298E                  ; Store high byte to $298E
         ldy     #$0F
@@ -203,7 +203,7 @@ score_display:                                          ; $2921
         lda     ($04),y
         jsr     @L2996
 @L2970:                                                 ; $2970 - self-modified STA abs,x
-        sta     $0400,x                 ; Address modified at runtime
+        sta     D_0400,x                ; Address modified at runtime
         dex
         dex
         dex

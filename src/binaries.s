@@ -21,6 +21,7 @@
 
 ; Symbols within CHARSET region ($4000-$445F)
 ; Many of these are work buffers that overlay the charset area
+D_4000      = $4000     ; Character set base address
 D_4050      = $4050     ; Entity/item data array
 D_4080      = $4080     ; Memory region cleared during bonus stage
 D_4087      = $4087     ; Graphics source data 1
@@ -38,6 +39,7 @@ D_40D7      = $40D7     ; Level display data
 D_40D8      = $40D8     ; Level display data (ones digit)
 D_40DE      = $40DE     ; Level display data
 D_40DF      = $40DF     ; Level display data
+D_4100      = $4100     ; Character set page 2
 D_4200      = $4200     ; Graphics work buffer
 D_4210      = $4210     ; Item work buffer 1
 D_4230      = $4230     ; Item work buffer 2
@@ -47,6 +49,7 @@ D_43B0      = $43B0     ; Data table 1
 D_43B8      = $43B8     ; Data table 2
 D_43C0      = $43C0     ; Data table 3
 D_4400      = $4400     ; Enemy template data table 2 (RAM copy)
+D_4B00      = $4B00     ; Enemy template data table (destination)
 
 ;-------------------------------------------------------------------------------
 ; Early initialization code and title screen data ($4460-$47FF, 928 bytes)

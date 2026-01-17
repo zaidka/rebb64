@@ -55,21 +55,21 @@ L_4461:
         inx                                         ; X = 0 (byte index)
 
 L_4472:
-        lda     $4000,x                             ; Copy page 1: $4000 -> $4800
-        sta     $4800,x
-        lda     $4100,x                             ; Copy page 2: $4100 -> $4900
-        sta     $4900,x
-        lda     $4200,x                             ; Copy page 3: $4200 -> $4A00
-        sta     $4A00,x
-        lda     $4300,x                             ; Copy page 4: $4300 -> $4B00
-        sta     $4B00,x
+        lda     D_4000,x                            ; Copy page 1: $4000 -> $4800
+        sta     D_4800,x
+        lda     D_4100,x                            ; Copy page 2: $4100 -> $4900
+        sta     D_4900,x
+        lda     D_4200,x                            ; Copy page 3: $4200 -> $4A00
+        sta     D_4A00,x
+        lda     D_4300,x                            ; Copy page 4: $4300 -> $4B00
+        sta     D_4B00,x
 
         ;-----------------------------------------------------------------------
         ; Clear Lookup Tables: $0200-$03FF
         ;-----------------------------------------------------------------------
         lda     #$00
-        sta     $0200,x                             ; Clear $0200-$02FF
-        sta     $0300,x                             ; Clear $0300-$03FF
+        sta     D_0200,x                            ; Clear $0200-$02FF
+        sta     D_0300,x                            ; Clear $0300-$03FF
 
         inx
         bne     L_4472                              ; Loop for all 256 bytes
@@ -86,7 +86,7 @@ L_4472:
 
 L_4499:
         adc     #$08                                ; Add 8 to accumulator
-        sta     $0200,x                             ; Store low byte in table
+        sta     D_0200,x                            ; Store low byte in table
         bcc     L_44A2                              ; If no carry, skip high byte update
         iny                                         ; Increment high byte
         clc
@@ -94,7 +94,7 @@ L_4499:
 L_44A2:
         pha                                         ; Save low byte accumulator
         tya                                         ; Transfer high byte to A
-        sta     $0300,x                             ; Store high byte in table
+        sta     D_0300,x                            ; Store high byte in table
         tay                                         ; Restore Y from A
         pla                                         ; Restore low byte accumulator
 
@@ -122,14 +122,14 @@ L_44B0:
         sta     CIA2_PRA                            ; Configure VIC bank and serial
 
         lda     #$20                                ; Value for VIC memory control
-        sta     $D018                               ; Set character/screen memory
+        sta     VIC_MEMPTR                          ; Set character/screen memory
 
         ;-----------------------------------------------------------------------
         ; VIC Control Register Setup
         ;-----------------------------------------------------------------------
         lda     #$7F                                ; Clear bit 7
-        and     $D011                               ; Read VIC control 1
-        sta     $D011                               ; Clear raster MSB
+        and     VIC_CTRL1                           ; Read VIC control 1
+        sta     VIC_CTRL1                           ; Clear raster MSB
 
         ;-----------------------------------------------------------------------
         ; Interrupt Configuration
@@ -139,7 +139,7 @@ L_44B0:
 
         lda     #$01
         sta     VIC_IRQ                             ; Clear raster interrupt flag
-        sta     $D01A                               ; Enable raster interrupt
+        sta     VIC_ICTRL                           ; Enable raster interrupt
 
         lda     #$FB                                ; Raster line $FB (251)
         sta     VIC_RASTER                          ; Set raster compare line
@@ -148,19 +148,19 @@ L_44B0:
         ; Hardware IRQ Vector Setup ($FFFE-$FFFF in banked RAM)
         ;-----------------------------------------------------------------------
         lda     #$AB                                ; IRQ handler address low byte
-        sta     $FFFE                               ; Set hardware IRQ vector low
+        sta     IRQ_VEC                             ; Set hardware IRQ vector low
         lda     #$06                                ; IRQ handler address high byte
-        sta     $FFFF                               ; Set hardware IRQ vector high
+        sta     IRQ_VEC_HI                          ; Set hardware IRQ vector high
                                                     ; IRQ vector now points to $06AB
 
         ;-----------------------------------------------------------------------
         ; VIC Display Configuration
         ;-----------------------------------------------------------------------
         lda     #$00
-        sta     $D01B                               ; Sprite priority register
+        sta     VIC_SPR_PRI                         ; Sprite priority register
 
         lda     #$D8                                ; VIC control 2 value
-        sta     $D016                               ; Set horizontal scroll/width
+        sta     VIC_CTRL2                           ; Set horizontal scroll/width
 
         lda     #$54
         sta     $30                                 ; Screen pointer high byte
@@ -171,9 +171,9 @@ L_44B0:
         ; NMI Vector Setup
         ;-----------------------------------------------------------------------
         lda     #$2D                                ; NMI handler address low byte
-        sta     $FFFA                               ; Set NMI vector low
+        sta     NMI_VEC                             ; Set NMI vector low
         lda     #$07                                ; NMI handler address high byte
-        sta     $FFFB                               ; Set NMI vector high
+        sta     NMI_VEC_HI                          ; Set NMI vector high
                                                     ; NMI vector now points to $072D
 
         ;-----------------------------------------------------------------------
@@ -181,16 +181,16 @@ L_44B0:
         ;-----------------------------------------------------------------------
         lda     #$00
         sta     $37
-        sta     $5AFF
+        sta     D_5AFF
 
-        jsr     $F4BD                               ; Sound initialization routine
+        jsr     D_F4BD                              ; Sound initialization routine
         cli                                         ; Enable interrupts
-        jsr     $E374                               ; Screen initialization routine
+        jsr     D_E374                              ; Screen initialization routine
 
         lda     #$05
-        sta     $8548                               ; Game state variable
+        sta     D_8548                              ; Game state variable
         lda     #$03
-        sta     $8549                               ; Game state variable
+        sta     D_8548+1                            ; Game state variable
 
         ;-----------------------------------------------------------------------
         ; Copy Data from Internal Tables
@@ -199,11 +199,11 @@ L_44B0:
 
 L_451E:
         lda     D_47B5,x                            ; Load from table 1
-        sta     $8570,x                             ; Store destination 1
+        sta     D_8570,x                            ; Store destination 1
         lda     D_47BD,x                            ; Load from table 2
-        sta     $8598,x                             ; Store destination 2
+        sta     D_8598,x                            ; Store destination 2
         lda     D_47C5,x                            ; Load from table 3
-        sta     $85C0,x                             ; Store destination 3
+        sta     D_85C0,x                            ; Store destination 3
         dex
         bpl     L_451E                              ; Loop while positive
 
@@ -237,19 +237,19 @@ L_4535:
         ldy     #$46                                ; Parameter
 
 L_4556:
-        jsr     $E42A                               ; Call routine with params
+        jsr     D_E42A                              ; Call routine with params
         ldx     #$F0                                ; Parameter
         ldy     #$46                                ; Parameter
-        jsr     $E42A                               ; Call routine with params
+        jsr     D_E42A                              ; Call routine with params
 
         ldy     #$35
-        jsr     $05AD                               ; Call routine
+        jsr     D_05AD                              ; Call routine
 
         ;-----------------------------------------------------------------------
         ; Title Screen Wait Loop - Check for Fire Button or Cheat Code
         ;-----------------------------------------------------------------------
 L_4565:
-        jsr     $E494                               ; Display title screen
+        jsr     D_E494                              ; Display title screen
 
         lda     CIA1_PRA                            ; Read joystick port 2
         and     #$10                                ; Test fire button bit
@@ -274,7 +274,7 @@ L_4582:
         bne     L_4565                              ; Loop back if not zero
 
 L_4590:
-        jsr     $E494                               ; Update display
+        jsr     D_E494                              ; Update display
 
         lda     CIA1_PRA                            ; Check fire button again
         and     #$10
@@ -285,8 +285,8 @@ L_4590:
         beq     L_4590                              ; Wait for release
 
 L_45A1:
-        jsr     $F4BD                               ; Sound routine
-        jmp     $F005                               ; Jump to main game loop
+        jsr     D_F4BD                              ; Sound routine
+        jmp     D_F005                              ; Jump to main game loop
 
 ;-------------------------------------------------------------------------------
 ; L_45A7: Cheat Code Key Sequence Detection
@@ -330,7 +330,7 @@ L_45A7:
         ; Cheat Mode Activated - Modify Color Table
         ;-----------------------------------------------------------------------
         lda     #$02
-        sta     $D020                               ; Change border color (visual feedback)
+        sta     VIC_BORDER                          ; Change border color (visual feedback)
 
         lda     #$51                                ; Pointer low byte
         sta     $40
@@ -381,7 +381,7 @@ L_4619:
 L_4624:
         dex                                         ; Decrement counter
         bne     L_45F2                              ; Continue if more blocks
-        stx     $D020                               ; Reset border color
+        stx     VIC_BORDER                          ; Reset border color
         jmp     L_45A1                              ; Return to normal game start
 
 ;===============================================================================

@@ -83,7 +83,7 @@ FREQ_TABLE_HI:
 
 music_init_code:
         lda     music_waveform_table,y          ; $F477: B9 24 F9
-        sta     $F4B3                           ; $F47A: 8D B3 F4
+        sta     smc_adc_operand                 ; $F47A: 8D B3 F4 (self-mod)
         ldx     #$02                            ; $F47D: A2 02
         
 @loop1:
@@ -93,16 +93,16 @@ music_init_code:
         sta     $8D,x                           ; $F487: 95 8D
         sty     $9E                             ; $F489: 84 9E
         lda     #$00                            ; $F48B: A9 00
-        ldy     $742D,x                         ; $F48D: BC 2D 74
+        ldy     D_742D,x                        ; $F48D: BC 2D 74
         sta     $87,x                           ; $F490: 95 87
-        sta     $F2BB,y                         ; $F492: 99 BB F2
-        sta     $F2BF,y                         ; $F495: 99 BF F2
-        lda     $7433,x                         ; $F498: BD 33 74
+        sta     D_F2BB,y                        ; $F492: 99 BB F2
+        sta     D_F2BF,y                        ; $F495: 99 BF F2
+        lda     D_7433,x                        ; $F498: BD 33 74
         sta     $82,x                           ; $F49B: 95 82
         lda     #$01                            ; $F49D: A9 01
         sta     $A0,x                           ; $F49F: 95 A0
-        sta     $F308,x                         ; $F4A1: 9D 08 F3
-        sta     $F305,x                         ; $F4A4: 9D 05 F3
+        sta     D_F308,x                        ; $F4A1: 9D 08 F3
+        sta     D_F305,x                        ; $F4A4: 9D 05 F3
         ldy     $9E                             ; $F4A7: A4 9E
         dey                                     ; $F4A9: 88
         dey                                     ; $F4AA: 88
@@ -113,11 +113,12 @@ music_init_code:
         lda     #$00                            ; $F4AF: A9 00
         tax                                     ; $F4B1: AA
         
-@loop2:
+loop2:
+smc_adc_operand := * + 1                        ; $F4B3: Self-modified by $F47A (operand of ADC)
         adc     #$05                            ; $F4B2: 69 05
-        sta     $F39A,x                         ; $F4B4: 9D 9A F3
+        sta     D_F39A,x                        ; $F4B4: 9D 9A F3
         inx                                     ; $F4B7: E8
         cpx     #$20                            ; $F4B8: E0 20
-        bcc     @loop2                          ; $F4BA: 90 F6
+        bcc     loop2                           ; $F4BA: 90 F6
         
         rts                                     ; $F4BC: 60

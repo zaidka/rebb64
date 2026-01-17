@@ -187,6 +187,8 @@ VIC_BG0     = $D021     ; Background color 0
 VIC_BG1     = $D022     ; Background color 1
 VIC_BG2     = $D023     ; Background color 2
 VIC_IRQ     = $D019     ; VIC interrupt register
+VIC_ICTRL   = $D01A     ; VIC interrupt control register
+VIC_SPR_PRI = $D01B     ; Sprite priority register (0=sprite in front)
 VIC_SPR0_COL = $D027    ; Sprite colors
 VIC_SPR1_COL = $D028    ; Sprite 1 color
 VIC_SPR2_COL = $D029    ; Sprite 2 color
@@ -226,6 +228,8 @@ NMINV       = $0318     ; NMI vector (low byte at $0318, high at $0319)
 NMINV_HI    = $0319     ; NMI vector high byte
 ISTOP       = $0312     ; BASIC stop key check routine vector
 D_033C      = $033C     ; Cassette buffer (192 bytes)
+NMI_VEC     = $FFFA     ; Hardware NMI vector low byte
+NMI_VEC_HI  = $FFFB     ; Hardware NMI vector high byte
 IRQ_VEC     = $FFFE     ; Hardware IRQ vector low byte
 IRQ_VEC_HI  = $FFFF     ; Hardware IRQ vector high byte
 D_FEBC      = $FEBC     ; KERNAL IRQ exit routine
@@ -273,7 +277,9 @@ D_47F8      = $47F8     ; Item table 1
 ; D_7BA6 - now defined as label in level-data-part2.s
 ; D_7AE3 - now defined as label in level-data-part2.s
 ; D_7BC8 - now defined as label in level-data-part2.s
-D_7D00      = $7D00     ; Level data destination
+D_7D00      = $7D00     ; Level data destination / screen buffer 1
+D_7D80      = $7D80     ; Screen buffer 2
+D_7E00      = $7E00     ; Screen buffer 3
 ; D_48D0 defined as label in init-routines.s
 ; D_4460 defined as label in game-init-early.s (Main game code entry point)
 D_4500      = $4500     ; Enemy template data table 3 (RAM copy)

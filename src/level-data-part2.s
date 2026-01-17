@@ -53,6 +53,8 @@ D_A745      = $A745                 ; Game over Y position +1
 D_A76F      = $A76F                 ; Entity state array
 D_A77C      = $A77C                 ; Entity attribute table +1
 D_A783      = $A783                 ; Entity attribute table +8
+D_A784      = $A784                 ; Entity attribute table +9
+D_A789      = $A789                 ; Entity attribute table +14 (screen address high)
 
 .segment "LEVELS2"
 

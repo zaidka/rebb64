@@ -47,11 +47,11 @@
 music_handler_00:
         lda     ($85),y                 ; b1 85        $7305
         ldy     $82,x                   ; b4 82        $7307
-        sta     $F292,y                 ; 99 92 f2     $7309
+        sta     D_F292,y                ; 99 92 f2     $7309
         lda     #$02                    ; a9 02        $730c
         jsr     music_add_offset        ; 20 20 74     $730e
         jsr     music_save_pointer      ; 20 05 74     $7311
-        jmp     $F56F                   ; 4c 6f f5     $7314
+        jmp     D_F56F                  ; 4c 6f f5     $7314
 
 ; ============================================================================
 ; Handler 1 ($7317) - Decrement and loop control
@@ -60,10 +60,10 @@ music_handler_00:
 music_handler_01:
         dec     $82,x                   ; d6 82        $7317
         ldy     $82,x                   ; b4 82        $7319
-        lda     $F292,y                 ; b9 92 f2     $731b
+        lda     D_F292,y                ; b9 92 f2     $731b
         sec                             ; 38           $731e
         sbc     #$01                    ; e9 01        $731f
-        sta     $F292,y                 ; 99 92 f2     $7321
+        sta     D_F292,y                ; 99 92 f2     $7321
         beq     @continue               ; f0 08        $7324
         jsr     music_restore_pointer   ; 20 d0 73     $7326
         inc     $82,x                   ; f6 82        $7329
@@ -71,7 +71,7 @@ music_handler_01:
         .byte   $2C                     ; BIT trick    $732d
 @continue:
         lda     #$01                    ; a9 01        $732e
-        jmp     $F56C                   ; 4c 6c f5     $7330
+        jmp     D_F56C                  ; 4c 6c f5     $7330
 
 ; ============================================================================
 ; Handler 2 ($7333) - Load timing value (0D)
@@ -100,11 +100,11 @@ music_handler_03:
 @copy_loop:
         lda     ($78),y                 ; b1 78        $734a
 @copy_target:
-        sta     $F2AE,y                 ; 99 ae f2     $734c (self-modified high byte)
+        sta     D_F2AE,y                ; 99 ae f2     $734c (self-modified high byte)
         dey                             ; 88           $734f
         bpl     @copy_loop              ; 10 f8        $7350
         lda     #$03                    ; a9 03        $7352
-        jmp     $F56C                   ; 4c 6c f5     $7354
+        jmp     D_F56C                  ; 4c 6c f5     $7354
 
 ; ============================================================================
 ; Data/Code overlap ($7357-$735C) - 6 bytes
@@ -124,7 +124,7 @@ music_handler_04:
         lda     ($85),y                 ; b1 85        $735d
         sta     $87,x                   ; 95 87        $735f
         lda     #$02                    ; a9 02        $7361
-        jmp     $F56C                   ; 4c 6c f5     $7363
+        jmp     D_F56C                  ; 4c 6c f5     $7363
 
 ; ============================================================================
 ; Handler 5 ($7366) - Set frequency pointers
@@ -133,11 +133,11 @@ music_handler_04:
 music_handler_05:
         lda     ($85),y                 ; b1 85        $7366
         ldy     D_742D,x                ; bc 2d 74     $7368
-        sta     $F2B6,y                 ; 99 b6 f2     $736b
-        lda     #$F2                    ; a9 f2        $736e
-        sta     $F2B7,y                 ; 99 b7 f2     $7370
+        sta     D_F2B6,y                ; 99 b6 f2     $736b
+        lda     #>D_F2B6                ; a9 f2        $736e (high byte of $F2B6)
+        sta     D_F2B7,y                ; 99 b7 f2     $7370
         lda     #$02                    ; a9 02        $7373
-        jmp     $F56C                   ; 4c 6c f5     $7375
+        jmp     D_F56C                  ; 4c 6c f5     $7375
 
 ; ============================================================================
 ; Handler 6 ($7378) - Set filter cutoff (F7)
@@ -156,7 +156,7 @@ filter_store_accumulator:
         sta     $91                     ; 85 91        $7380
 filter_set_sid:
         sty     $D417                   ; 8c 17 d4     $7382 - SID Filter Cutoff Hi
-        jmp     $F56A                   ; 4c 6a f5     $7385
+        jmp     D_F56A                  ; 4c 6a f5     $7385
 
 ; ============================================================================
 ; Handler 8 ($7388) - Set filter cutoff (78) with mode 3
@@ -197,28 +197,28 @@ music_handler_10:
 @restore_y:
         ldy     #$01                    ; a0 01        $73af (self-modified)
         jsr     music_load_pointer      ; 20 14 74     $73b1
-        jmp     $F56F                   ; 4c 6f f5     $73b4
+        jmp     D_F56F                  ; 4c 6f f5     $73b4
 
 ; ============================================================================
 ; Handler 11 ($73B7) - Update pointers and continue
 ; ============================================================================
 music_handler_11:
         jsr     music_load_pointer      ; 20 14 74     $73b7
-        jmp     $F56F                   ; 4c 6f f5     $73ba
+        jmp     D_F56F                  ; 4c 6f f5     $73ba
 
 ; ============================================================================
 ; Handler 12 ($73BD) - Loop counter check and control
 ; ============================================================================
 music_handler_12:
         lda     $82,x                   ; b5 82        $73bd
-        cmp     $7433,x                 ; dd 33 74     $73bf
+        cmp     D_7433,x                ; dd 33 74     $73bf
         bne     @not_done               ; d0 04        $73c2
-        dec     $F308,x                 ; de 08 f3     $73c4
+        dec     D_F308,x                ; de 08 f3     $73c4
         rts                             ; 60           $73c7
 @not_done:
         dec     $82,x                   ; d6 82        $73c8
         jsr     music_restore_pointer   ; 20 d0 73     $73ca
-        jmp     $F56F                   ; 4c 6f f5     $73cd
+        jmp     D_F56F                  ; 4c 6f f5     $73cd
 
 ; ============================================================================
 ; Helper: music_restore_pointer ($73D0)
@@ -226,9 +226,9 @@ music_handler_12:
 ; Restores music data pointer from saved state tables
 music_restore_pointer:
         ldy     $82,x                   ; b4 82        $73d0
-        lda     $F28A,y                 ; b9 8a f2     $73d2
+        lda     D_F28A,y                ; b9 8a f2     $73d2
         sta     $85                     ; 85 85        $73d5
-        lda     $F28E,y                 ; b9 8e f2     $73d7
+        lda     D_F28E,y                ; b9 8e f2     $73d7
         sta     $86                     ; 85 86        $73da
         rts                             ; 60           $73dc
 
@@ -244,11 +244,11 @@ music_handler_13:
         ldy     #$0F                    ; a0 0f        $73e6
 @copy_loop:
         lda     ($78),y                 ; b1 78        $73e8
-        sta     $F30B,y                 ; 99 0b f3     $73ea
+        sta     D_F30B,y                ; 99 0b f3     $73ea
         dey                             ; 88           $73ed
         bpl     @copy_loop              ; 10 f8        $73ee
         lda     #$03                    ; a9 03        $73f0
-        jmp     $F56C                   ; 4c 6c f5     $73f2
+        jmp     D_F56C                  ; 4c 6c f5     $73f2
 
 ; ============================================================================
 ; Handler 14 ($73F5) - Set sound effect end markers
@@ -256,10 +256,10 @@ music_handler_13:
 music_handler_14:
         ldy     D_742D,x                ; bc 2d 74     $73f5
         lda     #$FF                    ; a9 ff        $73f8
-        sta     $F2C8,y                 ; 99 c8 f2     $73fa
+        sta     D_F2C8,y                ; 99 c8 f2     $73fa
         lda     #$FE                    ; a9 fe        $73fd
-        sta     $F2CA,y                 ; 99 ca f2     $73ff
-        jmp     $F56A                   ; 4c 6a f5     $7402
+        sta     D_F2CA,y                ; 99 ca f2     $73ff
+        jmp     D_F56A                  ; 4c 6a f5     $7402
 
 ; ============================================================================
 ; Helper: music_save_pointer ($7405)
@@ -268,9 +268,9 @@ music_handler_14:
 music_save_pointer:
         ldy     $82,x                   ; b4 82        $7405
         lda     $85                     ; a5 85        $7407
-        sta     $F28A,y                 ; 99 8a f2     $7409
+        sta     D_F28A,y                ; 99 8a f2     $7409
         lda     $86                     ; a5 86        $740c
-        sta     $F28E,y                 ; 99 8e f2     $740e
+        sta     D_F28E,y                ; 99 8e f2     $740e
         inc     $82,x                   ; f6 82        $7411
         rts                             ; 60           $7413
 
@@ -317,6 +317,7 @@ D_742D:
 ; D_7430 - Voice frequency offset table (accessed throughout sound-engine.s)
 D_7430:
         .byte   $00, $23, $46           ; 00 23 46     $7430
+D_7433:                                 ; Voice frequency offset table +3
         .byte   $00, $0C, $18           ; 00 0c 18     $7433
 
 ; D_7436 - SID voice control offset table
