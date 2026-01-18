@@ -1,17 +1,26 @@
 ;===============================================================================
-; bb-graphics-copy.s - Graphics and sprite data copying
+; bb-graphics-copy.s - ROUND/READY Text Compositing
 ;===============================================================================
 ; Address range: $3C01-$3CB1
 ;
-; This module handles copying and compositing sprite/graphics data, likely for
-; animating sprites or creating composite graphics from multiple sources.
+; This module composites "ROUND" and "READY" text with sprite graphics for
+; level transition displays. It combines font bitmap data from the HUD font
+; at $FE90 with sprite data using OR operations.
+;
+; Data tables used:
+;   D_A9A8 (9 bytes) - "ROUND" + level number indices: R O U N D spc 1 0 0
+;   D_AD15 (9 bytes) - "READY!" text indices: R E A D Y spc ! spc spc
+;
+; Output buffers:
+;   $4600/$4E00 - "ROUND" composite graphics
+;   $4800/$4E48 - "READY" composite graphics
 ;===============================================================================
 
 ;-------------------------------------------------------------------------------
-; Graphics initialization and setup routine
+; D_3C01: Graphics Compositing Entry Point
 ;-------------------------------------------------------------------------------
-; Address: $3C01-$3CB1
-; Initializes graphics state and composites sprite data
+; Creates combined sprite+text images displayed during level transitions.
+; Uses direct ROM access to HUD font at $FE90 (hud_font symbol).
 ;-------------------------------------------------------------------------------
 .segment "CODE"
 
@@ -58,23 +67,23 @@ D_3C01:
         lda     D_0300,y
         ora     #$40
         sta     $05
-        lda     D_A9A8,x            ; Calculate dest address 1
+        lda     D_A9A8,x            ; Get "ROUND" font index
         asl
         asl
         asl
-        adc     #$90
+        adc     #<hud_font          ; Add low byte of font base
         sta     $11
         lda     #$00
-        adc     #$FE
+        adc     #>hud_font          ; Add high byte of font base
         sta     $12
-        lda     D_AD15,x            ; Calculate dest address 2
+        lda     D_AD15,x            ; Get "READY" font index
         asl
         asl
         asl
-        adc     #$90
+        adc     #<hud_font          ; Add low byte of font base
         sta     $13
         lda     #$00
-        adc     #$FE
+        adc     #>hud_font          ; Add high byte of font base
         sta     $14
         ldy     #$07                ; Composite 8 bytes
 

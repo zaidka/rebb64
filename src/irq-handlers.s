@@ -118,11 +118,11 @@ L0753:
         bmi     L_078C                  ; Always branch to exit
 
 L075B:
-        lda     #$52                    ; Default memory pointer
+        lda     #$52                    ; VIC memory: charset at $4800
         ldx     ARYTAB                  ; Get screen pointer ($2F)
         cpx     #$48                    ; Compare to $48
         bne     L0765                   ; If not equal, use default
-        lda     #$40                    ; Alternate memory pointer
+        lda     #$40                    ; VIC memory: charset at $4000
 L0765:
         sta     VIC_MEMPTR              ; Set VIC memory pointer
 

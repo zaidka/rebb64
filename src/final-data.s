@@ -102,19 +102,26 @@ D_FE43:
     .byte $A6                    ; $FE8A
     .byte $5D, $FF               ; $FE8B
     .byte $FF, $EF               ; $FE8D
+    .byte $FF                    ; $FE8F
 
 ; ============================================================================
-; DIGIT FONT GRAPHICS ($FE8F-$FF2F)
+; HUD FONT GRAPHICS ($FE90-$FF2F)
 ; ============================================================================
-; 8x8 pixel font for digits 0-9 and some letters
-; Each digit is 8 bytes (one byte per row, 8 rows)
-; Used for score display, level numbers, etc.
+; 8x8 pixel font containing 20 characters (160 bytes total)
+; Each character is 8 bytes (one byte per row, 8 rows)
 ; Bit pattern: 1 = pixel on, 0 = pixel off
-; These appear to be 6-pixel wide characters (bits 7-2 used)
+;
+; Character set contents:
+;   Index $00-$09: Digits 0-9 (for score display, level numbers)
+;   Index $0A-$13: R O U N D E A Y ! (space) - for "ROUND" and "READY!" text
+;
+; Usage:
+;   1. Copied to $4300 during init - accessed via screen codes $60-$73
+;   2. Accessed directly at $FE90 for graphics compositing (ROUND/READY text)
 
-D_FE8F:
+hud_font:
 ; Digit 0 - Classic rounded rectangle
-    .byte $FF, $FC               ; $FE8F - Top (includes preceding byte)
+    .byte $FC                    ; $FE90 - Top
     .byte $CC, $CC, $CC, $CC     ; $FE91 - Sides
     .byte $CC, $FC               ; $FE95 - Bottom
     
@@ -163,52 +170,52 @@ D_FE8F:
     .byte $FC, $CC, $CC, $FC     ; $FED8
     .byte $0C, $0C, $FC          ; $FEDC
     
-; Letter A or additional digit graphics
+; Letter R (index $0A) - for "ROUND" / "READY"
     .byte $00                    ; $FEDF
     .byte $FC, $CC, $CC, $F0     ; $FEE0
     .byte $CC, $CC, $CC          ; $FEE4
     
-; Letter B or additional graphics
+; Letter O (index $0B) - for "ROUND"
     .byte $00                    ; $FEE7
     .byte $FC, $CC, $CC, $CC     ; $FEE8
     .byte $CC, $CC, $FC          ; $FEEC
     
-; Letter C or U-shape
+; Letter U (index $0C) - for "ROUND"
     .byte $00                    ; $FEEF
     .byte $CC, $CC, $CC, $CC     ; $FEF0
     .byte $CC, $CC, $FC          ; $FEF4
     
-; Letter D
+; Letter N (index $0D) - for "ROUND"
     .byte $00                    ; $FEF7
     .byte $FC, $CC, $CC, $CC     ; $FEF8
     .byte $CC, $CC, $CC          ; $FEFC
 
-; Letter E (enclosed shape)
+; Letter D (index $0E) - for "ROUND" / "READY"
     .byte $00                    ; $FEFF
     .byte $F0, $CC, $CC, $CC     ; $FF00
     .byte $CC, $CC, $F0          ; $FF04
 
-; Letter F
+; Letter E (index $0F) - for "READY"
     .byte $00                    ; $FF07
     .byte $FC, $C0, $C0, $F0     ; $FF08
     .byte $C0, $C0, $FC          ; $FF0C
     
-; Letter G or variant
+; Letter A (index $10) - for "READY"
     .byte $00                    ; $FF0F
     .byte $FC, $CC, $CC, $FC     ; $FF10
     .byte $CC, $CC, $CC          ; $FF14
     
-; Letter H or T-shape
+; Letter Y (index $11) - for "READY"
     .byte $00                    ; $FF17
     .byte $CC, $CC, $CC, $FC     ; $FF18
     .byte $30, $30, $30          ; $FF1C
     
-; Letter I or exclamation variant
+; Exclamation mark (index $12) - for "READY!"
     .byte $00                    ; $FF1F
     .byte $CC, $CC, $CC, $CC     ; $FF20
     .byte $CC, $00, $CC          ; $FF24
     
-; Blank/space character
+; Space character (index $13)
     .byte $00                    ; $FF27
     .byte $00, $00, $00, $00     ; $FF28
     .byte $00, $00, $00          ; $FF2C

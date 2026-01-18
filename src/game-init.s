@@ -54,11 +54,11 @@ D_A428:
         bpl     @clear_4210_loop    ; 10 fa - Loop while X >= 0
         
         ;-----------------------------------------------------------------------
-        ; Copy data table from $FE8F to $4300 (160 bytes)
+        ; Copy HUD font from $FE90 to $4300 (160 bytes)
         ;-----------------------------------------------------------------------
         ldx     #$A0                ; a2 a0 - 160 bytes
 @copy_table_loop:
-        lda     D_FE8F,x            ; bd 8f fe - Read from source table
+        lda     hud_font-1,x        ; bd 8f fe - Read from source table
         sta     D_4300,x            ; 9d 00 43 - Write to destination
         dex                         ; ca
         bne     @copy_table_loop    ; d0 f7 - Loop until X=0

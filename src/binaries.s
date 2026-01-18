@@ -44,7 +44,7 @@ D_4200      = $4200     ; Graphics work buffer
 D_4210      = $4210     ; Item work buffer 1
 D_4230      = $4230     ; Item work buffer 2
 D_42C6      = $42C6     ; Data/flag location
-D_4300      = $4300     ; Enemy template data table 1 (RAM copy)
+D_4300      = $4300     ; HUD font destination (160 bytes copied from $FE90)
 D_43B0      = $43B0     ; Data table 1
 D_43B8      = $43B8     ; Data table 2
 D_43C0      = $43C0     ; Data table 3
@@ -360,7 +360,7 @@ D_A913      = $A913     ; Powerup item color indices (35 bytes, lower nibble onl
 D_A936      = $A936     ; Enemy score value table
 D_A965      = $A965     ; Special item score value table
 D_A988      = $A988     ; Enemy state temporary storage
-D_A9A8      = $A9A8     ; Graphics composite dest 1 (9 bytes)
+D_A9A8      = $A9A8     ; "ROUND" text indices (9 bytes: R O U N D spc + level digits)
 D_A9AE      = $A9AE     ; Level tens digit storage
 D_A9AF      = $A9AF     ; Level ones digit storage
 D_A9B0      = $A9B0     ; Graphics mode flag
@@ -418,7 +418,7 @@ D_ACDD      = $ACDD     ; Movement table
 D_ACED      = $ACED     ; Jump table
 
 ; --- Screen Layout Tables ($AD15-$AEFF) ---
-D_AD15      = $AD15     ; Graphics composite dest 2 (9 bytes)
+D_AD15      = $AD15     ; "READY!" text indices (9 bytes: R E A D Y spc ! spc spc)
 D_AD1E      = $AD1E     ; Screen row pointer table (low bytes)
 D_AD1F      = $AD1F     ; Screen row pointer table (low bytes, offset by 1)
 D_AD20      = $AD20     ; Screen row pointer (offset by 2)
