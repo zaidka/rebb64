@@ -1,5 +1,6 @@
 # Build artifacts
 build/*.o
+build/*.bin
 build/*.prg
 build/*.lst
 build/*.map

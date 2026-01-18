@@ -439,6 +439,27 @@ D_AE41      = $AE41     ; Sprite/charset source data
         .segment "GAMEDATA"
         .incbin "../data/game-data.bin"
 
+;-------------------------------------------------------------------------------
+; HUD Font ($FE90-$FF2F, 160 bytes)
+;-------------------------------------------------------------------------------
+; 8x8 pixel font containing 20 characters (160 bytes total)
+; Each character is 8 bytes (one byte per row, 8 rows)
+; Bit pattern: 1 = pixel on, 0 = pixel off
+;
+; Character set contents:
+;   Index $00-$09: Digits 0-9 (for score display, level numbers)
+;   Index $0A-$13: R O U N D E A Y ! (space) - for "ROUND" and "READY!" text
+;
+; Usage:
+;   1. Copied to $4300 during init - accessed via screen codes $60-$73
+;   2. Accessed directly at $FE90 for graphics compositing (ROUND/READY text)
+;
+; Source: data/hud-font.tga (converted by tools/convert-hud-font-tga.mjs)
+;-------------------------------------------------------------------------------
+        .segment "HUDFONT"
+hud_font:
+        .incbin "../build/hud-font.bin"
+
 ; Symbols within game-data.bin ($B0F0-$DFFF)
 ; These include level data, item positions, and various lookup tables
 ; NOTE: Color RAM addresses ($D800-$DBFF) are hardware, not in this binary

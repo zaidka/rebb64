@@ -11,14 +11,13 @@
 CA65 = ca65
 LD65 = ld65
 TSCRUNCH = tscrunch
+PYTHON = python3
 
 # Directories
 SRC_DIR = ../src
-BUILD_DIR = .
+DATA_DIR = ../data
 
-# Source files
-SOURCES = $(SRC_DIR)/master.s
-LOADADDR = $(SRC_DIR)/loadaddr.s
+# Config
 CONFIG = c64-prg.cfg
 
 # Output
@@ -28,22 +27,22 @@ RELEASE = rebb64.prg
 # SHA256 hash of original Bubble Bobble C64 PRG (decompressed)
 REFERENCE_SHA256 = fdba2390782653ba2533b2d87c44c8f0480ab18968a2c0ccc0cef8300fcee7b6
 
-# Object files
-OBJECTS = master.o loadaddr.o
-
-# Default target
 all: $(OUTPUT)
 
+# TGA to binary conversion
+hud-font.bin: $(DATA_DIR)/hud-font.tga convert-tga.py
+	$(PYTHON) convert-tga.py $< $@ --format hires-chars
+
 # Assemble load address
-loadaddr.o: $(LOADADDR)
+loadaddr.o: $(SRC_DIR)/loadaddr.s
 	$(CA65) --cpu 6502 -o $@ $<
 
 # Assemble main source
-master.o: $(SOURCES)
+master.o: $(SRC_DIR)/master.s hud-font.bin
 	$(CA65) --cpu 6502 -I $(SRC_DIR) -o $@ $<
 
 # Link
-$(OUTPUT): $(OBJECTS) $(CONFIG)
+$(OUTPUT): loadaddr.o master.o $(CONFIG)
 	$(LD65) -C $(CONFIG) -o $@ loadaddr.o master.o
 
 # Verify against original hash
@@ -57,6 +56,6 @@ release: $(OUTPUT)
 
 # Clean build artifacts
 clean:
-	rm -f $(OBJECTS) $(OUTPUT) $(RELEASE)
+	rm -f loadaddr.o master.o $(OUTPUT) $(RELEASE) *.bin
 
 .PHONY: all clean verify release
