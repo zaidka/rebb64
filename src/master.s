@@ -245,7 +245,6 @@ D_0300      = $0300     ; Level pointer table (high bytes, 100 entries)
 ; D_7305-$7429: Music command handlers - now defined in music-command-handlers.s
 ; D_742A-$743F: Music data tables - now defined in music-command-handlers.s
 D_3F86      = $3F86     ; Bubble character table
-; D_FF30 and D_FF94 are now defined as labels in final-data.s
 
 ; Sprite masking tables
 
@@ -780,3 +779,12 @@ L_A474      = $A474     ; READY label
 
 ; Final data section
 .include "final-data.s"
+
+; ============================================================================
+; END OF PRG FILE ($FFF8-$FFFA)
+; ============================================================================
+; These 3 bytes exist in the original PRG file but seem to serve no purpose.
+; Included only to produce a byte-identical build for verification.
+; ============================================================================
+        .segment "FILE_PADDING"
+        .byte $29, $00, $FF

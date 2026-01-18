@@ -433,11 +433,22 @@ D_ADF9      = $ADF9     ; Character mask table 2
 D_AE41      = $AE41     ; Sprite/charset source data
 
 ;-------------------------------------------------------------------------------
-; Game data ($B0F0-$DFFF, 12048 bytes)
+; Game data ($B0F0-$C5F1, 5378 bytes)
 ; NOTE: $D800-$DBFF is hardware Color RAM, not part of this binary
 ;-------------------------------------------------------------------------------
         .segment "GAMEDATA"
-        .incbin "../data/game-data.bin"
+        .incbin "../data/game-data-static.bin"
+
+;-------------------------------------------------------------------------------
+; Level Bitmaps ($C5F2-$DFFF, 6670 bytes)
+;-------------------------------------------------------------------------------
+; Platform layout bitmaps for all 100 levels
+; Each level uses 46 bytes (symmetric) or 92 bytes (asymmetric)
+; Generated from data/levels.txt by build/convert-levels.py
+;-------------------------------------------------------------------------------
+        .segment "LEVEL_BITMAPS"
+level_bitmaps:
+        .incbin "../build/level-bitmaps.bin"
 
 ;-------------------------------------------------------------------------------
 ; HUD Font ($FE90-$FF2F, 160 bytes)
@@ -459,6 +470,29 @@ D_AE41      = $AE41     ; Sprite/charset source data
         .segment "HUDFONT"
 hud_font:
         .incbin "../build/hud-font.bin"
+
+;-------------------------------------------------------------------------------
+; Level Colors ($FF30-$FF93, 100 bytes)
+;-------------------------------------------------------------------------------
+; Background/platform color theme for each level (1 byte per level)
+; High nibble and low nibble each encode a C64 color value
+; Generated from data/levels.txt by build/convert-levels.py
+;-------------------------------------------------------------------------------
+        .segment "LEVEL_COLORS"
+level_colors:
+        .incbin "../build/level-colors.bin"
+
+;-------------------------------------------------------------------------------
+; Level Flags ($FF94-$FFF7, 100 bytes)
+;-------------------------------------------------------------------------------
+; Symmetry flag + sidebar character set index for each level
+; Bit 7 = symmetry (1=symmetric/46 bytes, 0=asymmetric/92 bytes)
+; Bits 0-6 = sidebar character set index
+; Generated from data/levels.txt by build/convert-levels.py
+;-------------------------------------------------------------------------------
+        .segment "LEVEL_FLAGS"
+level_flags:
+        .incbin "../build/level-flags.bin"
 
 ; Symbols within game-data.bin ($B0F0-$DFFF)
 ; These include level data, item positions, and various lookup tables

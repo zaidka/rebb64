@@ -29,6 +29,10 @@ REFERENCE_SHA256 = fdba2390782653ba2533b2d87c44c8f0480ab18968a2c0ccc0cef8300fcee
 
 all: $(OUTPUT)
 
+# Level data conversion (levels.txt -> binary files)
+level-bitmaps.bin level-colors.bin level-flags.bin: $(DATA_DIR)/levels.txt convert-levels.py
+	$(PYTHON) convert-levels.py $< level-bitmaps.bin level-colors.bin level-flags.bin
+
 # TGA to binary conversion
 hud-font.bin: $(DATA_DIR)/hud-font.tga convert-tga.py
 	$(PYTHON) convert-tga.py $< $@ --format hires-chars
@@ -38,7 +42,7 @@ loadaddr.o: $(SRC_DIR)/loadaddr.s
 	$(CA65) --cpu 6502 -o $@ $<
 
 # Assemble main source
-master.o: $(SRC_DIR)/master.s hud-font.bin
+master.o: $(SRC_DIR)/master.s hud-font.bin level-bitmaps.bin level-colors.bin level-flags.bin
 	$(CA65) --cpu 6502 -I $(SRC_DIR) -o $@ $<
 
 # Link
@@ -56,6 +60,6 @@ release: $(OUTPUT)
 
 # Clean build artifacts
 clean:
-	rm -f loadaddr.o master.o $(OUTPUT) $(RELEASE) *.bin
+	rm -f loadaddr.o master.o $(OUTPUT) $(RELEASE) *.bin level-bitmaps.bin level-colors.bin level-flags.bin
 
 .PHONY: all clean verify release

@@ -69,7 +69,7 @@ L_E021:
         bpl     L_E021
         
         ; Check level number (level >= 100 branches)
-        lda     D_FF94,x            ; Get symmetry (bit 7) + sidebarCharsIndex (bits 0-6)
+        lda     level_flags,x       ; Get symmetry (bit 7) + sidebarCharsIndex (bits 0-6)
         and     #$7F
         cmp     #$64                ; Compare with 100
         bcs     L_E05E              ; Branch if >= 100
@@ -126,7 +126,7 @@ L_E07E:
         sty     VARTAB              ; $2D = 0
         
         ; Extract color information from level flags
-        lda     D_FF30,x            ; Get background color byte (bgColors metadata)
+        lda     level_colors,x      ; Get background color byte (bgColors metadata)
         tay
         lsr     a                   ; High nibble -> $1D
         lsr     a
@@ -637,10 +637,10 @@ init_level_renderer:
         lda     #$30
         sta     R6510               ; $01 = CPU port
         
-        ; Set up data pointer
-        lda     #$F2
+        ; Set up data pointer to level bitmaps
+        lda     #<level_bitmaps
         sta     $40
-        lda     #$C5
+        lda     #>level_bitmaps
         sta     $41
         
         cpx     #$00
@@ -650,7 +650,7 @@ init_level_renderer:
         ldx     #$00
 L_E2AD:
         lda     #$2E                ; Base offset = 46 bytes
-        ldy     D_FF94,x            ; Get symmetry flag (bit 7)
+        ldy     level_flags,x       ; Get symmetry flag (bit 7)
         bmi     L_E2B5              ; Branch if asymmetric level (bit 7 set)
         asl     a                   ; Double offset (92 bytes)
 L_E2B5:
@@ -667,7 +667,7 @@ L_E2BE:
 L_E2C3:
         ; Get data table index based on level flags
         ldy     #$00
-        lda     D_FF94,x            ; Get symmetry flag (bit 7)
+        lda     level_flags,x       ; Get symmetry flag (bit 7)
         bpl     L_E2CB              ; Branch if symmetric (bit 7 clear)
         iny                         ; Y = 1 for special levels
         
