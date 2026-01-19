@@ -282,12 +282,14 @@ D_A420      = $A420     ; Additional data table (8 bytes)
 ; No symbols defined within SPRPAT region ($A47E-$A59F)
 
 ;-------------------------------------------------------------------------------
-; Game tables ($A632-$B0EF, 2750 bytes)
+; Game tables ($A632-$AE50, 2079 bytes)
+; Lookup tables for sprites, positions, items, etc.
+; Enemy spawn data has been moved to ENEMY_SPAWNS segment (generated)
 ;-------------------------------------------------------------------------------
         .segment "GAMETABLES"
-        .incbin "../data/game-tables.bin"
+        .incbin "../data/game-tables-static.bin"
 
-; Symbols within game-tables.bin ($A632-$B0EF)
+; Symbols within game-tables-static.bin ($A632-$AE50)
 ; These are read-only lookup tables used throughout the game
 
 ; --- Sprite/Graphics Tables ($A632-$A6FF) ---
@@ -433,11 +435,39 @@ D_ADF9      = $ADF9     ; Character mask table 2
 D_AE41      = $AE41     ; Sprite/charset source data
 
 ;-------------------------------------------------------------------------------
-; Game data ($B0F0-$C5F1, 5378 bytes)
+; Enemy Spawn Data ($AE51-$B568, 1816 bytes)
+; Position and type data for enemy spawns on all 100 levels
+; Generated from data/levels.txt by build/convert-levels.py
+;-------------------------------------------------------------------------------
+        .segment "ENEMY_SPAWNS"
+enemy_spawns:
+        .incbin "../build/enemy-spawns.bin"
+
+;-------------------------------------------------------------------------------
+; Item Spawn Positions ($B569-$B694, 300 bytes)
+; Three 100-byte tables at offsets +0, +100, +200
+; Generated from data/levels.txt by build/convert-levels.py
+;-------------------------------------------------------------------------------
+        .segment "ITEM_POSITIONS"
+item_positions:
+        .incbin "../build/item-positions.bin"
+
+;-------------------------------------------------------------------------------
+; Game data middle ($B695-$C58D, 3833 bytes)
+; Wind currents, handler routines, and lookup tables
 ; NOTE: $D800-$DBFF is hardware Color RAM, not part of this binary
 ;-------------------------------------------------------------------------------
         .segment "GAMEDATA"
-        .incbin "../data/game-data-static.bin"
+        .incbin "../data/game-data-middle.bin"
+
+;-------------------------------------------------------------------------------
+; Physics Flags ($C58E-$C5F1, 100 bytes)
+; Level hole/bubble current metadata
+; Generated from data/levels.txt by build/convert-levels.py
+;-------------------------------------------------------------------------------
+        .segment "PHYSICS_FLAGS"
+physics_flags:
+        .incbin "../build/physics-flags.bin"
 
 ;-------------------------------------------------------------------------------
 ; Level Bitmaps ($C5F2-$DFFF, 6670 bytes)
@@ -494,19 +524,11 @@ level_colors:
 level_flags:
         .incbin "../build/level-flags.bin"
 
-; Symbols within game-data.bin ($B0F0-$DFFF)
-; These include level data, item positions, and various lookup tables
+; --- Symbols within game-data-middle.bin ($B695-$C58D) ---
+; Wind currents, handler routines, and lookup tables
 ; NOTE: Color RAM addresses ($D800-$DBFF) are hardware, not in this binary
-
-; --- Item Spawn Position Tables ($B569-$B6FF) ---
-D_B569      = $B569     ; Item spawn positions A (100 bytes) - 5-bit packed coords
-D_B5CD      = $B5CD     ; Item spawn positions B (100 bytes) - 5-bit packed coords
-D_B631      = $B631     ; Item spawn positions C (upper nibble) + bubble spawns (lower nibble, 100 bytes)
-
-; --- Handler/Callback Routines ($C085-$C6FF) ---
 D_C085      = $C085     ; Far routine
 D_C2B5      = $C2B5     ; Handler routine
-D_C58E      = $C58E     ; Level hole/bubble current metadata (100 bytes)
 D_C6D0      = $C6D0     ; Loader callback routine
 
 ; --- Animation/Update Routines ($DE85) ---

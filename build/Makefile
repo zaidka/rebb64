@@ -27,11 +27,15 @@ RELEASE = rebb64.prg
 # SHA256 hash of original Bubble Bobble C64 PRG (decompressed)
 REFERENCE_SHA256 = fdba2390782653ba2533b2d87c44c8f0480ab18968a2c0ccc0cef8300fcee7b6
 
+# Generated level data files
+LEVEL_BINS = level-bitmaps.bin level-colors.bin level-flags.bin \
+             enemy-spawns.bin item-positions.bin physics-flags.bin
+
 all: $(OUTPUT)
 
 # Level data conversion (levels.txt -> binary files)
-level-bitmaps.bin level-colors.bin level-flags.bin: $(DATA_DIR)/levels.txt convert-levels.py
-	$(PYTHON) convert-levels.py $< level-bitmaps.bin level-colors.bin level-flags.bin
+$(LEVEL_BINS): $(DATA_DIR)/levels.txt convert-levels.py
+	$(PYTHON) convert-levels.py $< $(LEVEL_BINS)
 
 # TGA to binary conversion
 hud-font.bin: $(DATA_DIR)/hud-font.tga convert-tga.py
@@ -42,7 +46,7 @@ loadaddr.o: $(SRC_DIR)/loadaddr.s
 	$(CA65) --cpu 6502 -o $@ $<
 
 # Assemble main source
-master.o: $(SRC_DIR)/master.s hud-font.bin level-bitmaps.bin level-colors.bin level-flags.bin
+master.o: $(SRC_DIR)/master.s hud-font.bin $(LEVEL_BINS)
 	$(CA65) --cpu 6502 -I $(SRC_DIR) -o $@ $<
 
 # Link
@@ -60,6 +64,6 @@ release: $(OUTPUT)
 
 # Clean build artifacts
 clean:
-	rm -f loadaddr.o master.o $(OUTPUT) $(RELEASE) *.bin level-bitmaps.bin level-colors.bin level-flags.bin
+	rm -f loadaddr.o master.o $(OUTPUT) $(RELEASE) *.bin
 
 .PHONY: all clean verify release

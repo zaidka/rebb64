@@ -679,7 +679,7 @@ L_E2CB:
         sta     D_E30D
         
         ; Get hole metadata (holes in lower nibble, bubble currents in upper nibble)
-        lda     D_C58E,x
+        lda     physics_flags,x
         sta     $3D
         
         ; Process two chunks (at X=0 and X=96)

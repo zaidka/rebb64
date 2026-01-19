@@ -22,11 +22,11 @@
 setup_level_data:
 D_2B31:
         ldx     SUBFLG                  ; a6 10        $2b31 - X = current level number
-        lda     D_B5CD,x                ; bd cd b5     $2b33 - Get level attribute byte 1
+        lda     item_positions + 100,x  ; bd cd b5     $2b33 - Get level attribute byte 1
         sta     ADRAY1                  ; 85 03        $2b36 - Store in work register
-        lda     D_B631,x                ; bd 31 b6     $2b38 - Get level attribute byte 2
+        lda     item_positions + 200,x  ; bd 31 b6     $2b38 - Get level attribute byte 2
         sta     $04                     ; 85 04        $2b3b - Store in work register
-        lda     D_B569,x                ; bd 69 b5     $2b3d - Get scroll/wrap byte
+        lda     item_positions,x        ; bd 69 b5     $2b3d - Get scroll/wrap byte
         tax                             ; aa           $2b40 - Transfer to X
         and     #$f8                    ; 29 f8        $2b41
         sta     $59                     ; 85 59        $2b43

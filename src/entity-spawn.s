@@ -141,7 +141,7 @@ D_3A6C:
 
         ; Level-specific initialization
         ldx     $10                 ; SUBFLG (level number)
-        lda     D_B631,x            ; Load item spawn positions C + bubble spawns
+        lda     item_positions + 200,x  ; Load item spawn positions C + bubble spawns
         sta     $02
         lda     #$2C
         lsr     $02                 ; Test flag bit
