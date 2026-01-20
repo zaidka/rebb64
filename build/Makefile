@@ -44,12 +44,15 @@ hud-font.bin: $(DATA_DIR)/hud-font.tga convert-tga.py
 sidebars.bin: $(DATA_DIR)/sidebars.tga convert-tga.py
 	$(PYTHON) convert-tga.py $< $@ --format multicolor-chars
 
+level-tiles.bin: $(DATA_DIR)/level-tiles.tga convert-tga.py
+	$(PYTHON) convert-tga.py $< $@ --format multicolor-chars
+
 # Assemble load address
 loadaddr.o: $(SRC_DIR)/loadaddr.s
 	$(CA65) --cpu 6502 -o $@ $<
 
 # Assemble main source
-master.o: $(SRC_DIR)/master.s hud-font.bin sidebars.bin $(LEVEL_BINS)
+master.o: $(SRC_DIR)/master.s hud-font.bin sidebars.bin level-tiles.bin $(LEVEL_BINS)
 	$(CA65) --cpu 6502 -I $(SRC_DIR) -o $@ $<
 
 # Link

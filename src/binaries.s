@@ -468,10 +468,12 @@ item_positions:
         .incbin "../build/sidebars.bin"
 
 ;-------------------------------------------------------------------------------
-; Game data - Handler routines ($C2CE-$C58D, 800 bytes)
+; Level Tiles ($C2CE-$C58D, 800 bytes)
+; Multi-color 4x8 tiles for levels 12-99
+; Generated from data/level-tiles.tga by build/convert-tga.py
 ;-------------------------------------------------------------------------------
-        .segment "GAMEDATA_HANDLERS"
-        .incbin "../data/game-data-handlers.bin"
+        .segment "LEVEL_TILES"
+        .incbin "../build/level-tiles.bin"
 
 ;-------------------------------------------------------------------------------
 ; Physics Flags ($C58E-$C5F1, 100 bytes)
@@ -536,14 +538,3 @@ level_colors:
         .segment "LEVEL_FLAGS"
 level_flags:
         .incbin "../build/level-flags.bin"
-
-; --- Symbols within game-data-middle.bin ($B695-$C58D) ---
-; Wind currents, handler routines, and lookup tables
-; NOTE: Color RAM addresses ($D800-$DBFF) are hardware, not in this binary
-D_C085      = $C085     ; Far routine
-D_C2B5      = $C2B5     ; Handler routine
-D_C6D0      = $C6D0     ; Loader callback routine
-
-; --- Animation/Update Routines ($DE85) ---
-D_DE85      = $DE85     ; Animation update routine
-

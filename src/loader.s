@@ -86,10 +86,10 @@ L_494C:
 
 L_495A:
         inc     $B1                                 ; $495A - Next block
-        .byte   $EE                                 ; $495C - Data byte
-        jsr     D_C6D0                              ; $495D - Unknown call
-        lda     D_ABA5                              ; $4960 - Check completion
-        cmp     RODBS                               ; $4963
+        inc     VIC_BORDER                          ; $495C - Border flash during load
+        dec     RODBS                               ; $495F - Decrement block counter
+        lda     RIDBE                               ; $4961 - Load completion flag
+        cmp     RODBS                               ; $4963 - Compare with counter
         bne     D_493A                              ; $4965 - Not done, continue
         
         jsr     D_4A9D                              ; $4967 - Cleanup and restore
@@ -326,8 +326,8 @@ D_4A9D:
         ora     #$10                                ; $4AA0 - Enable screen
         sta     VIC_CTRL1                           ; $4AA2
         lda     R6510                               ; $4AA5 - Get CPU port
-        .byte   $09                                 ; $4AA7 - Data byte
-        jsr     D_C085                              ; $4AA8 - Unknown call
+        ora     #$20                                ; $4AA7 - Set bit 5 (KERNAL ROM)
+        sta     $C0                                 ; $4AA9 - Side effect (unused)
         sta     R6510                               ; $4AAB - Restore CPU port
         lda     #$7F                                ; $4AAD - Disable interrupts
         sta     CIA1_ICR                            ; $4AAF
