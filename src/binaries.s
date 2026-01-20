@@ -453,12 +453,25 @@ item_positions:
         .incbin "../build/item-positions.bin"
 
 ;-------------------------------------------------------------------------------
-; Game data middle ($B695-$C58D, 3833 bytes)
-; Wind currents, handler routines, and lookup tables
-; NOTE: $D800-$DBFF is hardware Color RAM, not part of this binary
+; Game data - Wind currents ($B695-$BC0D, 1145 bytes)
 ;-------------------------------------------------------------------------------
-        .segment "GAMEDATA"
-        .incbin "../data/game-data-middle.bin"
+        .segment "GAMEDATA_WIND"
+        .incbin "../data/game-data-wind.bin"
+
+;-------------------------------------------------------------------------------
+; Sidebars ($BC0E-$C2CD, 1888 bytes)
+; 59 sidebar designs × 4 characters × 8 bytes per character
+; Multi-color character data for level sidebars
+; Generated from data/sidebars.tga by build/convert-tga.py
+;-------------------------------------------------------------------------------
+        .segment "SIDEBARS"
+        .incbin "../build/sidebars.bin"
+
+;-------------------------------------------------------------------------------
+; Game data - Handler routines ($C2CE-$C58D, 800 bytes)
+;-------------------------------------------------------------------------------
+        .segment "GAMEDATA_HANDLERS"
+        .incbin "../data/game-data-handlers.bin"
 
 ;-------------------------------------------------------------------------------
 ; Physics Flags ($C58E-$C5F1, 100 bytes)

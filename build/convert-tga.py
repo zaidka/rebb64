@@ -141,6 +141,59 @@ def convert_hires_chars(image, cell_width, cell_height, cells_per_row):
     return bytes(output)
 
 
+def convert_multicolor_chars(image, cell_width, cell_height, cells_per_row):
+    """
+    Convert image to multi-color character data.
+
+    Each character is 8 bytes (one byte per row).
+    Each byte encodes 4 pixels using 2-bit pairs.
+
+    Input image should have:
+      - Each character cell = 4 pixels wide × 8 pixels tall
+      - Palette indices 0-3 only
+      - 1 TGA pixel = 1 C64 logical pixel (double-width happens on C64 hardware)
+
+    Output format:
+      - 8 bytes per character
+      - Each byte = 4 pixels packed as 2-bit pairs (MSB first)
+    """
+    width = image["width"]
+    height = image["height"]
+
+    cols = width // cell_width
+    rows = height // cell_height
+
+    output = bytearray()
+
+    for char_idx in range(cols * rows):
+        col = char_idx % cols
+        row = char_idx // cols
+        base_x = col * cell_width
+        base_y = row * cell_height
+
+        # Each character is 8 rows × 4 pixels
+        for y in range(cell_height):
+            byte = 0
+            # Each row has 4 pixels
+            for x in range(4):
+                pixel_idx = get_pixel(image, base_x + x, base_y + y)
+
+                # Validate palette index
+                if pixel_idx > 3:
+                    raise ValueError(
+                        f"Invalid pixel value {pixel_idx} at char {char_idx}, "
+                        f"row {y}, pixel {x}. Must be 0-3."
+                    )
+
+                # Pack into byte (MSB first: shift by 6, 4, 2, 0)
+                shift = 6 - (x * 2)
+                byte |= pixel_idx << shift
+
+            output.append(byte)
+
+    return bytes(output)
+
+
 # =============================================================================
 # Format Registry
 # =============================================================================
@@ -152,9 +205,12 @@ FORMATS = {
         "cell_height": 8,
         "converter": convert_hires_chars,
     },
-    # Future formats:
-    # 'multicolor-sprites': { ... }
-    # 'hires-sprites': { ... }
+    "multicolor-chars": {
+        "description": "Multi-color 4x8 characters (4 pixels wide, sidebars)",
+        "cell_width": 4,
+        "cell_height": 8,
+        "converter": convert_multicolor_chars,
+    },
 }
 
 
