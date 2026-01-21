@@ -183,12 +183,10 @@ D_ECDF:
     cmp  D_8750,x               ; Compare with target direction
     bcs  L_ECED                 ; If >=, skip direction change
     
-    ; Change entity direction (incomplete instruction - self-modifying code)
+    ; Store target direction to entity direction array
     lda  D_8750,x               ; Load target direction
-    .byte $9D                   ; STA absolute,X opcode (next 2 bytes are address)
-    ; Note: This appears to be incomplete/corrupted code
-    ; Falls through to JSR which may be the actual continuation
-    jsr  D_6085                 ; Call direction handler
+    sta  D_8520,x               ; Store to direction array
+    rts                         ; Return
 
 ; Check platform cell and potentially reverse entity direction
 L_ECED:

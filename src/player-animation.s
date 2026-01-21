@@ -471,8 +471,8 @@ D_20C0:
         rts                             ; 60           $20c7
 
 L_20C8:
-        .byte   $fe                     ; fe           $20c8 - INC abs,X opcode
-        jsr     D_6085                  ; 20 85 60     $20c9 - (address in middle of instruction)
+        inc     D_8520,x                ; fe 20 85     $20c8 - Increment direction
+        rts                             ; 60           $20cb
 
 L_20CC:
         ; End of jump

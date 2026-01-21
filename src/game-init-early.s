@@ -50,18 +50,19 @@ L_4461:
         txs                                         ; Transfer X to stack pointer
 
         ;-----------------------------------------------------------------------
-        ; Copy Game Data: $4000-$43FF -> $4800-$4BFF (1024 bytes)
+        ; Backup charset: $4000-$43FF -> $4800-$4BFF (1024 bytes = 128 characters)
+        ; This preserves the charset while allowing the region to be used as work RAM
         ;-----------------------------------------------------------------------
         inx                                         ; X = 0 (byte index)
 
 L_4472:
-        lda     D_4000,x                            ; Copy page 1: $4000 -> $4800
+        lda     charset,x                           ; Copy page 1: $4000 -> $4800
         sta     D_4800,x
-        lda     D_4100,x                            ; Copy page 2: $4100 -> $4900
+        lda     charset + $100,x                    ; Copy page 2: $4100 -> $4900
         sta     D_4900,x
-        lda     D_4200,x                            ; Copy page 3: $4200 -> $4A00
+        lda     charset + $200,x                    ; Copy page 3: $4200 -> $4A00
         sta     D_4A00,x
-        lda     D_4300,x                            ; Copy page 4: $4300 -> $4B00
+        lda     charset + $300,x                    ; Copy page 4: $4300 -> $4B00
         sta     D_4B00,x
 
         ;-----------------------------------------------------------------------

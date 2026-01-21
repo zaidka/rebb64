@@ -270,14 +270,22 @@ L_EF0D:
     eor  #$03                   ; Toggle bits 0 and 1
     sta  D_85E8,x               ; Store updated flags
     
-    ; D_EF15 - Self-modified by STY above
-    rts
+    ; D_EF15 - Self-modified by STY D_EF15 at entry to D_EEEB/L_EF2A:
+    ;   Y=$60 (RTS): Just return after toggling D_85E8
+    ;   Y=$BD (LDA abs,X): Fall through to also toggle D_8520
+D_EF15:
+    rts                         ; This byte gets modified
 
-    ; Unused/corrupted code (3 bytes) - appears to be dead code
-    ; Note: D_4985 is defined in bb-loader.s, this JSR is likely unreachable
-    jsr  D_4985                 ; May be data or dead code
-    .byte $04, $9D              ; Illegal NOP instruction
-    jsr  D_6085                 ; Continues but likely dead code
+    ; Extended direction toggle - reached when D_EF15 is modified to LDA ($BD)
+    ; When Y=$BD is stored at D_EF15, execution becomes:
+    ;   LDA D_8520,X  (BD from D_EF15 + 20 85 from below)
+    ;   EOR #$04
+    ;   STA D_8520,X
+    ;   RTS
+    .byte $20, $85              ; Address low/high for LDA D_8520,X
+    eor  #$04                   ; Toggle bit 2
+    sta  D_8520,x               ; Store updated direction
+    rts
 
 ; D_EF1E: Rightward movement handler
 D_EF1E:

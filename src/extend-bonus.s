@@ -232,15 +232,15 @@ L_334B:
 ; This prepares the data needed to fill screen with collectible items
 ;-------------------------------------------------------------------------------
 L_3366:
-    lda  D_9AE0,x               ; Get ROM data from $9AE0
+    lda  sprites_rom+$0000,x    ; Get ROM data from $9AE0
     sta  D_4300,x               ; Store to RAM at $4300
-    lda  D_9BE0,x               ; Get ROM data from $9BE0
+    lda  sprites_rom+$0100,x    ; Get ROM data from $9BE0
     sta  D_4400,x               ; Store to RAM at $4400
-    lda  D_9CE0,x               ; Get ROM data from $9CE0
+    lda  sprites_rom+$0200,x    ; Get ROM data from $9CE0
     sta  D_4500,x               ; Store to RAM at $4500
-    lda  D_9DE0,x               ; Get ROM data from $9DE0
+    lda  sprites_rom+$0300,x    ; Get ROM data from $9DE0
     sta  D_4600,x               ; Store to RAM at $4600 (Y positions)
-    lda  D_9EE0,x               ; Get ROM data from $9EE0
+    lda  sprites_rom+$0400,x    ; Get ROM data from $9EE0
     sta  D_4700,x               ; Store to RAM at $4700 (X positions)
     inx                         ; Next byte
     bne  L_3366                 ; Continue for 256 bytes

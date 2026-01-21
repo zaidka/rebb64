@@ -25,13 +25,13 @@
 ;
 ; External Calls:
 ; - D_05AD: Setup routine (called with Y=$19)
-; - D_2AE9: Unknown routine (modified by D_A81F table)
-; - D_A815: Pointer table (low bytes) for level data sources
-; - D_A81A: Pointer table (high bytes) for level data sources  
-; - D_A81F: Configuration table for bonus stages
+; - D_2AE9: Unknown routine (modified by bonus_sprite_colors table)
+; - bonus_data_ptr_lo: Pointer table (low bytes) for level data sources
+; - bonus_data_ptr_hi: Pointer table (high bytes) for level data sources  
+; - bonus_sprite_colors: Color table for bonus stages
 ; - D_A892: Level layout compression table
-; - D_35A8: Special data table (8 bytes): $BF,$FF,$00,$95,$55,$00,$95,$45
-; - D_A420: Additional data table (8 bytes)
+; - bonus_stage1_pattern_a: Pattern data (8 bytes) copied to $7D37 for stage 1
+; - bonus_stage1_pattern_b: Pattern data (8 bytes) copied to $7D76 for stage 1
 ;
 ; Called From:
 ; - $176F: jmp D_3517 (conditional on $68 != 0)
@@ -190,14 +190,14 @@ D_3517:
     ldx  $6A                    ; Get stage index
     bmi  L_3554                 ; If negative, skip to level data processing
 
-    ; Copy configuration byte from D_A81F table
-    lda  D_A81F,x               ; Get config byte for this stage
+    ; Copy configuration byte from bonus_sprite_colors table
+    lda  bonus_sprite_colors,x  ; Get color for this bonus stage
     sta  D_2AE9                 ; Store configuration
 
     ; Set up pointer to level data source ($40-$41)
-    lda  D_A815,x               ; Get data pointer low byte
+    lda  bonus_data_ptr_lo,x    ; Get data pointer low byte
     sta  DATLIN+1               ; Store in $40
-    lda  D_A81A,x               ; Get data pointer high byte
+    lda  bonus_data_ptr_hi,x    ; Get data pointer high byte
     sta  DATPTR                 ; Store in $41
 
     ; Copy 256 bytes from (DATLIN+1) to $7D00
@@ -222,16 +222,18 @@ L_3539:
     bpl  L_3539                 ; Continue while Y < $80 (0-127)
 
     ; Special handling for stage index 1
+    ; After clearing first 128 bytes, patch in two 8-byte patterns
+    ; that create small decorative elements in the level buffer
     cpx  #$01                   ; Is stage index 1?
     bne  L_3554                 ; No - skip to data processing
 
-    ; Copy special data tables for stage 1
+    ; Copy pattern data tables for stage 1
     ldy  #$07                   ; Copy 8 bytes (indices 7-0)
 
 L_3545:
-    lda  D_35A8,y               ; Get byte from D_35A8 table
+    lda  bonus_stage1_pattern_a,y ; Get pattern A byte
     sta  D_7D37,y               ; Store to $7D37
-    lda  D_A420,y               ; Get byte from D_A420 table
+    lda  bonus_stage1_pattern_b,y ; Get pattern B byte
     sta  D_7D76,y               ; Store to $7D76
     dey                         ; Next byte
     bpl  L_3545                 ; Continue for 8 bytes
@@ -325,10 +327,11 @@ L_3593:
     rts                         ; Return
 
 ;-------------------------------------------------------------------------------
-; D_35A8 - Data table for bonus stage 1
-; 8 bytes copied to $7D37 when stage index = 1
+; Bonus stage 1 pattern A - 8 bytes copied to $7D37 during stage 1 init
+; Creates a small decorative element (pillar/stripe pattern) in the level buffer
+; Used alongside bonus_stage1_pattern_b which is copied to $7D76
 ;-------------------------------------------------------------------------------
-D_35A8:
+bonus_stage1_pattern_a:
     .byte $BF, $FF, $00, $95, $55, $00, $95, $45
 
 ;-------------------------------------------------------------------------------

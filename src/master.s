@@ -234,6 +234,91 @@ IRQ_VEC     = $FFFE     ; Hardware IRQ vector low byte
 IRQ_VEC_HI  = $FFFF     ; Hardware IRQ vector high byte
 D_FEBC      = $FEBC     ; KERNAL IRQ exit routine
 
+; --- Charset Region Work Buffers ($4000-$47FF) ---
+; These addresses overlap the charset memory region and are used as work RAM.
+; The charset label is defined in binaries.s; these are offsets into that region.
+D_4050      = charset + $50     ; Entity/item data array
+D_4080      = charset + $80     ; Memory region cleared during bonus stage
+D_4087      = charset + $87     ; Graphics source data 1
+D_408F      = charset + $8F     ; Graphics source data 2
+D_4097      = charset + $97     ; Graphics source data 3
+D_409F      = charset + $9F     ; Graphics source data 4
+D_40A8      = charset + $A8     ; Level header data (8 bytes)
+D_40B0      = charset + $B0     ; Level sidebar chars 1
+D_40B8      = charset + $B8     ; Level sidebar chars 2
+D_40C0      = charset + $C0     ; Level sidebar chars 3
+D_40C8      = charset + $C8     ; Level sidebar chars 4
+D_40D0      = charset + $D0     ; Level number display buffer (6 bytes)
+D_40D6      = charset + $D6     ; Level display data
+D_40D7      = charset + $D7     ; Level display data
+D_40D8      = charset + $D8     ; Level display data (ones digit)
+D_40DE      = charset + $DE     ; Level display data
+D_40DF      = charset + $DF     ; Level display data
+D_4100      = charset + $100    ; Character set page 2
+D_4200      = charset + $200    ; Graphics work buffer
+D_4210      = charset + $210    ; Item work buffer 1
+D_4230      = charset + $230    ; Item work buffer 2
+D_42C6      = charset + $2C6    ; Data/flag location
+D_4300      = charset + $300    ; HUD font destination (160 bytes copied from $FE90)
+D_43B0      = charset + $3B0    ; Data table 1
+D_43B8      = charset + $3B8    ; Data table 2
+D_43C0      = charset + $3C0    ; Data table 3
+D_4400      = charset + $400    ; Enemy template data table 2 (RAM copy)
+D_4B00      = charset + $B00    ; Enemy template data table (destination)
+
+; --- Work RAM Region ($4B00-$57FF) ---
+; This region is initialized from work-ram-init.bin and used during gameplay.
+; VIC config: Bank 1 ($4000-$7FFF), Screen at $4800, Charset at $4000
+; $4B00-$4BFF is overwritten by charset backup during init.
+D_4CF3      = $4CF3     ; External routine (called from sound engine)
+D_4E00      = $4E00     ; Platform screen address low
+D_4E48      = $4E48     ; Graphics output buffer (72 bytes)
+D_4F00      = $4F00     ; Platform screen address high
+D_4FF8      = $4FF8     ; Item table 2
+; Screen RAM pages (VIC double-buffering)
+D_5000      = $5000     ; Screen RAM page 0
+D_5001      = $5001     ; Screen pointer storage
+D_501E      = $501E     ; Level position data
+D_501F      = $501F     ; Level position data
+D_5050      = $5050     ; Level data value
+D_5053      = $5053     ; Screen memory area 1
+D_50AF      = $50AF     ; Screen memory area for animation
+D_5100      = $5100     ; Screen RAM page 1
+D_519C      = $519C     ; Sprite index table 1 (9 bytes)
+D_51D3      = $51D3     ; Screen text output (self-modifying)
+D_51EC      = $51EC     ; Sprite index table 2 (9 bytes)
+D_5200      = $5200     ; Screen RAM page 2
+D_525B      = $525B     ; Screen memory area 2
+D_52AA      = $52AA     ; Screen line pointer array 1
+D_52D2      = $52D2     ; Screen line pointer array 2
+D_52FA      = $52FA     ; Screen line pointer array 3
+D_5300      = $5300     ; Screen RAM page 3
+D_5322      = $5322     ; Screen line pointer array 4
+D_534A      = $534A     ; Screen line pointer array 5
+D_5398      = $5398     ; Source tile table
+D_53C0      = $53C0     ; Screen buffer destination
+D_53C1      = $53C1     ; Screen buffer destination +1
+D_53DE      = $53DE     ; Screen buffer alternate
+D_53DF      = $53DF     ; Screen buffer alternate +1
+D_53E4      = $53E4     ; Data/routine location
+D_53F8      = $53F8     ; Screen 1 sprite pointers (VIC reads at screen + $3F8)
+D_53FA      = $53FA     ; Screen 1 sprite pointers +2
+D_53FC      = $53FC     ; Screen 1 sprite pointers +4
+; Color RAM buffer pages (copied to $D800)
+D_5400      = $5400     ; Color RAM buffer page 0
+D_5401      = $5401     ; Color RAM buffer +1
+D_5500      = $5500     ; Color RAM buffer page 1
+D_559C      = $559C     ; Screen 2 sprite index table 1 (9 bytes)
+D_55D3      = $55D3     ; Screen text output 2 (self-modifying)
+D_55EC      = $55EC     ; Screen 2 sprite index table 2 (9 bytes)
+D_5600      = $5600     ; Color RAM buffer page 2
+D_5700      = $5700     ; Color RAM buffer page 3
+D_57D4      = $57D4     ; Game state storage / animation data
+D_57E4      = $57E4     ; Data/routine location
+D_57F8      = $57F8     ; Screen 2 sprite pointers (VIC reads at screen + $3F8)
+D_57FA      = $57FA     ; Screen 2 sprite pointers +2
+D_57FC      = $57FC     ; Screen 2 sprite pointers +4
+
 ; --- Game Data Tables (in RAM, addresses fixed) ---
 D_0107      = $0107     ; Stack page temp buffer
 D_0108      = $0108     ; Stack page temp buffer
@@ -450,7 +535,7 @@ D_EEB4      = $EEB4     ; Entity movement handler
 ; D_EEEB now defined as label in entity-ai.s
 
 ; $EFxx - Entity physics
-D_EF15      = $EF15     ; Self-modified RTS
+; D_EF15 now defined as label in entity-ai.s
 ; D_EF1E now defined as label in entity-ai.s
 D_EF3B      = $EF3B     ; Right movement platform check
 ; D_EF4C now defined as label in entity-ai.s
@@ -613,11 +698,10 @@ D_7F83      = $7F83     ; Bonus level handler
 ; D_32C1, D_3421, D_344A are defined in bb-extend-bonus.s
 
 ; --- Bonus Round Forward References ---
-; D_348A, D_3495, D_34A0, D_34FA, D_3502, D_350A, D_350C, D_3517, D_35A8 are defined in bb-bonus-round.s
 D_2AE9      = $2AE9     ; Configuration byte storage
 ; D_48A8, D_48B0, D_48B8, D_48C0, D_48C8 defined in init-routines.s
-D_7D37      = $7D37     ; Special data area 1 (8 bytes)
-D_7D76      = $7D76     ; Special data area 2 (8 bytes)
+D_7D37      = $7D37     ; Bonus stage 1 pattern A destination (8 bytes)
+D_7D76      = $7D76     ; Bonus stage 1 pattern B destination (8 bytes)
 
 ; --- Bonus Stage Extended Forward References ---
 ; D_35B0, D_35C0, D_3621, D_362F, D_370C, D_3771, D_3794 are defined in bb-bonus-stage-extended.s

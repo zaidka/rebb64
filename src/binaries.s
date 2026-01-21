@@ -13,43 +13,17 @@
 ;===============================================================================
 
 ;-------------------------------------------------------------------------------
-; Character set ($4000-$445F, 1120 bytes)
-; NOTE: Region $4000-$47FF is used for charset + work buffers during gameplay
+; Character set ($4000-$445F, 1120 bytes = 140 characters)
+; Source: data/charset.tga (140 hires 8x8 characters)
+;
+; NOTE: Region $4000-$47FF is used for charset + work buffers during gameplay.
+; The first 1024 bytes ($4000-$43FF) are backed up to $4800-$4BFF at init,
+; allowing this region to be reused as work RAM while preserving the charset.
+; Work buffer equates (D_4050, D_4080, etc.) are defined in master.s.
 ;-------------------------------------------------------------------------------
         .segment "CHARSET"
-        .incbin "../data/charset.bin"
-
-; Symbols within CHARSET region ($4000-$445F)
-; Many of these are work buffers that overlay the charset area
-D_4000      = $4000     ; Character set base address
-D_4050      = $4050     ; Entity/item data array
-D_4080      = $4080     ; Memory region cleared during bonus stage
-D_4087      = $4087     ; Graphics source data 1
-D_408F      = $408F     ; Graphics source data 2
-D_4097      = $4097     ; Graphics source data 3
-D_409F      = $409F     ; Graphics source data 4
-D_40A8      = $40A8     ; Level header data (8 bytes)
-D_40B0      = $40B0     ; Level sidebar chars 1
-D_40B8      = $40B8     ; Level sidebar chars 2
-D_40C0      = $40C0     ; Level sidebar chars 3
-D_40C8      = $40C8     ; Level sidebar chars 4
-D_40D0      = $40D0     ; Level number display buffer (6 bytes)
-D_40D6      = $40D6     ; Level display data
-D_40D7      = $40D7     ; Level display data
-D_40D8      = $40D8     ; Level display data (ones digit)
-D_40DE      = $40DE     ; Level display data
-D_40DF      = $40DF     ; Level display data
-D_4100      = $4100     ; Character set page 2
-D_4200      = $4200     ; Graphics work buffer
-D_4210      = $4210     ; Item work buffer 1
-D_4230      = $4230     ; Item work buffer 2
-D_42C6      = $42C6     ; Data/flag location
-D_4300      = $4300     ; HUD font destination (160 bytes copied from $FE90)
-D_43B0      = $43B0     ; Data table 1
-D_43B8      = $43B8     ; Data table 2
-D_43C0      = $43C0     ; Data table 3
-D_4400      = $4400     ; Enemy template data table 2 (RAM copy)
-D_4B00      = $4B00     ; Enemy template data table (destination)
+charset:
+        .incbin "../build/charset.bin"
 
 ;-------------------------------------------------------------------------------
 ; Early initialization code and title screen data ($4460-$47FF, 928 bytes)
@@ -57,96 +31,70 @@ D_4B00      = $4B00     ; Enemy template data table (destination)
 ;-------------------------------------------------------------------------------
 
 ;-------------------------------------------------------------------------------
-; Graphics data ($4B00-$57FF, 3328 bytes)
-; This region contains screen RAM buffers and graphics data
+; Work RAM initialization ($4B00-$57FF, 3328 bytes)
+;
+; This region is used as work RAM during gameplay for screen buffers,
+; sprite pointer tables, and various game state. The binary file provides
+; initial values that are loaded at startup.
+;
+; Memory layout:
+;   $4B00-$4BFF: Overwritten by charset backup during init (from $4300-$43FF)
+;                Exception: $4BF8-$4BFF are sprite pointers (set by game)
+;   $4C00-$4FFF: Lookup tables and work buffers
+;   $5000-$53FF: Screen RAM pages 0-3 (double-buffered)
+;   $5400-$57FF: Color RAM buffer pages 0-3
+;
+; VIC configuration during gameplay:
+;   Bank 1 ($4000-$7FFF), Screen at $4800, Charset at $4000
+;   Sprite pointers at $4BF8 (screen + $3F8)
 ;-------------------------------------------------------------------------------
         .segment "GRAPHICS"
-        .incbin "../data/graphics-data.bin"
+work_ram_init:
+        .incbin "../data/work-ram-init.bin"
 
-; Symbols within GRAPHICS region ($4B00-$57FF)
-; Screen RAM pages and work buffers
-D_4CF3      = $4CF3     ; External routine (called from sound engine)
-D_4E00      = $4E00     ; Platform screen address low
-D_4E48      = $4E48     ; Graphics output buffer (72 bytes)
-D_4F00      = $4F00     ; Platform screen address high
-D_4FF8      = $4FF8     ; Item table 2
-D_5000      = $5000     ; Screen RAM page 0
-D_5001      = $5001     ; Screen pointer storage
-D_501E      = $501E     ; Level position data
-D_501F      = $501F     ; Level position data
-D_5050      = $5050     ; Level data value
-D_50AF      = $50AF     ; Screen memory area for animation
-D_5053      = $5053     ; Screen memory area 1
-D_5100      = $5100     ; Screen RAM page 1
-D_519C      = $519C     ; Sprite index table 1 (9 bytes)
-D_51D3      = $51D3     ; Screen text output (self-modifying)
-D_51EC      = $51EC     ; Sprite index table 2 (9 bytes)
-D_5200      = $5200     ; Screen RAM page 2
-D_525B      = $525B     ; Screen memory area 2
-D_52AA      = $52AA     ; Screen line pointer array 1
-D_52D2      = $52D2     ; Screen line pointer array 2
-D_52FA      = $52FA     ; Screen line pointer array 3
-D_5300      = $5300     ; Screen RAM page 3
-D_5322      = $5322     ; Screen line pointer array 4
-D_534A      = $534A     ; Screen line pointer array 5
-D_5398      = $5398     ; Source tile table
-D_53C0      = $53C0     ; Screen buffer destination
-D_53C1      = $53C1     ; Screen buffer destination
-D_53DE      = $53DE     ; Screen buffer alternate
-D_53DF      = $53DF     ; Screen buffer alternate
-D_53E4      = $53E4     ; Data/routine location
-D_53F8      = $53F8     ; Screen 1 sprite pointers
-D_53FA      = $53FA     ; Screen 1 sprite pointers +2
-D_53FC      = $53FC     ; Screen 1 sprite pointers +4
-D_5400      = $5400     ; Color RAM buffer page 0
-D_5401      = $5401     ; Color RAM buffer +1
-D_5500      = $5500     ; Color RAM buffer page 1
-D_559C      = $559C     ; Screen 2 sprite index table 1 (9 bytes)
-D_55D3      = $55D3     ; Screen text output 2 (self-modifying)
-D_55EC      = $55EC     ; Screen 2 sprite index table 2 (9 bytes)
-D_5600      = $5600     ; Color RAM buffer page 2
-D_5700      = $5700     ; Color RAM buffer page 3
-D_57D4      = $57D4     ; Game state storage / animation data
-D_57E4      = $57E4     ; Data/routine location
-D_57F8      = $57F8     ; Screen 2 sprite pointers
-D_57FA      = $57FA     ; Screen 2 sprite pointers +2
-D_57FC      = $57FC     ; Screen 2 sprite pointers +4
+; NOTE: Symbols for work RAM region ($4B00-$57FF) are defined in master.s
+; since they are RAM addresses used during gameplay, not file data offsets.
 
 ;-------------------------------------------------------------------------------
-; Sprite data 1 ($5800-$5FFF, 2048 bytes)
-; This region is used for sprite data and game state flags
+; Game sprites ($5800-$703F, 6208 bytes = 97 sprites)
+; Built from data/sprites-game.tga via convert-tga.py.
+;
+; Memory layout:
+;   $5800-$5FFF: 32 sprites (pointers $160-$17F) - players, bubbles, EXTEND
+;   $6000-$703F: 65 sprites (pointers $180-$1C0) - enemies, items, animations
+;
+; Note: Byte 63 of each sprite (the padding byte) is used as game state
+; variables during gameplay. The initial values are set in the TGA file.
 ;-------------------------------------------------------------------------------
-        .segment "SPRITES1"
-        .incbin "../data/sprites1.bin"
-
-; Symbols within SPRITES1 region ($5800-$5FFF)
-; Game state flags, timers, and counters
-D_5800      = $5800     ; Sprite data buffer
-D_58BF      = $58BF     ; Global level flag
-D_58FF      = $58FF     ; Special timer
-D_593F      = $593F     ; Special rendering mode flag
-D_597F      = $597F     ; Frame counter
-D_59BF      = $59BF     ; Game state flag
-D_59FF      = $59FF     ; Game state flag
-D_5A7F      = $5A7F     ; Game mode flag
-D_5ABF      = $5ABF     ; Countdown timer 2
-D_5AFF      = $5AFF     ; Sprites active flag
-D_5B3F      = $5B3F     ; Level progression counter
-D_5B7F      = $5B7F     ; Active sprite mask
-D_5BBF      = $5BBF     ; Special item countdown
-D_5BFF      = $5BFF     ; Enemy type seed
-D_5C3F      = $5C3F     ; Game state flag
+        .segment "SPRITES_GAME"
+sprites_game:
+        .incbin "../build/sprites-game.bin"               ; 97 sprites (6208 bytes)
 
 ;-------------------------------------------------------------------------------
-; Level data part 1 ($6000-$7304, 4869 bytes)
+; Music sequence data ($7040-$7304, 709 bytes)
 ;-------------------------------------------------------------------------------
-        .segment "LEVELS"
-        .incbin "../data/level-data-part1.bin"
+        .segment "MUSICSEQ"
+music_sequence_7040:
+        .incbin "../data/music-sequence.bin"
 
-; Symbols within level-data-part1.bin
-; NOTE: D_6085 is NOT executable code - it's used as a byte-encoding trick
-; where "jsr D_6085" emits bytes $20 $85 $60 to create other instructions
-D_6085      = $6085     ; Byte pattern for self-modifying code trick
+; Symbols within sprite region ($5800-$5FFF)
+; Game state flags stored in sprite padding bytes (byte 63 of each sprite)
+; These addresses are used as RAM variables during gameplay.
+D_5800      = sprites_game              ; Sprite data buffer base
+D_58BF      = sprites_game + 2*64 + 63  ; Global level flag (sprite 2, byte 63)
+D_58FF      = sprites_game + 3*64 + 63  ; Special timer (sprite 3, byte 63)
+D_593F      = sprites_game + 4*64 + 63  ; Special rendering mode flag (sprite 4, byte 63)
+D_597F      = sprites_game + 5*64 + 63  ; Frame counter (sprite 5, byte 63)
+D_59BF      = sprites_game + 6*64 + 63  ; Game state flag (sprite 6, byte 63)
+D_59FF      = sprites_game + 7*64 + 63  ; Game state flag (sprite 7, byte 63)
+D_5A7F      = sprites_game + 9*64 + 63  ; Game mode flag (sprite 9, byte 63)
+D_5ABF      = sprites_game + 10*64 + 63 ; Countdown timer 2 (sprite 10, byte 63)
+D_5AFF      = sprites_game + 11*64 + 63 ; Sprites active flag (sprite 11, byte 63)
+D_5B3F      = sprites_game + 12*64 + 63 ; Level progression counter (sprite 12, byte 63)
+D_5B7F      = sprites_game + 13*64 + 63 ; Active sprite mask (sprite 13, byte 63)
+D_5BBF      = sprites_game + 14*64 + 63 ; Special item countdown (sprite 14, byte 63)
+D_5BFF      = sprites_game + 15*64 + 63 ; Enemy type seed (sprite 15, byte 63)
+D_5C3F      = sprites_game + 16*64 + 63 ; Game state flag (sprite 16, byte 63)
 
 ;-------------------------------------------------------------------------------
 ; Music command handlers inserted here ($7305-$743F, 315 bytes)
@@ -154,12 +102,114 @@ D_6085      = $6085     ; Byte pattern for self-modifying code trick
 ;-------------------------------------------------------------------------------
 
 ;-------------------------------------------------------------------------------
-; Sprite data 2 ($8000-$9FFF, 8192 bytes)
+; Level data part 2 - Sprite block 1 ($7440-$7ABF, 1664 bytes)
+; Bubble dragon in bubble + Grumple Gromit (left & bubble) sprites.
+; 26 multicolor sprites = 1664 bytes
+; Source: data/bubble-dragon-in-bubble.tga (8 sprites, 512 bytes)
+;         data/grumple-gromit.tga left+bubble (18 sprites, 1152 bytes)
+;-------------------------------------------------------------------------------
+        .segment "LEVELS2_SPR1"
+sprite_data_7440:
+        .incbin "../build/bubble-dragon-in-bubble.bin"
+        .incbin "../build/grumple-gromit.bin", 0, 1152
+
+;-------------------------------------------------------------------------------
+; Level data part 2 - Code block 1 ($7AC0-$7C3F)
+; See level-data-part2.s for disassembled routines
+;-------------------------------------------------------------------------------
+
+;-------------------------------------------------------------------------------
+; Level data part 2 - Sprite block 2 ($7C40-$7E7F, 576 bytes)
+; Grumple Gromit facing right sprites.
+; 9 multicolor sprites = 576 bytes
+; Source: data/grumple-gromit.tga right (9 sprites at offset 1152)
+;-------------------------------------------------------------------------------
+        .segment "LEVELS2_SPR2"
+sprite_data_7C40:
+        .incbin "../build/grumple-gromit.bin", 1152, 576
+
+;-------------------------------------------------------------------------------
+; Level data part 2 - Code block 2 ($7E80-$7FFF)
+; See level-data-part2.s for disassembled routines
+;-------------------------------------------------------------------------------
+
+;-------------------------------------------------------------------------------
+; Sprite data 2 & 3 ($8000-$A427, 9256 bytes)
 ; This large region contains sprite graphics and is heavily used as RAM
 ; for entity data, collision flags, and animation arrays during gameplay
+;
+; Layout:
+;   - $8000-$847F: Bubble masks (1152 bytes, from bubble-masks.tga)
+;   - $8480-$8EFF: Entity/table data (2688 bytes, used as RAM during gameplay)
+;   - $8F00-$A31F: Software sprites (5152 bytes, from software-sprites.tga)
+;   - $A340-$A427: Sprite ROM data (232 bytes, from sprites-rom.tga)
 ;-------------------------------------------------------------------------------
-        .segment "SPRITES2"
-        .incbin "../data/sprites2.bin"
+
+; Bubble mask tables ($8000-$847F, 1152 bytes)
+; 72 x 16-byte mask patterns for bubble rendering
+        .segment "BUBBLE_MASKS"
+bubble_masks:
+        .incbin "../build/bubble-masks.bin"
+
+; Entity/table data ($8480-$8EFF, 2688 bytes)
+; Used as RAM for entity state during gameplay
+        .segment "SPRITES2_TABLES"
+        .incbin "../data/sprites2-tables.bin"
+
+; Software sprites ($8F00-$A31F, 5152 bytes)
+; 48-byte column-major multicolor sprites for software rendering
+        .segment "SOFTWARE_SPRITES"
+software_sprites_base:
+        .incbin "../build/software-sprites.bin"             ; 5152 bytes
+
+; Legacy symbol for code that references the old SPRITES_ROM location
+; This points to offset 3040 within SOFTWARE_SPRITES ($8F00 + $BE0 = $9AE0)
+sprites_rom = $9AE0
+
+; Symbols for bubble mask offsets ($8000-$8210)
+; These are used by sprite_gfx_ptr table entries 0-11
+; Each entry is 48 bytes ($30) apart, same spacing as software sprites
+bubble_mask_0x000 = bubble_masks + $000         ; $8000 - Entry 0
+bubble_mask_0x030 = bubble_masks + $030         ; $8030 - Entry 1
+bubble_mask_0x060 = bubble_masks + $060         ; $8060 - Entry 2
+bubble_mask_0x090 = bubble_masks + $090         ; $8090 - Entry 3
+bubble_mask_0x0c0 = bubble_masks + $0C0         ; $80C0 - Entry 4
+bubble_mask_0x0f0 = bubble_masks + $0F0         ; $80F0 - Entry 5
+bubble_mask_0x120 = bubble_masks + $120         ; $8120 - Entry 6
+bubble_mask_0x150 = bubble_masks + $150         ; $8150 - Entry 7
+bubble_mask_0x180 = bubble_masks + $180         ; $8180 - Entry 8
+bubble_mask_0x1b0 = bubble_masks + $1B0         ; $81B0 - Entry 9
+bubble_mask_0x1e0 = bubble_masks + $1E0         ; $81E0 - Entry 10
+bubble_mask_0x210 = bubble_masks + $210         ; $8210 - Entry 11
+
+; Symbols for sprite graphics within software sprites region
+; These are used by sprite_gfx_ptr table entries 12-57
+; Named by offset within software-sprites.tga for easy cross-reference
+soft_spr_0x000 = software_sprites_base + $000   ; $8F00 - Entries 48-51
+soft_spr_0x180 = software_sprites_base + $180   ; $9080 - Entries 12-14
+soft_spr_0x240 = software_sprites_base + $240   ; $9140 - Entries 15-19
+soft_spr_0x300 = software_sprites_base + $300   ; $9200 - Entries 20-23 (lightning bubble)
+soft_spr_0x400 = software_sprites_base + $400   ; $9300 - Entries 52-55
+soft_spr_0x580 = software_sprites_base + $580   ; $9480 - Entries 24-26
+soft_spr_0x610 = software_sprites_base + $610   ; $9510 - Entries 27-31
+soft_spr_0x700 = software_sprites_base + $700   ; $9600 - Entries 32-37
+soft_spr_0x820 = software_sprites_base + $820   ; $9720 - Entries 38-42
+soft_spr_0x910 = software_sprites_base + $910   ; $9810 - Entry 43
+soft_spr_0x940 = software_sprites_base + $940   ; $9840 - Entries 56-57
+
+; Bonus cake sprites + unused data ($A320-$A427, 264 bytes)
+; Layout:
+;   $A320-$A41F: 256 bytes - 4 cake sprites from bonus-sprites.tga
+;   $A420-$A427: 8 bytes - bonus stage 1 pattern data (patch B)
+        .segment "BONUS_CAKE"
+bonus_cake_sprites:
+        .incbin "../build/bonus-sprites.bin", 0, 256        ; 256 bytes - cake
+; Bonus stage 1 pattern B - 8 bytes copied to $7D76 during stage 1 init
+; Creates a small decorative element (pillar/stripe pattern) in the level buffer
+; Used alongside bonus_stage1_pattern_a which is copied to $7D37
+; This data is the top left of the melon sprite from bonus-sprites.tga
+bonus_stage1_pattern_b:
+        .incbin "../build/bonus-sprites.bin", 256, 8        ; 8 bytes - melon top left
 
 ; Symbols within SPRITES2 region ($8000-$9FFF)
 ; Entity data arrays, collision flags, animation data
@@ -257,37 +307,207 @@ D_8CEC      = $8CEC     ; Baron sprite data source 2
 D_8D00      = $8D00     ; Screen buffer page 2
 D_8E00      = $8E00     ; Screen buffer page 3
 
-; --- Enemy template ROM tables ($9AE0-$9FFF) ---
-D_9AE0      = $9AE0     ; Enemy template ROM table 1
-D_9BE0      = $9BE0     ; Enemy template ROM table 2
-D_9CE0      = $9CE0     ; Enemy template ROM table 3
-D_9DE0      = $9DE0     ; Enemy template ROM table 4
-D_9EE0      = $9EE0     ; Enemy template ROM table 5
+
 
 ;-------------------------------------------------------------------------------
-; Sprite data 3 ($A000-$A427, 1064 bytes)
+; Bonus melon sprites + padding ($A47E-$A51F, 162 bytes)
+; Layout:
+;   $A47E-$A495: 24 bytes - zero padding
+;   $A496-$A49F: 10 bytes - melon top right (from bonus-sprites.tga)
+;   $A4A0-$A51F: 128 bytes - 2 melon sprites from bonus-sprites.tga
 ;-------------------------------------------------------------------------------
-        .segment "SPRITES3"
-        .incbin "../data/sprites3.bin"
-
-; Symbols within SPRITES3 region ($A000-$A427)
-D_A420      = $A420     ; Additional data table (8 bytes)
+        .segment "BONUS_MELON"
+bonus_melon_padding:
+        .byte   $00, $00, $00, $00, $00, $00, $00, $00      ; 24 bytes - zero padding
+        .byte   $00, $00, $00, $00, $00, $00, $00, $00
+        .byte   $00, $00, $00, $00, $00, $00, $00, $00
+        .incbin "../build/bonus-sprites.bin", 264, 10       ; 10 bytes - melon top right
+bonus_melon_sprites:
+        .incbin "../build/bonus-sprites.bin", 274, 128      ; 128 bytes - melon sprites 4 & 5
 
 ;-------------------------------------------------------------------------------
-; Sprite patterns ($A47E-$A59F, 290 bytes)
+; Bonus diamond sprites ($A520-$A59F, 128 bytes)
+; 2 diamond sprites from bonus-sprites.tga
 ;-------------------------------------------------------------------------------
-        .segment "SPRPAT"
-        .incbin "../data/sprite-patterns.bin"
+        .segment "BONUS_DIAMOND"
+bonus_diamond_sprites:
+        .incbin "../build/bonus-sprites.bin", 402, 128      ; 128 bytes - diamond
 
-; No symbols defined within SPRPAT region ($A47E-$A59F)
+
 
 ;-------------------------------------------------------------------------------
 ; Game tables ($A632-$AE50, 2079 bytes)
 ; Lookup tables for sprites, positions, items, etc.
 ; Enemy spawn data has been moved to ENEMY_SPAWNS segment (generated)
+;
+; Structure:
+;   $A632-$A814: game-tables-part1a.bin (483 bytes) - lookup tables
+;   $A815-$A823: Bonus stage pointer tables (15 bytes) - source code below
+;   $A824-$A853: game-tables-part1b.bin (48 bytes) - lookup tables
+;   $A854-$A877: diamond-sprite.bin (36 bytes) - from diamond-sprite.tga
+;   $A878-$AD74: game-tables-part2.bin (1277 bytes) - lookup tables
+;   $AD75-$ADB0: digit-font.bin (60 bytes) - from digit-font.tga
+;   $ADB1-$AE50: game-tables-part3.bin (160 bytes) - lookup tables
 ;-------------------------------------------------------------------------------
         .segment "GAMETABLES"
-        .incbin "../data/game-tables-static.bin"
+        .incbin "../data/game-tables-part1a.bin"    ; $A632-$A814 (483 bytes)
+
+; Bonus stage data pointer tables ($A815-$A823)
+; These point to data areas used during bonus round initialization
+; 256 bytes are copied from the pointed address to buffer $7D00
+; Index 0: Cake bonus - copies cake sprite data directly
+; Index 1: Special stage - copies from $A420, then clears first 128 bytes,
+;          then patches in bonus_stage1_pattern_a at $7D37 and
+;          bonus_stage1_pattern_b at $7D76
+; Index 2-4: Melon bonus - copies melon sprite data directly
+bonus_data_ptr_lo:
+        .byte   <bonus_cake_sprites         ; Index 0: $A320
+        .byte   <bonus_stage1_pattern_b     ; Index 1: $A420
+        .byte   <bonus_melon_sprites        ; Index 2: $A4A0
+        .byte   <bonus_melon_sprites        ; Index 3: $A4A0
+        .byte   <bonus_melon_sprites        ; Index 4: $A4A0
+bonus_data_ptr_hi:
+        .byte   >bonus_cake_sprites         ; Index 0: $A320
+        .byte   >bonus_stage1_pattern_b     ; Index 1: $A420
+        .byte   >bonus_melon_sprites        ; Index 2: $A4A0
+        .byte   >bonus_melon_sprites        ; Index 3: $A4A0
+        .byte   >bonus_melon_sprites        ; Index 4: $A4A0
+bonus_sprite_colors:
+        .byte   $07                         ; Index 0: Yellow (cake)
+        .byte   $05                         ; Index 1: Green
+        .byte   $07                         ; Index 2: Yellow (melon)
+        .byte   $0E                         ; Index 3: Light blue (diamond)
+        .byte   $04                         ; Index 4: Purple (diamond)
+
+        .incbin "../data/game-tables-part1b.bin"    ; $A824-$A853 (48 bytes)
+        .incbin "../build/diamond-sprite.bin"       ; $A854-$A877 (36 bytes)
+        .incbin "../data/game-tables-part2a.bin", 0, 476   ; $A878-$AA53 (476 bytes)
+
+; Sprite graphics pointer table - low bytes ($AA54-$AA8D, 58 bytes)
+; Combined with sprite_gfx_ptr_hi to form full addresses for sprite graphics
+; Entries 0-11: bubble masks ($8000-$8210)
+; Entries 12-43: software sprites ($9080-$9810)
+; Entries 44-47: null ($0000)
+; Entries 48-57: software sprites ($8F00-$9870)
+sprite_gfx_ptr_lo:
+        .byte   <bubble_mask_0x000                        ; Entry 0
+        .byte   <bubble_mask_0x030                        ; Entry 1
+        .byte   <bubble_mask_0x060                        ; Entry 2
+        .byte   <bubble_mask_0x090                        ; Entry 3
+        .byte   <bubble_mask_0x0c0                        ; Entry 4
+        .byte   <bubble_mask_0x0f0                        ; Entry 5
+        .byte   <bubble_mask_0x120                        ; Entry 6
+        .byte   <bubble_mask_0x150                        ; Entry 7
+        .byte   <bubble_mask_0x180                        ; Entry 8
+        .byte   <bubble_mask_0x1b0                        ; Entry 9
+        .byte   <bubble_mask_0x1e0                        ; Entry 10
+        .byte   <bubble_mask_0x210                        ; Entry 11
+        .byte   <soft_spr_0x180                           ; Entry 12
+        .byte   <(soft_spr_0x180 + $30)                   ; Entry 13
+        .byte   <(soft_spr_0x180 + $60)                   ; Entry 14
+        .byte   <(soft_spr_0x240 - $30)                   ; Entry 15
+        .byte   <soft_spr_0x240                           ; Entry 16
+        .byte   <(soft_spr_0x240 + $30)                   ; Entry 17
+        .byte   <(soft_spr_0x240 + $60)                   ; Entry 18
+        .byte   <(soft_spr_0x240 + $90)                   ; Entry 19
+        .byte   <soft_spr_0x300                           ; Entry 20 (lightning bubble)
+        .byte   <(soft_spr_0x300 + $30)                   ; Entry 21 (lightning bubble)
+        .byte   <(soft_spr_0x300 + $60)                   ; Entry 22 (lightning bubble)
+        .byte   <(soft_spr_0x300 + $90)                   ; Entry 23 (lightning bubble)
+        .byte   <soft_spr_0x580                           ; Entry 24
+        .byte   <(soft_spr_0x580 + $30)                   ; Entry 25
+        .byte   <(soft_spr_0x580 + $60)                   ; Entry 26
+        .byte   <soft_spr_0x610                           ; Entry 27
+        .byte   <(soft_spr_0x610 + $30)                   ; Entry 28
+        .byte   <(soft_spr_0x610 + $60)                   ; Entry 29
+        .byte   <(soft_spr_0x610 + $90)                   ; Entry 30
+        .byte   <(soft_spr_0x610 + $C0)                   ; Entry 31
+        .byte   <soft_spr_0x700                           ; Entry 32
+        .byte   <(soft_spr_0x700 + $30)                   ; Entry 33
+        .byte   <(soft_spr_0x700 + $60)                   ; Entry 34
+        .byte   <(soft_spr_0x700 + $90)                   ; Entry 35
+        .byte   <(soft_spr_0x700 + $C0)                   ; Entry 36
+        .byte   <(soft_spr_0x700 + $F0)                   ; Entry 37
+        .byte   <soft_spr_0x820                           ; Entry 38
+        .byte   <(soft_spr_0x820 + $30)                   ; Entry 39
+        .byte   <(soft_spr_0x820 + $60)                   ; Entry 40
+        .byte   <(soft_spr_0x820 + $90)                   ; Entry 41
+        .byte   <(soft_spr_0x820 + $C0)                   ; Entry 42
+        .byte   <soft_spr_0x910                           ; Entry 43
+        .byte   $00, $00, $00, $00                        ; Entries 44-47: null
+        .byte   <soft_spr_0x000                           ; Entry 48
+        .byte   <(soft_spr_0x000 + $30)                   ; Entry 49
+        .byte   <(soft_spr_0x000 + $60)                   ; Entry 50
+        .byte   <(soft_spr_0x000 + $90)                   ; Entry 51
+        .byte   <soft_spr_0x400                           ; Entry 52
+        .byte   <(soft_spr_0x400 + $30)                   ; Entry 53
+        .byte   <(soft_spr_0x400 + $60)                   ; Entry 54
+        .byte   <(soft_spr_0x400 + $90)                   ; Entry 55
+        .byte   <soft_spr_0x940                           ; Entry 56
+        .byte   <(soft_spr_0x940 + $30)                   ; Entry 57
+
+; Sprite graphics pointer table - high bytes ($AA8E-$AAC7, 58 bytes)
+; Combined with sprite_gfx_ptr_lo to form full addresses for sprite graphics
+sprite_gfx_ptr_hi:
+        .byte   >bubble_mask_0x000                        ; Entry 0
+        .byte   >bubble_mask_0x030                        ; Entry 1
+        .byte   >bubble_mask_0x060                        ; Entry 2
+        .byte   >bubble_mask_0x090                        ; Entry 3
+        .byte   >bubble_mask_0x0c0                        ; Entry 4
+        .byte   >bubble_mask_0x0f0                        ; Entry 5
+        .byte   >bubble_mask_0x120                        ; Entry 6
+        .byte   >bubble_mask_0x150                        ; Entry 7
+        .byte   >bubble_mask_0x180                        ; Entry 8
+        .byte   >bubble_mask_0x1b0                        ; Entry 9
+        .byte   >bubble_mask_0x1e0                        ; Entry 10
+        .byte   >bubble_mask_0x210                        ; Entry 11
+        .byte   >soft_spr_0x180                           ; Entry 12
+        .byte   >(soft_spr_0x180 + $30)                   ; Entry 13
+        .byte   >(soft_spr_0x180 + $60)                   ; Entry 14
+        .byte   >(soft_spr_0x240 - $30)                   ; Entry 15
+        .byte   >soft_spr_0x240                           ; Entry 16
+        .byte   >(soft_spr_0x240 + $30)                   ; Entry 17
+        .byte   >(soft_spr_0x240 + $60)                   ; Entry 18
+        .byte   >(soft_spr_0x240 + $90)                   ; Entry 19
+        .byte   >soft_spr_0x300                           ; Entry 20 (lightning bubble)
+        .byte   >(soft_spr_0x300 + $30)                   ; Entry 21 (lightning bubble)
+        .byte   >(soft_spr_0x300 + $60)                   ; Entry 22 (lightning bubble)
+        .byte   >(soft_spr_0x300 + $90)                   ; Entry 23 (lightning bubble)
+        .byte   >soft_spr_0x580                           ; Entry 24
+        .byte   >(soft_spr_0x580 + $30)                   ; Entry 25
+        .byte   >(soft_spr_0x580 + $60)                   ; Entry 26
+        .byte   >soft_spr_0x610                           ; Entry 27
+        .byte   >(soft_spr_0x610 + $30)                   ; Entry 28
+        .byte   >(soft_spr_0x610 + $60)                   ; Entry 29
+        .byte   >(soft_spr_0x610 + $90)                   ; Entry 30
+        .byte   >(soft_spr_0x610 + $C0)                   ; Entry 31
+        .byte   >soft_spr_0x700                           ; Entry 32
+        .byte   >(soft_spr_0x700 + $30)                   ; Entry 33
+        .byte   >(soft_spr_0x700 + $60)                   ; Entry 34
+        .byte   >(soft_spr_0x700 + $90)                   ; Entry 35
+        .byte   >(soft_spr_0x700 + $C0)                   ; Entry 36
+        .byte   >(soft_spr_0x700 + $F0)                   ; Entry 37
+        .byte   >soft_spr_0x820                           ; Entry 38
+        .byte   >(soft_spr_0x820 + $30)                   ; Entry 39
+        .byte   >(soft_spr_0x820 + $60)                   ; Entry 40
+        .byte   >(soft_spr_0x820 + $90)                   ; Entry 41
+        .byte   >(soft_spr_0x820 + $C0)                   ; Entry 42
+        .byte   >soft_spr_0x910                           ; Entry 43
+        .byte   $00, $00, $00, $00                        ; Entries 44-47: null
+        .byte   >soft_spr_0x000                           ; Entry 48
+        .byte   >(soft_spr_0x000 + $30)                   ; Entry 49
+        .byte   >(soft_spr_0x000 + $60)                   ; Entry 50
+        .byte   >(soft_spr_0x000 + $90)                   ; Entry 51
+        .byte   >soft_spr_0x400                           ; Entry 52
+        .byte   >(soft_spr_0x400 + $30)                   ; Entry 53
+        .byte   >(soft_spr_0x400 + $60)                   ; Entry 54
+        .byte   >(soft_spr_0x400 + $90)                   ; Entry 55
+        .byte   >soft_spr_0x940                           ; Entry 56
+        .byte   >(soft_spr_0x940 + $30)                   ; Entry 57
+
+        .incbin "../data/game-tables-part2b.bin"    ; $AAC8-$AD74 (685 bytes)
+        .incbin "../build/digit-font.bin"           ; $AD75-$ADB0 (60 bytes)
+        .incbin "../data/game-tables-part3.bin"     ; $ADB1-$AE50 (160 bytes)
 
 ; Symbols within game-tables-static.bin ($A632-$AE50)
 ; These are read-only lookup tables used throughout the game
@@ -341,9 +561,9 @@ D_A804      = $A804     ; Player bonus data location
 D_A80D      = $A80D     ; "EXTEND" character table
 D_A813      = $A813     ; Spawn data table
 D_A814      = $A814     ; Spawn data table + 1
-D_A815      = $A815     ; Level data pointer table (low bytes)
-D_A81A      = $A81A     ; Level data pointer table (high bytes)
-D_A81F      = $A81F     ; Large bonus sprite colors (5 bytes: cupcake, melon, yellow/blue/purple diamond)
+D_A815      = bonus_data_ptr_lo   ; Level data pointer table (low bytes)
+D_A81A      = bonus_data_ptr_hi   ; Level data pointer table (high bytes)
+D_A81F      = bonus_sprite_colors ; Large bonus sprite colors (5 bytes: cupcake, melon, yellow/blue/purple diamond)
 D_A824      = $A824     ; Entity state table
 D_A825      = $A825     ; Player 2 invincibility timer
 D_A826      = $A826     ; Sprite data table
@@ -384,8 +604,8 @@ D_AA20      = $AA20     ; Enemy Y positions (offset by 2)
 D_AA30      = $AA30     ; Bubble type storage
 D_AA42      = $AA42     ; Saved enemy type during capture
 D_AA44      = $AA44     ; Enemy data
-D_AA54      = $AA54     ; Sprite graphics pointer table (low)
-D_AA8E      = $AA8E     ; Sprite graphics pointer table (high)
+D_AA54      = sprite_gfx_ptr_lo ; Sprite graphics pointer table (low)
+D_AA8E      = sprite_gfx_ptr_hi ; Sprite graphics pointer table (high)
 D_AAC8      = $AAC8     ; Sprite graphics pointer table 2 (low)
 D_AB02      = $AB02     ; Sprite graphics pointer table 2 (high)
 D_AB41      = $AB41     ; Entity sprite page table
@@ -453,10 +673,11 @@ item_positions:
         .incbin "../build/item-positions.bin"
 
 ;-------------------------------------------------------------------------------
-; Game data - Wind currents ($B695-$BC0D, 1145 bytes)
+; Game data - Zone regions ($B695-$BC0D, variable size, original 1145 bytes)
+; Generated from data/zone-data.txt by tools/zone-data-tool.py
 ;-------------------------------------------------------------------------------
         .segment "GAMEDATA_WIND"
-        .incbin "../data/game-data-wind.bin"
+        .incbin "../build/zone-data.bin"
 
 ;-------------------------------------------------------------------------------
 ; Sidebars ($BC0E-$C2CD, 1888 bytes)
@@ -498,9 +719,9 @@ level_bitmaps:
 ;-------------------------------------------------------------------------------
 ; HUD Font ($FE90-$FF2F, 160 bytes)
 ;-------------------------------------------------------------------------------
-; 8x8 pixel font containing 20 characters (160 bytes total)
+; 4x8 multicolor font containing 20 characters (160 bytes total)
 ; Each character is 8 bytes (one byte per row, 8 rows)
-; Bit pattern: 1 = pixel on, 0 = pixel off
+; Bit pattern: 2 bits per pixel (4 pixels per byte)
 ;
 ; Character set contents:
 ;   Index $00-$09: Digits 0-9 (for score display, level numbers)
@@ -510,7 +731,7 @@ level_bitmaps:
 ;   1. Copied to $4300 during init - accessed via screen codes $60-$73
 ;   2. Accessed directly at $FE90 for graphics compositing (ROUND/READY text)
 ;
-; Source: data/hud-font.tga (converted by tools/convert-hud-font-tga.mjs)
+; Source: data/hud-font.tga (converted by build/convert-tga.py --format multicolor-chars)
 ;-------------------------------------------------------------------------------
         .segment "HUDFONT"
 hud_font:
