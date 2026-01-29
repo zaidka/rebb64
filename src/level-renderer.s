@@ -34,29 +34,29 @@
 ;   $31 - Bit counter (8 bits per byte)
 ;   $07 - Current byte being processed
 ; ============================================================================
-.segment "CODE_E000"
+.segment "CODE_LEVEL_RENDERER"
 
 setup_level_screen:
-        ; Initialize screen pointer to $5448
-        lda     #$48
+        ; Initialize screen pointer
+        lda     #>__VIC_CHARSET_B__
         sta     $2F
-        lda     #$54
+        lda     #>__VIC_SCREEN_B__
         sta     $30
         
         ; Call helper routines
-        jsr     D_E494              ; Wait one frame / prepare screen
-        jsr     D_E393              ; Setup screen memory (clear_color_ram)
+        jsr     wait_one_frame              ; Wait one frame / prepare screen
+        jsr     clear_color_ram      ; Setup screen memory
         
         ; Get current level number
         ldx     SUBFLG              ; $10 = current level (1-100)
         
-        ; Calculate pointer to level header ($0200,x + $6E offset)
+        ; Calculate pointer to level tiles: level_tiles + level * 8
         lda     D_0200,x
         clc
-        adc     #$6E
+        adc     #<level_tiles
         sta     $18                 ; Store low byte of header pointer
         lda     D_0300,x
-        adc     #$C2
+        adc     #>level_tiles
         sta     $19                 ; Store high byte of header pointer
         
         ; Copy 8 bytes from level header to $40A8 and $48A8
@@ -64,7 +64,7 @@ setup_level_screen:
 L_E021:
         lda     ($18),y
         sta     D_40A8,y
-        sta     D_48A8,y
+        sta     CHARSETB_A8,y
         dey
         bpl     L_E021
         
@@ -75,7 +75,7 @@ L_E021:
         bcs     L_E05E              ; Branch if >= 100
         
         ; For levels < 100: Calculate sidebar chars pointer
-        ; Multiply level by 32 (shift left 5 times) and add $BB0E (sidebarChars base)
+        ; Multiply level by 32 (shift left 5 times) and add sidebars base
         iny                         ; Y = 0
         sty     $1B                 ; Clear high byte
         asl     a                   ; Level * 2
@@ -87,18 +87,18 @@ L_E021:
         rol     $1B
         asl     a                   ; Level * 32
         rol     $1B
-        adc     #$0E                ; Add offset $0E
+        adc     #<sidebars          ; Add low byte of sidebars base
         sta     $1A
         lda     $1B
-        adc     #$BB                ; Add high byte $BB
-        sta     $1B                 ; Pointer is now at $BB0E + (level * 32)
+        adc     #>sidebars          ; Add high byte of sidebars base
+        sta     $1B                 ; Pointer is now at sidebars + (level * 32)
         
         ; Copy 32 bytes from sidebar chars data to $40B0 and $48B0
         ldy     #$1F
 L_E051:
         lda     ($1A),y
         sta     D_40B0,y
-        sta     D_48B0,y
+        sta     CHARSETB_B0,y
         dey
         bpl     L_E051
         bmi     L_E07E              ; Always branches
@@ -112,10 +112,10 @@ L_E060:
         sta     D_40B8,y
         sta     D_40C0,y
         sta     D_40C8,y
-        sta     D_48B0,y            ; Mirror locations
-        sta     D_48B8,y
-        sta     D_48C0,y
-        sta     D_48C8,y
+        sta     CHARSETB_B0,y       ; Mirror locations
+        sta     CHARSETB_B8,y
+        sta     CHARSETB_C0,y
+        sta     CHARSETB_C8,y
         dey
         bpl     L_E060
 
@@ -146,14 +146,15 @@ L_E07E:
         jsr     init_level_renderer ; Initialize level renderer ($E299)
         
         ; Clear level data pointers
+setup_level_data_pointers:
         lda     #$00
         sta     $11
         sta     $13
         sta     $04
-        lda     #$8B
+        lda     #>__SCREEN_BACKUP__
         sta     $12
         sta     $14
-        lda     #$54
+        lda     #>__VIC_SCREEN_B__
         sta     $05
         
         ; Process 25 rows of screen data
@@ -259,7 +260,7 @@ draw_border:
         sta     $02
         lda     #$1E
         sta     $04
-        lda     #$54
+        lda     #>__VIC_SCREEN_B__
         sta     $03
         sta     $05
         
@@ -372,16 +373,16 @@ decompress_level_data:
 L_E18B:
         sta     $11                 ; Save level number
         
-        ; Set up source pointer to $B695 (wind currents/level data)
-        lda     #$95
+        ; Set up source pointer to zone data (wind currents/level data)
+        lda     #<zone_data
         sta     $02
-        lda     #$B6
+        lda     #>zone_data
         sta     $03
         
         ; Set up decompression buffer pointer to $8B00
         lda     #$00
         sta     $13
-        lda     #$8B
+        lda     #>__SCREEN_BACKUP__
         sta     $14
         
         ; Initialize renderer
@@ -427,7 +428,7 @@ L_E1C5:
         ldx     #$18                ; 24 rows
         lda     #$00
         sta     $04
-        lda     #$85
+        lda     #>D_8500
         sta     $05
         
 L_E1D1:
@@ -481,7 +482,8 @@ L_E1F3:
         rol     a
         rol     a
         sta     $0A                 ; Save fill pattern
-        
+
+level_decompress_data:
         txa
         and     #$1F                ; Extract X coordinate (0-31)
         sta     $04
@@ -520,7 +522,7 @@ L_E1F3:
         adc     $04                 ; Add column offset
         sta     $04
         lda     D_AC0A,x            ; Row address table (high)
-        adc     #$85
+        adc     #>D_8500
         sta     $05
         
         ; Fill rectangle
@@ -550,7 +552,7 @@ L_E24C:
         ; Initialize screen pointer
         lda     #$00
         sta     $04
-        lda     #$85
+        lda     #>D_8500
         sta     $05
         
         ldx     #$18                ; 24 rows
@@ -794,12 +796,11 @@ L_E35B:
 ; Data tables
 ; ============================================================================
 D_E36A:
-        .byte   $1F                 ; Low byte of routine address
-        
-        rol     a                   ; (Note: May be data, not code)
-        
+        .byte   <D_E31F             ; Low byte of L_E31F routine address
+        .byte   <L_E32A             ; Low byte of L_E32A routine address
+
 D_E36C:
-        .byte   $E3,$E3             ; High bytes of routine addresses
+        .byte   >D_E31F,>L_E32A     ; High bytes of routine addresses
 
 D_E36E:
         .byte   $FF,$FF,$E1         ; Data table 1
@@ -808,15 +809,16 @@ D_E371:
         .byte   $FF,$87,$FF         ; Data table 2
 
 ; ============================================================================
-; Inline code at $E374 (no label - falls through from data)
+; ROUTINE: clear_screen ($E374)
 ; Clears screen memory, sprites, and color RAM
 ; ============================================================================
+clear_screen:
         lda     #$00
         sta     VIC_BORDER          ; $D020 = black border
         sta     VIC_BG0             ; $D021 = black background
         sta     VIC_SPR_ENA         ; $D015 = disable all sprites
         
-        jsr     D_E740              ; Additional cleanup
+        jsr     fill_color_ram      ; Additional cleanup
         
         ; Clear screen RAM $5000-$53FF (1024 bytes)
         lda     #$20                ; Space character
@@ -848,5 +850,5 @@ L_E397:
 
 ; ============================================================================
 ; End of bb-level-renderer.s
-; Forward references (D_E494, D_E740, D_AC09, D_AC0A) defined in bb-master.s
+; Forward references (wait_one_frame, fill_color_ram, D_AC09, D_AC0A) defined in bb-master.s
 ; ============================================================================

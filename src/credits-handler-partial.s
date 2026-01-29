@@ -18,8 +18,9 @@
 
 ; D_F1AC - Credit/score check routine
 ; Checks two player scores (X = 1 down to 0)
-.segment "CODE_E000"
+.segment "CODE_CREDITS"
 
+D_F1AC:
     ldx  #$01                   ; Start with player 1
 
 L_F1AE:
@@ -109,9 +110,19 @@ L_F20A:
 ; ==============================================================================
 
 D_F20B:
-    .byte $76, $94, $B2, $D0, $F5, $13  ; Music index values (6 bytes)
+    .byte <sfx_voice_config_0            ; -> sfx_voice_config_0 ($F976)
+    .byte <sfx_voice_config_1            ; -> sfx_voice_config_1 ($F994)
+    .byte <sfx_voice_config_2            ; -> sfx_voice_config_2 ($F9B2)
+    .byte <sfx_voice_config_3            ; -> sfx_voice_config_3 ($F9D0)
+    .byte <sfx_voice_config_4            ; -> sfx_voice_config_4 ($F9F5)
+    .byte <sfx_voice_config_5            ; -> sfx_voice_config_5 ($FA13)
 D_F211:
-    .byte $F9, $F9, $F9, $F9, $F9, $FA  ; Music parameters (6 bytes)
+    .byte >sfx_voice_config_0            ; -> sfx_voice_config_0 ($F976)
+    .byte >sfx_voice_config_1            ; -> sfx_voice_config_1 ($F994)
+    .byte >sfx_voice_config_2            ; -> sfx_voice_config_2 ($F9B2)
+    .byte >sfx_voice_config_3            ; -> sfx_voice_config_3 ($F9D0)
+    .byte >sfx_voice_config_4            ; -> sfx_voice_config_4 ($F9F5)
+    .byte >sfx_voice_config_5            ; -> sfx_voice_config_5 ($FA13)
 
 ; ==============================================================================
 ; Level-Specific Initialization ($F217-$F23F, 41 bytes)

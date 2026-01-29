@@ -20,14 +20,16 @@
 .segment "CODE"
 
 L_3CB2:                                             ; Label at byte before D_3CB2 table
-        .byte   $B5,$CA,$38,$E9,$18                 ; $3CB2
-        .byte   $4A,$A8,$BD                         ; $3CB7
+        lda     PESSION,x                          ; $3CB2 - b5 ca
+        sec                                         ; $3CB4 - 38
+        sbc     #$18                                ; $3CB5 - e9 18
+        lsr     a                                   ; $3CB7 - 4a
+        tay                                         ; $3CB8 - a8
+        lda     D_AA42,x                            ; $3CB9 - bd 42 aa
 
-L_3CBA:                                             ; Label at byte before D_3CBB
-        .byte   $42                                 ; $3CBA (D_3CBB equate points to $3CBB)
-
+L_3CBA = L_3CB2 + 8                                ; Preserve equate for D_3CBB references
 L_3CBB_continued:
-        .byte   $AA,$99,$22,$85                     ; $3CBB+1
+        sta     D_8522,y                             ; $3CBC - 99 22 85
         lda     #$00                                ; $3CBF
         sta     D_872A,y                            ; $3CC1
 
@@ -107,16 +109,16 @@ routine_3CD7:
 @no_carry2:
         stx     D_E861                              ; $3D11
         
-        ; Initialize sprite control bytes
-        lda     #$60                                ; $3D14 - RTS instruction opcode
-        sta     D_E849                              ; $3D16 - Set sprite routine 1
-        sta     D_E853                              ; $3D19 - Set sprite routine 2
-        sta     D_E85D                              ; $3D1C - Set sprite routine 3
+        ; Set AND mask pointers for all 3 columns to D_8260 (bubble_masks + $260)
+        lda     #<D_8260                            ; $3D14 - AND mask low byte
+        sta     D_E849                              ; $3D16 - Set AND col1 operand low
+        sta     D_E853                              ; $3D19 - Set AND col2 operand low
+        sta     D_E85D                              ; $3D1C - Set AND col3 operand low
         
-        lda     #$82                                ; $3D1F - STX $nn,Y instruction opcode
-        sta     D_E84A                              ; $3D21 - Modify sprite code 1
-        sta     D_E854                              ; $3D24 - Modify sprite code 2
-        sta     D_E85E                              ; $3D27 - Modify sprite code 3
+        lda     #>D_8260                            ; $3D1F - AND mask high byte
+        sta     D_E84A                              ; $3D21 - Set AND col1 operand high
+        sta     D_E854                              ; $3D24 - Set AND col2 operand high
+        sta     D_E85E                              ; $3D27 - Set AND col3 operand high
         
         jmp     D_E7CF                              ; $3D2A - Jump to sprite display
 

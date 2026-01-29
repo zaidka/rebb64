@@ -57,13 +57,13 @@ L_4461:
 
 L_4472:
         lda     charset,x                           ; Copy page 1: $4000 -> $4800
-        sta     D_4800,x
+        sta     __VIC_CHARSET_B__,x
         lda     charset + $100,x                    ; Copy page 2: $4100 -> $4900
-        sta     D_4900,x
+        sta     __VIC_CHARSET_B__ + $100,x
         lda     charset + $200,x                    ; Copy page 3: $4200 -> $4A00
-        sta     D_4A00,x
+        sta     __VIC_CHARSET_B__ + $200,x
         lda     charset + $300,x                    ; Copy page 4: $4300 -> $4B00
-        sta     D_4B00,x
+        sta     __VIC_CHARSET_B__ + $300,x
 
         ;-----------------------------------------------------------------------
         ; Clear Lookup Tables: $0200-$03FF
@@ -119,10 +119,10 @@ L_44B0:
         lda     #$35                                ; Memory config: I/O + KERNAL
         sta     R6510                               ; Set processor port
 
-        lda     #$96                                ; CIA2 Port A value
+        lda     #<__CIA2_PRA_GAME__                      ; CIA2 Port A: VIC bank + serial
         sta     CIA2_PRA                            ; Configure VIC bank and serial
 
-        lda     #$20                                ; Value for VIC memory control
+        lda     #<__VIC_MEMPTR_INIT__                    ; VIC memory: screen at charset B, charset at A
         sta     VIC_MEMPTR                          ; Set character/screen memory
 
         ;-----------------------------------------------------------------------
@@ -163,9 +163,9 @@ L_44B0:
         lda     #$D8                                ; VIC control 2 value
         sta     VIC_CTRL2                           ; Set horizontal scroll/width
 
-        lda     #$54
+        lda     #>__VIC_SCREEN_B__
         sta     $30                                 ; Screen pointer high byte
-        lda     #$48
+        lda     #>__VIC_CHARSET_B__
         sta     $2F                                 ; Screen pointer low byte
 
         ;-----------------------------------------------------------------------
@@ -186,7 +186,7 @@ L_44B0:
 
         jsr     D_F4BD                              ; Sound initialization routine
         cli                                         ; Enable interrupts
-        jsr     D_E374                              ; Screen initialization routine
+        jsr     clear_screen                         ; Screen initialization routine
 
         lda     #$05
         sta     D_8548                              ; Game state variable
@@ -234,14 +234,14 @@ L_4535:
         ;-----------------------------------------------------------------------
         ; Display Setup
         ;-----------------------------------------------------------------------
-        ldx     #$2D                                ; Parameter
-        ldy     #$46                                ; Parameter
+        ldx     #<D_462D                            ; Title screen data low
+        ldy     #>D_462D                            ; Title screen data high
 
 L_4556:
-        jsr     D_E42A                              ; Call routine with params
-        ldx     #$F0                                ; Parameter
-        ldy     #$46                                ; Parameter
-        jsr     D_E42A                              ; Call routine with params
+        jsr     display_text_string                  ; Call routine with params
+        ldx     #<credits_page_2                    ; Credits text low
+        ldy     #>credits_page_2                    ; Credits text high
+        jsr     display_text_string                  ; Call routine with params
 
         ldy     #$35
         jsr     D_05AD                              ; Call routine
@@ -250,7 +250,7 @@ L_4556:
         ; Title Screen Wait Loop - Check for Fire Button or Cheat Code
         ;-----------------------------------------------------------------------
 L_4565:
-        jsr     D_E494                              ; Display title screen
+        jsr     wait_one_frame                              ; Display title screen
 
         lda     CIA1_PRA                            ; Read joystick port 2
         and     #$10                                ; Test fire button bit
@@ -275,7 +275,7 @@ L_4582:
         bne     L_4565                              ; Loop back if not zero
 
 L_4590:
-        jsr     D_E494                              ; Update display
+        jsr     wait_one_frame                              ; Update display
 
         lda     CIA1_PRA                            ; Check fire button again
         and     #$10
@@ -333,10 +333,10 @@ L_45A7:
         lda     #$02
         sta     VIC_BORDER                          ; Change border color (visual feedback)
 
-        lda     #$51                                ; Pointer low byte
+        lda     #<enemy_spawns                      ; Pointer low byte
         sta     $40
-        lda     #$AE                                ; Pointer high byte
-        sta     $41                                 ; Points to $AE51
+        lda     #>enemy_spawns                      ; Pointer high byte
+        sta     $41
 
         ldx     #$63                                ; Counter = 99
 
@@ -425,7 +425,9 @@ D_46B1:
         .byte   $57,$52,$49,$54,$54,$45,$4E,$40     ; "WRITTEN@"
         .byte   $42,$59,$40,$40,$53,$54,$45,$50     ; "BY@@STEP"
         .byte   $48,$45,$4E,$40,$52,$55,$44,$44     ; "HEN@RUDD"
-        .byte   $59,$5B,$10,$1F,$05,$09,$07         ; "Y[....."
+        .byte   $59,$5B,$10                         ; "Y[."
+credits_page_2:
+        .byte   $1F,$05,$09,$07                     ; Set cursor + row/col
 
         .byte   $47,$52,$41,$50,$48,$49,$43,$53     ; "GRAPHICS"
         .byte   $40,$42,$59,$40,$40,$41,$4E,$44     ; "@BY@@AND"
@@ -469,7 +471,7 @@ D_47B5:
         .byte   $05,$03,$0A,$0A,$0A,$0A,$0A,$0A
 
 D_47BD:
-        .byte   $60,$60,$00,$00,$00,$00,$00,$00
+        .byte   <__SPRITE_PTR_BASE__, <__SPRITE_PTR_BASE__, $00,$00,$00,$00,$00,$00
 
 D_47C5:
         .byte   $FF,$FF,$00,$00,$00,$00,$00,$00

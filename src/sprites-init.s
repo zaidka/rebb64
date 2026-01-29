@@ -127,7 +127,9 @@ D_081F:
         sta     VIC_SPR7_Y                      ; $0822 - VIC_SPR7_Y
         
         ; Update sprite pointers
-        lda     #$d9                            ; $0825 - Base sprite pointer
+        ; Base sprite pointer for Grumple Gromit left-facing sprites (ending sequence).
+        ; Value = (sprite_data_7440 + $200 - VIC_bank) / 64, computed as hibyte(X*4).
+        lda     #>(sprite_data_7440 + $200 - __VIC_BANK_BASE__ + sprite_data_7440 + $200 - __VIC_BANK_BASE__ + sprite_data_7440 + $200 - __VIC_BANK_BASE__ + sprite_data_7440 + $200 - __VIC_BANK_BASE__)
         adc     $be                             ; $0827 - Offset
 L_0829:
         sta     D_53FA,x                        ; $0829 - Sprite pointer buffer 1
@@ -210,10 +212,10 @@ D_0880:
 ;   - Fill level with random tiles (200 tiles for demo/attract mode)
 ; ============================================================================
 D_0885:
-        jsr     D_E374                          ; $0885 - Screen setup
-        lda     #$54                            ; $0888
+        jsr     clear_screen                     ; $0885 - Screen setup
+        lda     #>__VIC_SCREEN_B__                ; $0888
         sta     $30                             ; $088A - ARYTAB+1
-        lda     #$48                            ; $088C
+        lda     #>__VIC_CHARSET_B__              ; $088C
         sta     $2f                             ; $088E - ARYTAB
         
         ; Copy sprite/charset data
@@ -228,7 +230,7 @@ L_0892:
         lda     #$00                            ; $089B
         sta     $20                             ; $089D - Game mode flag
         sta     VIC_SPR_ENA                     ; $089F - VIC_SPR_ENA (disable sprites)
-        jsr     D_E740                          ; $08A2
+        jsr     fill_color_ram                  ; $08A2
         
         ; Set up random level fill
         lda     #$06                            ; $08A5
@@ -249,7 +251,7 @@ L_08B3:
         lda     #$00                            ; $08BC
         adc     D_AC09,y                        ; $08BE - Level data pointer low
         sta     $11                             ; $08C1 - INPFLG
-        lda     #$50                            ; $08C3
+        lda     #>__VIC_SCREEN_A__                  ; $08C3
         adc     D_AC0A,y                        ; $08C5 - Level data pointer high
         sta     $12                             ; $08C8 - TANSGN
 L_08CA:
@@ -265,6 +267,6 @@ D_08CF:
         bne     L_08B3                          ; $08DA - Loop 200 times
         
         ; Finish initialization
-        jsr     D_E494                          ; $08DC - Wait one frame
+        jsr     wait_one_frame                          ; $08DC - Wait one frame
         lda     #$09                            ; $08DF
-        jmp     D_E740                          ; $08E1
+        jmp     fill_color_ram                  ; $08E1

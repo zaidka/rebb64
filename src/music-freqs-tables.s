@@ -19,11 +19,17 @@
 ;===============================================================================
 
 ;-------------------------------------------------------------------------------
-; Note offset table ($F39C-$F3B8, 29 bytes)
-; Maps note values to frequency table offsets
+; Multiplication-by-5 lookup table ($F39A-$F3B8, 31 bytes)
+; multiply_by_5[n] = n * 5 (for n = 1..31)
+; Used to calculate array offsets for 5-byte voice parameter structures.
+; The first 2 bytes were originally at the end of CODE_F2C4 and the
+; remaining 29 bytes (note_offset_table) in MUSICFREQS. Merged here to
+; keep the full table in a single segment for relocatability.
 ;-------------------------------------------------------------------------------
         .segment "MUSICFREQS"
 
+D_F39A:
+        .byte   $05, $0A
 note_offset_table:
         .byte   $0F, $14, $19, $1E, $23, $28, $2D, $32
         .byte   $37, $3C, $41, $46, $4B, $50, $55, $5A

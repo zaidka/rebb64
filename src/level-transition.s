@@ -40,8 +40,8 @@ D_2DD7:
     lda  #$03                   ; Low byte offset
     ora  ARYTAB+1               ; Combine with array table
     sta  CURLIN                 ; Set cursor line low
-    and  #$03                   ; Mask to 3
-    ora  #$d8                   ; Combine with high address
+    and  #$03                   ; Mask to page offset
+    ora  #$d8                   ; Color RAM ($D800) base - hardware fixed
     sta  OLDLIN                 ; Set old line pointer
     jsr  D_2E79                 ; Reset all entity states
     dec  MEMSIZ                 ; Decrement memory pointer
@@ -60,13 +60,13 @@ L_2DFE:
     lda  MEMSIZ+1               ; Get screen page
     sta  STREND+1               ; Set string end high
     lda  CURLIN                 ; Get cursor line
-    eor  #$04                   ; Toggle bit 2
+    eor  #ARYTAB_SCREEN_TOGGLE  ; Toggle screen page
     sta  FRETOP                 ; Set free space top
 
 ; Screen clearing loop - clears screen memory row by row
 L_2E15:
-    jsr  D_E494                 ; Wait one frame
-    jsr  D_E494                 ; Wait another frame
+    jsr  wait_one_frame                 ; Wait one frame
+    jsr  wait_one_frame                 ; Wait another frame
     jsr  D_045C                 ; Screen update routine
     ldy  #$1b                   ; 28 bytes per row (0-27)
 L_2E20:

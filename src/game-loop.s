@@ -26,9 +26,9 @@ D_08E4:
         jsr     D_0885                          ; $08E4 - Initialize game state
         ldy     #$04                            ; $08E7
         jsr     D_05AD                          ; $08E9 - Delay routine
-        ldx     #$41                            ; $08EC
-        ldy     #$ac                            ; $08EE
-        jsr     D_E42A                          ; $08F0 - Load data
+        ldx     #<D_AC41                        ; $08EC
+        ldy     #>D_AC41                        ; $08EE
+        jsr     display_text_string              ; $08F0 - Load data
         lda     #$74                            ; $08F3
         sta     FA                              ; $08F5 - Player 1 X
         lda     #$e4                            ; $08F7
@@ -39,9 +39,9 @@ D_08E4:
         lda     ENESSION1                       ; $0901 - Player 2 state
         pha                                     ; $0903 - Save for later
         inc     ENESSION1                       ; $0904 - Increment player 2 state
-        jsr     D_E4DA                          ; $0906
+        jsr     setup_player_sprites                          ; $0906
 D_0909:
-        jsr     D_E494                          ; $0909 - Wait one frame
+        jsr     wait_one_frame                          ; $0909 - Wait one frame
 
 ; ============================================================================
 ; LEVEL START SETUP ($090E)
@@ -55,7 +55,7 @@ D_090E:
         lda     #$ff                            ; $0913
         sta     VIC_SPR_ENA                     ; $0915 - Enable all sprites
         jsr     D_7BC8                          ; $0918 - Wait routine
-        jsr     D_E374                          ; $091B - Screen setup
+        jsr     clear_screen                     ; $091B - Screen setup
         
         ; Clear various game state variables
         ldx     #$00                            ; $091E
@@ -141,26 +141,26 @@ D_09A5:
         bcc     L_09D3                          ; $09A5 - Branch based on carry
         lda     #$00                            ; $09A7
         sta     VIC_SPR_ENA                     ; $09A9 - Disable sprites
-        jsr     D_E740                          ; $09AC
-        jsr     D_E000                          ; $09AF
+        jsr     fill_color_ram                  ; $09AC
+        jsr     setup_level_screen               ; $09AF
         jsr     D_37C9                          ; $09B2
-        jsr     D_E4C5                          ; $09B5
+        jsr     copy_charset_data                ; $09B5
         lda     #$0d                            ; $09B8
-        jsr     D_E740                          ; $09BA
+        jsr     fill_color_ram                  ; $09BA
         jsr     D_7B53                          ; $09BD
 D_09C0:
         lda     #$09                            ; $09C0
         sta     D_D800                          ; $09C2 - Color RAM
         sta     D_D801                          ; $09C5 - Color RAM
-        jsr     D_E4DA                          ; $09C8
+        jsr     setup_player_sprites                          ; $09C8
         lda     #$ff                            ; $09CB
         sta     VIC_SPR_ENA                     ; $09CD - Enable sprites
         jmp     D_09DC                          ; $09D0
 
 L_09D3:
-        jsr     D_E000                          ; $09D3
+        jsr     setup_level_screen               ; $09D3
         jsr     D_37C9                          ; $09D6
-        jsr     D_E4C5                          ; $09D9
+        jsr     copy_charset_data                ; $09D9
 
 ; ============================================================================
 ; FINAL LEVEL SETUP ($09DC)
@@ -168,15 +168,15 @@ L_09D3:
 ; Final setup before entering main game loop
 ; ============================================================================
 D_09DC:
-        jsr     D_E3A7                          ; $09DC - Update sprite animations
-        jsr     D_E189                          ; $09DF
+        jsr     update_sprite_animations         ; $09DC - Update sprite animations
+        jsr     decompress_level_data            ; $09DF
         jsr     D_392A                          ; $09E2
         jsr     D_05C5                          ; $09E5
-        jsr     D_E554                          ; $09E8
-        jsr     D_E658                          ; $09EB
-        jsr     D_E6CD                          ; $09EE
+        jsr     draw_animated_sprite            ; $09E8
+        jsr     copy_and_mask_graphics          ; $09EB
+        jsr     draw_player_digits              ; $09EE
         jsr     D_2B31                          ; $09F1
-        jsr     D_E49B                          ; $09F4
+        jsr     copy_screen_buffers              ; $09F4
         jsr     D_17BE                          ; $09F7
         jsr     D_3C01                          ; $09FA
         lda     #$32                            ; $09FD - 50 frames = 1 second timer
@@ -203,7 +203,7 @@ D_0A0A:
         jsr     D_7EC1                          ; $0A0D - Check for RUN/STOP (quit)
         jsr     D_F1AC                          ; $0A10 - Update sound/music
         jsr     D_1578                          ; $0A13 - Update bubbles physics
-        jsr     D_E3A7                          ; $0A16 - Update sprite animations
+        jsr     update_sprite_animations         ; $0A16 - Update sprite animations
         jsr     D_1319                          ; $0A19 - Update player sprites
         jsr     D_045C                          ; $0A1C - Check player state/join game
         
@@ -261,7 +261,7 @@ D_0A61 = * - 1                                  ; Label for self-modifying code
         lda     #$00                            ; $0A6E
         sta     MEMSIZ                          ; $0A70 - Pause flag
         sta     D_5AFF                          ; $0A72
-        jsr     D_E494                          ; $0A75 - Wait one frame
+        jsr     wait_one_frame                          ; $0A75 - Wait one frame
         jsr     D_2E79                          ; $0A78
         inc     SUBFLG                          ; $0A7B - Increment level
         lda     SUBFLG                          ; $0A7D - Current level
@@ -275,7 +275,7 @@ L_0A88:
         bpl     L_0A81                          ; $0A89
         cmp     #$64                            ; $0A8B - Check if level 100 (ending)
         beq     L_0AA8                          ; $0A8D
-        jsr     D_E4DA                          ; $0A8F
+        jsr     setup_player_sprites                          ; $0A8F
         lda     ZP_21                           ; $0A92 - Level complete flag
         cmp     #$7f                            ; $0A94
         jmp     D_09A5                          ; $0A96 - Start next level
@@ -283,7 +283,7 @@ L_0A88:
 L_0A99:
         ; Game over sequence
         inc     MEMSIZ                          ; $0A99 - Pause flag
-        jsr     D_E3A7                          ; $0A9B
+        jsr     update_sprite_animations         ; $0A9B
         ldy     #$20                            ; $0A9E
 D_0AA0:
         jsr     D_05AD                          ; $0AA0 - Delay routine

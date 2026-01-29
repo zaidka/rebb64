@@ -38,18 +38,18 @@ L_0466:
         bpl     L_049D              ; 10 31
 L_046C:
 D_046C = L_046C                     ; Alias for external references
-        lda     #$51                ; a9 51
+        lda     #(>__VIC_SCREEN_A__)+1  ; a9 51 - screen A + $100 page
         ldy     #$39                ; a0 39
         ldx     #$00                ; a2 00
         jsr     D_047B              ; 20 7b 04
-        lda     #$52                ; a9 52
+        lda     #(>__VIC_SCREEN_A__)+2  ; a9 52 - screen A + $200 page
         ldy     #$51                ; a0 51
         ldx     #$01                ; a2 01
 D_047B:
         sty     DATLIN1             ; 84 40
         sty     DATPTR1             ; 84 42
         sta     DATPTR              ; 85 41
-        ora     #$04                ; 09 04
+        ora     #ARYTAB_SCREEN_TOGGLE ; 09 04 - advance to screen B
         sta     INPPTR              ; 85 43
         lda     D_045A,x            ; bd 5a 04
         bmi     L_049D              ; 30 13
@@ -189,7 +189,7 @@ D_0540:
         sta     L_049D              ; 8d 9d 04
 L_0565:
         lda     #$E9                ; a9 e9
-        ldy     #$50                ; a0 50
+        ldy     #>__VIC_SCREEN_A__  ; a0 50
         cpx     #$01                ; e0 01
         bne     L_0571              ; d0 04
         lda     #$01                ; a9 01
@@ -201,16 +201,16 @@ L_0571:
         sta     ZP_04               ; 85 04
         sta     ZP_06               ; 85 06
         tya                         ; 98
-        ora     #$04                ; 09 04
+        ora     #ARYTAB_SCREEN_TOGGLE ; 09 04 - convert to screen B page
         sta     ZP_05               ; 85 05
-        eor     #$8C                ; 49 8c
+        eor     #SCREEN_TO_COLORRAM_EOR ; 49 8c - convert to Color RAM page
 D_0580:
         sta     ZP_07               ; 85 07
         ldy     #$06                ; a0 06
 L_0584:
         tya                         ; 98
         clc                         ; 18
-        adc     #$50                ; 69 50
+        adc     #>__VIC_SCREEN_A__  ; 69 50 - advance Y by screen page offset
         tay                         ; a8
         lda     #$20                ; a9 20
         sta     (ZP_02),y           ; 91 02
@@ -244,9 +244,9 @@ L_05AC:
 ; Calls BASIC ROM routines and sound player initialization
 
 D_05AD:
-        jsr     D_E494                  ; Call BASIC initialization
+        jsr     wait_one_frame                  ; Call BASIC initialization
         sty     D_5C3F                  ; Store Y to temp
-        jsr     D_F477                  ; Initialize sound tables
+        jsr     music_init_code         ; Initialize sound tables
         jmp     D_F53C                  ; Jump to sound update
 
 ; ============================================================================
@@ -268,9 +268,9 @@ D_05B9:
 
 D_05C5:
         ldx     #$03                    ; Initialize with value 3
-        stx     $8549                   ; Store to entity array
+        stx     D_8548+1                ; Store to entity array
         inx                             ; X = 4
-        stx     $8521                   ; Store to entity array
+        stx     D_8520+1                ; Store to entity array
         inx                             ; X = 5
         stx     D_8548                  ; Store to entity array
         lda     D_8729                  ; Get saved state high

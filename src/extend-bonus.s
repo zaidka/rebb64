@@ -73,7 +73,7 @@
 ; - D_E3A7: Update sprite data
 ; - D_E42A: Sprite/entity update routine
 ; - D_E49B: Game loop continuation
-; - D_E658: Unknown routine
+; - copy_and_mask_graphics: Copy and mask graphics routine
 ; - D_E9EA: Random number generator
 ; - L_A474: READY label
 ;
@@ -122,7 +122,7 @@ L_32CD:
     inc  MEMSIZ                 ; Increment memory pointer
     jsr  L_A474                 ; READY - screen setup
     lda  ARYTAB+1               ; Get screen config byte
-    eor  #$04                   ; Toggle screen configuration
+    eor  #ARYTAB_SCREEN_TOGGLE  ; Toggle screen configuration
     jsr  D_1853                 ; Apply screen rendering changes
     pla                         ; Restore player index
     pha                         ; Keep it on stack (needed again later)
@@ -175,8 +175,8 @@ D_3300:
 ; Resets entities, clears memory, prepares for Phase 2 (collectibles display)
 ;-------------------------------------------------------------------------------
     jsr  D_2E79                 ; Reset entities
-    jsr  D_E374                 ; Unknown routine
-    jsr  D_E49B                 ; Game loop continuation
+    jsr  clear_screen            ; Clear screen
+    jsr  copy_screen_buffers    ; Game loop continuation
     lda  #$00                   ; Clear accumulator
     ldx  #$2F                   ; Clear 48 bytes
 
@@ -203,7 +203,7 @@ L_3333:
     sta  D_A988,x               ; Store $FF in save area
     dex                         ; Next byte
     bpl  L_3333                 ; Continue for 32 bytes
-    jsr  D_E658                 ; Unknown routine
+    jsr  copy_and_mask_graphics ; Copy and mask graphics
     lda  #$0F                   ; Wait parameter (15 frames)
     jsr  D_7BC8                 ; Wait with delay
     ldx  #$1F                   ; 32 bytes to restore
@@ -223,7 +223,7 @@ L_334B:
     stx  $1E                    ; Store in $1E
     jsr  D_7B53                 ; Unknown routine
     jsr  D_1847                 ; Screen update routine
-    jsr  D_E3A7                 ; Update sprite data
+    jsr  update_sprite_animations ; Update sprite data
     ldx  #$00                   ; Start at byte 0
 
 ;-------------------------------------------------------------------------------
@@ -297,9 +297,9 @@ L_338D:
     adc  #$21                   ; Add $21 to player index
     sta  D_A804                 ; Store result
     jsr  D_311E                 ; Clear top screen area
-    ldx  #$F9                   ; Low byte of address
-    ldy  #$A7                   ; High byte of address ($A7F9)
-    jsr  D_E42A                 ; Sprite/entity update routine
+    ldx  #<D_A7F9               ; Low byte of address
+    ldy  #>D_A7F9               ; High byte of address ($A7F9)
+    jsr  display_text_string    ; Sprite/entity update routine
     lda  #$14                   ; Color value (20)
     sta  DATPTR                 ; Store color pointer
     lda  #$05                   ; 6 letters (counting down from 5)
@@ -343,7 +343,7 @@ L_33FC:
 ; Gives +1 life to the player who completed EXTEND, clears item flag,
 ; updates lives display, and decrements level completion counter
 ;-------------------------------------------------------------------------------
-    jsr  D_E374                 ; Unknown routine
+    jsr  clear_screen            ; Clear screen
     jsr  D_7BC6                 ; Wait for frame
     pla                         ; Get player index from stack (final use)
     pha                         ; Push back for one more use
@@ -407,7 +407,7 @@ D_344A:
     lda  D_AD41,y               ; Get screen column offset (high byte)
     adc  #$00                   ; Add carry
     sta  INPPTR                 ; Store screen pointer high byte
-    adc  #$88                   ; Add $8800 for color RAM ($C000 + $8800 = $D800)
+    adc  #(>$D800 - >__VIC_SCREEN_A__) ; Add offset for color RAM ($D800) page
     sta  VARNAM                 ; Store color RAM pointer high byte
 
     ; Place top-left character

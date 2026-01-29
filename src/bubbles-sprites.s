@@ -50,9 +50,9 @@ bubble_player_loop:
         sta     DATPTR+1                ; 85 42
         sta     $44                     ; 85 44
         lda     $50,x                   ; b5 50    - Get bubble screen high
-        ora     #$54                    ; 09 54    - Set to screen memory page
+        ora     #>__VIC_SCREEN_B__          ; 09 54    - Set to screen memory page
         sta     DATPTR                  ; 85 41
-        eor     #$04                    ; 49 04    - Flip between screens
+        eor     #ARYTAB_SCREEN_TOGGLE   ; 49 04    - Flip between screens
         sta     VARNAM                  ; 85 45
         adc     #$3b                    ; 69 3b    - Add color RAM offset
         sta     INPPTR                  ; 85 43
@@ -513,8 +513,8 @@ animation_display_loop:
         sta     INPFLG                  ; 85 11    - Store to input flag
 
 animation_frame_loop:                   ; $17D5 - Loop back point (after initial setup)
-        jsr     D_E494                  ; 20 94 e4 - Wait one frame
-        jsr     D_E494                  ; 20 94 e4 - Wait another frame
+        jsr     wait_one_frame                  ; 20 94 e4 - Wait one frame
+        jsr     wait_one_frame                  ; 20 94 e4 - Wait another frame
         jsr     update_sprite_positions ; 20 05 18 - Update sprites
 
         ldx     #$07                    ; a2 07    - 8 sprites

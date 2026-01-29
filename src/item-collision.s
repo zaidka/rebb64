@@ -12,12 +12,7 @@
 
 .segment "CODE"
 
-; Entry point at $29BB - appears to be data/unused
-.byte   $de                             ; de           $29bb
-
-; Entry point at $29BC - check collision with entity index $87
-D_29BC:
-        ldy     #$87                    ; a0 87        $29bc
+        dec     D_87A0,x                ; Decrement collision state
         beq     L_2A0B                  ; f0 4b        $29be
 
 ; Entry point at $29C0 - check collision with players (Y=1 for player 2, Y=0 for player 1)

@@ -272,13 +272,13 @@ D_1E3B:                 ; D_1E3B is the RTS (State 0 high byte = $60)
     rts
     ; States 1-23 (23 entries = 46 bytes, State 0 is implicit from BPL+RTS = $60F7)
     .byte   $62,$21             ; $1E3C - State 1 handler ($2162)
-    .byte   $08,$EA             ; $1E3E - State 2 handler ($EA08)
-    .byte   $FD,$E9             ; $1E40 - State 3 handler ($E9FD)
+    .byte   <L_EA08,>L_EA08     ; $1E3E - State 2 handler
+    .byte   <D_E9FD,>D_E9FD     ; $1E40 - State 3 handler
     .byte   $2E,$1F             ; $1E42 - State 4 handler ($1F2E)
-    .byte   $C0,$EF             ; $1E44 - State 5 handler ($EFC0)
-    .byte   $B2,$EE             ; $1E46 - State 6 handler ($EEB2)
-    .byte   $FD,$E9             ; $1E48 - State 7 handler ($E9FD)
-    .byte   $FD,$E9             ; $1E4A - State 8 handler ($E9FD)
+    .byte   <D_EFC0,>D_EFC0     ; $1E44 - State 5 handler
+    .byte   <D_EEB2,>D_EEB2     ; $1E46 - State 6 handler
+    .byte   <D_E9FD,>D_E9FD     ; $1E48 - State 7 handler
+    .byte   <D_E9FD,>D_E9FD     ; $1E4A - State 8 handler
     .byte   $9F,$1E             ; $1E4C - State 9 handler ($1E9F)
     .byte   $08,$28             ; $1E4E - State 10 handler ($2808)
     .byte   $7C,$26             ; $1E50 - State 11 handler ($267C)

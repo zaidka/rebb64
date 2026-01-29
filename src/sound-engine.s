@@ -17,9 +17,9 @@
 ; Clears all SID registers and sets volume to maximum.
 
 ; sound_init: (descriptive name from reference)
-; D_F4BD: (label defined in bb-master.s)
 .segment "CODE_F4BD"
 
+D_F4BD:
     ldx  #$16                   ; a2 16        $f4bd  ; 23 SID registers to clear
 ; sound_init_loop: (descriptive name from reference)
 L_F4BF:
@@ -86,7 +86,7 @@ D_F4FD:
 ; Called every frame to update music and sound effects.
 ; Processes all 3 SID voices for music playback.
 ; sound_update: (descriptive name from reference)
-; D_F53C: (label defined in bb-master.s)
+D_F53C:
     ldx  #$02                   ; a2 02        $f53c  ; Process 3 voices (2,1,0)
     lda  #$00                   ; a9 00        $f53e
     sta  SYESSION               ; 85 a4        $f540  ; Clear active voice count
@@ -122,9 +122,18 @@ D_F56F:
     ldy  #$00                   ; a0 00        $f56f
     lda  ($85),y                ; b1 85        $f571
     bpl  L_F581                 ; 10 0c        $f573
-    iny                         ; c8           $f575
-    eor  #$c0                   ; 49 c0        $f576
-    sta  D_F57C                 ; 8d 7c f5     $f578
+    iny                         ; c8           $f575 (Y=1 for handler operand reads)
+    ; EOR maps command bytes ($80-$8E) to handler table offsets.
+    ; XOR only equals addition when the offset bits (1-3) don't overlap
+    ; with the table address bits. This requires bits 1-3 of the table's
+    ; low byte to be zero, i.e. low byte must be $x0 or $x1.
+    ; A fully relocatable fix (SEC+SBC) would cost 1 extra byte, shifting
+    ; all subsequent code. Until a byte can be reclaimed, this constraint
+    ; must hold.
+    .assert (<music_track_pointers .bitand $0E) = 0, error, "music_track_pointers low byte bits 1-3 must be zero for EOR dispatch"
+    eor  #($80 ^ <music_track_pointers)  ; 49 XX   $f576 (maps cmd byte to table offset)
+    sta  smc_jmp_vec+1           ; 8d 7c f5     $f578
+smc_jmp_vec:
     jmp  (D_F256)               ; 6c 56 f2     $f57b
 L_F57E:
     jmp  D_F63B                 ; 4c 3b f6     $f57e
@@ -185,12 +194,14 @@ L_F5E3:
     ldy  D_7430,x               ; bc 30 74     $f5f3
     jsr  D_F68D                 ; 20 8d f6     $f5f6
     lda  D_7357,x               ; bd 57 73     $f5f9
-    sta  D_F608                 ; 8d 08 f6     $f5fc
+    sta  smc_copy_src+1         ; 8d 08 f6     $f5fc
     lda  D_735A,x               ; bd 5a 73     $f5ff
-    sta  D_F60B                 ; 8d 0b f6     $f602
+    sta  smc_copy_dst+1         ; 8d 0b f6     $f602
     ldy  #$17                   ; a0 17        $f605
 L_F607:
+smc_copy_src:
     lda  D_F2AE,y               ; b9 ae f2     $f607
+smc_copy_dst:
     sta  D_F31B,y               ; 99 1b f3     $f60a
     dey                         ; 88           $f60d
     bpl  L_F607                 ; 10 f7        $f60e

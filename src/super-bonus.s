@@ -17,10 +17,15 @@
 
 .segment "CODE"
 
-; Data/code fragment at $2A18-$2A27 (16 bytes)
-; Appears to be position update code fragments
-.byte   $b5, $ba, $18, $7d, $a3, $a7, $95, $ba  ; $2a18
-.byte   $b5, $c2, $18, $7d, $a8, $a7, $95, $c2  ; $2a20
+; Position update code for super bonus items ($2A18-$2A27)
+        lda     $BA,x               ; $2A18 - Get X position
+        clc
+        adc     D_A7A3,x            ; Add X velocity from table
+        sta     $BA,x               ; Store new X position
+        lda     $C2,x               ; $2A20 - Get Y position
+        clc
+        adc     D_A7A8,x            ; Add Y velocity from table
+        sta     $C2,x               ; Store new Y position
 
 ; Code fragment at $2A28-$2A3E (23 bytes)
 .byte   $bd                             ; $2a28

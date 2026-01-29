@@ -262,11 +262,11 @@ L_3554:
     asl                         ; *32
     rol  INPPTR
     
-    ; Add base address $9AE0
-    adc  #$E0                   ; Add low byte ($E0)
+    ; Add sprites_rom base address
+    adc  #<sprites_rom          ; Add low byte of base
     sta  DATPTR+1               ; Store pointer low at $42
     lda  INPPTR                 ; Get high byte (with carries)
-    adc  #$9A                   ; Add high byte ($9A)
+    adc  #>sprites_rom          ; Add high byte of base
     sta  INPPTR                 ; Store pointer high at $43
 
     ; Process 32 bytes of level data

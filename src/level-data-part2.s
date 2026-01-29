@@ -51,14 +51,7 @@ ZP_41       = DATPTR                ; Temp storage ($41)
 ; Symbols needed but not defined elsewhere
 D_1288      = $1288                 ; Score handler routine
 D_587F      = $587F                 ; Target level storage
-D_A739      = $A739                 ; Y position offset table
-D_A73D      = $A73D                 ; Game over Y position
-D_A745      = $A745                 ; Game over Y position +1
-D_A76F      = $A76F                 ; Entity state array
-D_A77C      = $A77C                 ; Entity attribute table +1
-D_A783      = $A783                 ; Entity attribute table +8
-D_A784      = $A784                 ; Entity attribute table +9
-D_A789      = $A789                 ; Entity attribute table +14 (screen address high)
+; D_A739..D_A789 are now labels in GAMETABLES segment (binaries.s)
 
 ; NOTE: Sprite data for $7440-$7ABF is loaded in binaries.s (LEVELS2_SPR1 segment)
 ; Label sprite_data_7440 is defined there.
@@ -158,18 +151,26 @@ D_7AE3:
         rts                         ; 60
 
 ; --- Data tables for level 99 handler ---
-; Source pointers (low bytes) - point into sprite data at $76xx-$78xx
+; Source pointers (low bytes) - point into LEVELS2_SPR1 sprite data
 tbl_7B2F:
-        .byte   $40,$80,$C0,$00,$40,$80,$C0,$00,$40
+        .byte   <(sprite_data_7440+$200),<(sprite_data_7440+$240),<(sprite_data_7440+$280)
+        .byte   <(sprite_data_7440+$2C0),<(sprite_data_7440+$300),<(sprite_data_7440+$340)
+        .byte   <(sprite_data_7440+$380),<(sprite_data_7440+$3C0),<(sprite_data_7440+$400)
 ; Source pointers (high bytes)
 tbl_7B38:
-        .byte   $76,$76,$76,$77,$77,$77,$77,$78,$78
-; Dest pointers (low bytes) - point into screen buffer at $7Cxx-$7Exx
+        .byte   >(sprite_data_7440+$200),>(sprite_data_7440+$240),>(sprite_data_7440+$280)
+        .byte   >(sprite_data_7440+$2C0),>(sprite_data_7440+$300),>(sprite_data_7440+$340)
+        .byte   >(sprite_data_7440+$380),>(sprite_data_7440+$3C0),>(sprite_data_7440+$400)
+; Dest pointers (low bytes) - point into LEVELS2_SPR2 sprite data
 tbl_7B41:
-        .byte   $C0,$80,$40,$80,$40,$00,$40,$00,$C0
+        .byte   <(sprite_data_7C40+$80),<(sprite_data_7C40+$40),<(sprite_data_7C40+$00)
+        .byte   <(sprite_data_7C40+$140),<(sprite_data_7C40+$100),<(sprite_data_7C40+$C0)
+        .byte   <(sprite_data_7C40+$200),<(sprite_data_7C40+$1C0),<(sprite_data_7C40+$180)
 ; Dest pointers (high bytes)
 tbl_7B4A:
-        .byte   $7C,$7C,$7C,$7D,$7D,$7D,$7E,$7E,$7D
+        .byte   >(sprite_data_7C40+$80),>(sprite_data_7C40+$40),>(sprite_data_7C40+$00)
+        .byte   >(sprite_data_7C40+$140),>(sprite_data_7C40+$100),>(sprite_data_7C40+$C0)
+        .byte   >(sprite_data_7C40+$200),>(sprite_data_7C40+$1C0),>(sprite_data_7C40+$180)
 
 ; ============================================================================
 ; CREDITS DISPLAY ROUTINE ($7B53)
@@ -182,10 +183,10 @@ tbl_7B4A:
 
 credits_display:
 D_7B53:
-        ldx     #$93                ; a2 93
-        ldy     #$AB                ; a0 ab
-        jsr     D_E42A              ; 20 2a e4 - Display routine
-        jsr     D_E3A7              ; 20 a7 e3 - Update sprites
+        ldx     #<D_AB93            ; a2 93
+        ldy     #>D_AB93            ; a0 ab
+        jsr     display_text_string ; Display routine
+        jsr     update_sprite_animations ; Update sprites
         ldx     #$00                ; a2 00
         lda     D_045A              ; ad 5a 04 - Player 1 lives
         pha                         ; 48
@@ -215,9 +216,9 @@ D_7B53:
         txa                         ; 8a
         ora     #$20                ; 09 20
         sta     credits_count       ; 8d a4 7b
-        ldx     #$96                ; a2 96
-        ldy     #$7B                ; a0 7b
-        jmp     D_E42A              ; 4c 2a e4
+        ldx     #<credits_text      ; a2 96
+        ldy     #>credits_text      ; a0 7b
+        jmp     display_text_string ; Display text
 
 ; --- Credits text data ---
 credits_text:
@@ -295,7 +296,7 @@ wait_frames:
 D_7BC8:
         sta     D_0100              ; 8d 00 01 - Store counter on stack page
 @loop:
-        jsr     D_E494              ; 20 94 e4 - Wait one frame
+        jsr     wait_one_frame              ; 20 94 e4 - Wait one frame
         dec     D_0100              ; ce 00 01
         bne     @loop               ; d0 f8
         rts                         ; 60
@@ -342,9 +343,9 @@ D_7BE8:
         sty     D_A73D              ; 8c 3d a7
         iny                         ; c8
         sty     D_A745              ; 8c 45 a7
-        ldx     #$3B                ; a2 3b
-        ldy     #$A7                ; a0 a7
-        jsr     D_E42A              ; 20 2a e4 - Display "GAME OVER"
+        ldx     #<D_A73B            ; a2 3b
+        ldy     #>D_A73B            ; a0 a7
+        jsr     display_text_string ; Display "GAME OVER"
         ldx     ZP_40               ; a6 40
         rts                         ; 60
 
@@ -366,7 +367,7 @@ D_7BFE:
         adc     ZP_DC,x             ; 75 dc - Add column offset
         sta     ZP_40               ; 85 40
         lda     D_AC02,y            ; b9 02 ac - Screen address high
-        adc     #$85                ; 69 85 - Add page offset
+        adc     #>D_8500            ; 69 85 - Add page offset (D_8500 page)
         sta     ZP_41               ; 85 41
         lda     D_A9D6,x            ; bd d6 a9 - Get direction
         rts                         ; 60
@@ -496,7 +497,7 @@ check_pause_return:                 ; Shared by check_quit
 read_keyboard_frame:
 read_keyboard_wait:
 D_7EB3:
-        jsr     D_E494              ; 20 94 e4 - Wait one frame
+        jsr     wait_one_frame              ; 20 94 e4 - Wait one frame
 D_7EB6:
         lda     #$7F                ; a9 7f - Select keyboard row
 read_keyboard:
@@ -654,7 +655,7 @@ D_7FB2:                             ; Entry point from D_7C37
         dex                         ; ca
         bne     @flash_loop         ; d0 ef
         jsr     D_2E79              ; 20 79 2e
-        jsr     D_E4DA              ; 20 da e4
+        jsr     setup_player_sprites ; Setup player sprites
 D_7FD4:                             ; Loop target for level advancement
         inc     SUBFLG              ; e6 10
         lda     SUBFLG              ; a5 10
@@ -663,7 +664,7 @@ D_7FD4:                             ; Loop target for level advancement
         clc                         ; 18
         jmp     D_09A5              ; 4c a5 09
 @next_level:
-        jsr     D_E000              ; 20 00 e0 - Level renderer
+        jsr     setup_level_screen   ; 20 00 e0 - Level renderer
         jsr     D_37C9              ; 20 c9 37
         jsr     D_392A              ; 20 2a 39
         lda     #$00                ; a9 00

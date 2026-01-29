@@ -16,7 +16,7 @@
 ;-------------------------------------------------------------------------------
 .segment "CODE"
 
-        jsr     D_E494              ; Wait for frame sync
+        jsr     wait_one_frame              ; Wait for frame sync
         
         ; Setup self-modifying code addresses (store screen page)
         lda     $30                 ; ARYTAB+1 (screen page)
@@ -25,14 +25,14 @@
         sta     D_3AF0              ; Modify code at $3AF0 (self-mod target)
         
         ; Calculate alternate screen addresses
-        eor     #$04                ; Toggle screen page
+        eor     #ARYTAB_SCREEN_TOGGLE ; Toggle screen page
         clc
         adc     #$03
         sta     $41                 ; DATPTR - pointer high byte
         lda     $2F                 ; ARYTAB (screen page low)
         adc     #$01
         sta     $24                 ; INDEX2
-        eor     #$08
+        eor     #ARYTAB_CHARSET_TOGGLE
         sta     $19                 ; TEMPST
         
         ; Initialize screen pointers
@@ -89,7 +89,7 @@
         sta     $44
         lda     D_0300,y            ; Character pointer high
         ora     $2F                 ; ARYTAB
-        eor     #$08
+        eor     #ARYTAB_CHARSET_TOGGLE ; Select alternate charset page
         sta     $45                 ; VARNAM
         
         ; Process 8 bytes of character data
@@ -112,7 +112,7 @@
         bne     @process_row
         
         ; Frame sync and fill bottom row
-        jsr     D_E494              ; Wait for frame
+        jsr     wait_one_frame              ; Wait for frame
         ldy     #$08
         clc
 
@@ -210,7 +210,7 @@
 
 @scroll_done:
         ; Cleanup after scroll complete
-        jsr     D_E494              ; Wait for frame
+        jsr     wait_one_frame              ; Wait for frame
         ldx     #$08
         ldy     #$30
 
@@ -238,7 +238,7 @@
         lda     D_0100,x            ; Stack page data
         sta     D_3CB2,x            ; Restore to buffer
         lda     D_8B00,x            ; High memory data
-        sta     D_E200,x            ; Restore to high memory
+        sta     level_decompress_data,x ; Restore to high memory
         dex
         bne     @restore_saved
         

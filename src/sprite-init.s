@@ -31,16 +31,16 @@
 ; Entry point from external code
 
 routine_3E79:
-        ldx     #$99                                ; $3E79 - X register preset
-        lda     #$20                                ; $3E7B - Sprite pointer 1 low
+        ldx     #>soft_spr_0xa20                    ; $3E79 - ORA ptr high (=AND high too)
+        lda     #<soft_spr_0xa20                    ; $3E7B - ORA col1 low
         sta     D_E84C                              ; $3E7D
-        lda     #$30                                ; $3E80 - Sprite pointer 2 low
+        lda     #<soft_spr_0xa30                    ; $3E80 - ORA col2 low
         sta     D_E856                              ; $3E82
-        stx     D_E84D                              ; $3E85 - Set pointer 1 high
-        stx     D_E857                              ; $3E88 - Set pointer 2 high
-        lda     #$C0                                ; $3E8B - Sprite routine 1 value
+        stx     D_E84D                              ; $3E85 - Set ORA col1 high
+        stx     D_E857                              ; $3E88 - Set ORA col2 high
+        lda     #<soft_spr_0xac0                    ; $3E8B - AND col1 low
         sta     D_E849                              ; $3E8D
-        lda     #$D0                                ; $3E90 - Sprite routine 2 value
+        lda     #<soft_spr_0xad0                    ; $3E90 - AND col2 low
         bne     L_3EAF_common_end                   ; $3E92 - Always branches
 
 ;-------------------------------------------------------------------------------
@@ -51,16 +51,16 @@ routine_3E79:
 
 D_3E94:
         stx     DATLIN                              ; $3E94 - Save entity index
-        lda     #$C0                                ; $3E96 - Sprite pointer 1 low
+        lda     #<soft_spr_0x3c0                    ; $3E96 - ORA col1 low
         sta     D_E84C                              ; $3E98
-        lda     #$D0                                ; $3E9B - Sprite pointer 2 low
+        lda     #<soft_spr_0x3d0                    ; $3E9B - ORA col2 low
         sta     D_E856                              ; $3E9D
-        ldx     #$92                                ; $3EA0 - Sprite page high value
-        stx     D_E84D                              ; $3EA2 - Set pointer 1 high
-        stx     D_E857                              ; $3EA5 - Set pointer 2 high
-        lda     #$E0                                ; $3EA8 - Sprite routine 1 value
+        ldx     #>soft_spr_0x3c0                    ; $3EA0 - ORA/AND ptr high
+        stx     D_E84D                              ; $3EA2 - Set ORA col1 high
+        stx     D_E857                              ; $3EA5 - Set ORA col2 high
+        lda     #<soft_spr_0x3e0                    ; $3EA8 - AND col1 low
         sta     D_E849                              ; $3EAA
-        lda     #$F0                                ; $3EAD - Sprite routine 2 value
+        lda     #<soft_spr_0x3f0                    ; $3EAD - AND col2 low
 
 ;-------------------------------------------------------------------------------
 ; Common Ending for Init Routines ($3EAF-$3ED3)
@@ -76,49 +76,44 @@ L_3EAF_common_end:
 D_3EB6:
         stx     D_E84A                              ; $3EB6 - Set sprite instruction 1
         stx     D_E854                              ; $3EB9 - Set sprite instruction 2
-        lda     #$20                                ; $3EBC - Sprite pointer 3 low
+        lda     #<D_8020                            ; $3EBC - Sprite pointer 3 low
         sta     D_E860                              ; $3EBE
-        lda     #$80                                ; $3EC1 - Sprite pointer 3 high
+        lda     #>D_8020                            ; $3EC1 - Sprite pointer 3 high
         sta     D_E861                              ; $3EC3
-        lda     #$60                                ; $3EC6 - RTS opcode
-        sta     D_E85D                              ; $3EC8 - Set sprite routine 3
-        lda     #$82                                ; $3ECB - STX instruction opcode
-        sta     D_E85E                              ; $3ECD - Modify sprite code
+        lda     #<D_8260                            ; $3EC6 - AND col3 low byte
+        sta     D_E85D                              ; $3EC8 - Set AND col3 operand low
+        lda     #>D_8260                            ; $3ECB - AND col3 high byte
+        sta     D_E85E                              ; $3ECD - Set AND col3 operand high
         clc                                         ; $3ED0 - Clear carry
         jmp     D_E7CF                              ; $3ED1 - Jump to sprite display
 
 ;-------------------------------------------------------------------------------
-; Data Fragment ($3ED4)
-;-------------------------------------------------------------------------------
-        .byte   $86                                 ; $3ED4 - Fragment (STX)
-
-;-------------------------------------------------------------------------------
-; Sprite Init Routine 3 ($3ED5-$3EFC) - D_3ED5
+; Sprite Init Routine 3 ($3ED4-$3EFC) - D_3ED5
 ;-------------------------------------------------------------------------------
 ; Initialize sprite display from table data
 ; Uses Y register as index into sprite data tables
 
-D_3ED5:
-        .byte   $3F                                 ; $3ED5 - RLA illegal opcode (data?)
-        .byte   $BC,$C4                             ; $3ED6 - Data bytes (LDY addr,X?)
-        lda     #$A2                                ; $3ED8 - Preset X register value
-        tya                                         ; $3EDA - Transfer index
-        lda     D_AB5B,y                            ; $3EDB - Load sprite low from table
+D_3ED5 = * + 1                                      ; Entry point label at $3ED5
+        stx     DATLIN                              ; $3ED4 - 86 3f - Save entity index
+        ldy     D_A9C4,x                            ; $3ED6 - bc c4 a9 - Get entity sub-position
+        ldx     #>soft_spr_0x9a0                    ; $3ED9 - ORA ptr high (base page)
+        lda     D_AB5B,y                            ; $3EDB - Load ORA lo from table
         bne     L_3EE1_has_value                    ; $3EDE - Branch if non-zero
-        inx                                         ; $3EE0 - Increment if zero
+        inx                                         ; $3EE0 - Page cross: increment high byte
 
 L_3EE1_has_value:
-        sta     D_E84C                              ; $3EE1 - Set sprite pointer 1 low
+        sta     D_E84C                              ; $3EE1 - Set ORA col1 low
         clc                                         ; $3EE4
-        adc     #$10                                ; $3EE5 - Add offset for pointer 2
+        adc     #$10                                ; $3EE5 - Add offset for col2
         sta     D_E856                              ; $3EE7
-        stx     D_E84D                              ; $3EEA - Set pointer 1 high
-        stx     D_E857                              ; $3EED - Set pointer 2 high
-        ldx     #$99                                ; $3EF0 - New X value
-        lda     D_AB5F,y                            ; $3EF2 - Load sprite routine value
-        sta     D_E849                              ; $3EF5 - Set sprite routine 1
+        stx     D_E84D                              ; $3EEA - Set ORA col1 high
+        stx     D_E857                              ; $3EED - Set ORA col2 high
+        ldx     #>soft_spr_0xa40                    ; $3EF0 - AND ptr high
+D_3EF3 = * + 1                                      ; Alternate entry point label at $3EF3
+        lda     D_AB5F,y                            ; $3EF2 - Load AND col1 lo from table
+        sta     D_E849                              ; $3EF5 - Set AND col1 low
         clc                                         ; $3EF8
-        adc     #$10                                ; $3EF9 - Add offset
+        adc     #$10                                ; $3EF9 - Add offset for AND col2
         bne     L_3EAF_common_end                   ; $3EFB - Always branches to common end
 
 ;-------------------------------------------------------------------------------
@@ -130,26 +125,26 @@ L_3EE1_has_value:
 routine_3EFD:
         stx     DATLIN                              ; $3EFD - Save entity index
         ldy     D_A9C4,x                            ; $3EFF - Get entity sub-position
-        ldx     #$99                                ; $3F02 - Preset X
-        lda     D_A826,y                            ; $3F04 - Load sprite data from table
-        cmp     #$E0                                ; $3F07 - Check if >= $E0
+        ldx     #>soft_spr_0xae0                    ; $3F02 - ORA ptr high (base page)
+        lda     D_A826,y                            ; $3F04 - Load ORA lo from table
+        cmp     #<soft_spr_0xae0                    ; $3F07 - Check if same page
         beq     L_3F0C_skip_inc                     ; $3F09 - Skip increment if equal
-        inx                                         ; $3F0B - Increment X
+        inx                                         ; $3F0B - Page cross: increment high byte
 
 L_3F0C_skip_inc:
-        sta     D_E84C                              ; $3F0C - Set sprite pointer 1 low
+        sta     D_E84C                              ; $3F0C - Set ORA col1 low
 
 D_3F0F:
         clc                                         ; $3F0F
-        adc     #$10                                ; $3F10 - Add offset for pointer 2
+        adc     #$10                                ; $3F10 - Add offset for col2
         sta     D_E856                              ; $3F12
-        stx     D_E84D                              ; $3F15 - Set pointer 1 high
-        stx     D_E857                              ; $3F18 - Set pointer 2 high
-        ldx     #$9A                                ; $3F1B - Different X value
-        lda     D_A82A,y                            ; $3F1D - Load sprite routine value
+        stx     D_E84D                              ; $3F15 - Set ORA col1 high
+        stx     D_E857                              ; $3F18 - Set ORA col2 high
+        ldx     #>soft_spr_0xb60                    ; $3F1B - AND ptr high
+        lda     D_A82A,y                            ; $3F1D - Load AND col1 lo from table
         sta     D_E849                              ; $3F20
         clc                                         ; $3F23
-        adc     #$10                                ; $3F24 - Add offset
+        adc     #$10                                ; $3F24 - Add offset for AND col2
         bne     L_3EAF_common_end                   ; $3F26 - Branch to common end
 
         ; Alternate exit path
@@ -164,11 +159,11 @@ D_3F0F:
 ; Processes 10 blocks (X counts down from 9 to 0)
 
 L_3F2E_do_copy:
-        lda     #$20                                ; $3F2E - Initialize source pointer low
+        lda     #<soft_spr_0x1320                   ; $3F2E - Initialize source pointer low
         sta     OLDTXT                              ; $3F30 - Store at $3D
-        lda     #$70                                ; $3F32 - Initialize mask pointer low
+        lda     #<soft_spr_0x1370                   ; $3F32 - Initialize mask pointer low
         sta     $44                                 ; $3F34
-        lda     #$A2                                ; $3F36 - Initialize pointers high
+        lda     #>soft_spr_0x1320                   ; $3F36 - Initialize pointers high
         sta     OLDTXT+1                            ; $3F38 - Store at $3E
         sta     VARNAM                              ; $3F3A - Store at $45
         
@@ -222,32 +217,29 @@ L_3F74_no_carry:
         jmp     D_E97A                              ; $3F81 - Jump to handler
 
 ;-------------------------------------------------------------------------------
-; Data Tables ($3F84-$3F8B)
+; Data Tables ($3F84-$3F87) and Sprite Init Routine 5 ($3F88-$3FAF)
 ;-------------------------------------------------------------------------------
 D_3F84:
         .byte   $09,$13                             ; $3F84 - Data values
-        .byte   $42,$46,$86,$3F,$BD,$D6             ; $3F86 - Data fragment (D_3F86 defined in bb-master.s)
+        .byte   $42,$46                             ; $3F86 - Data fragment (D_3F86 defined in bb-master.s)
 
-;-------------------------------------------------------------------------------
-; Sprite Init Routine 5 ($3F8C-$3FAC)
-;-------------------------------------------------------------------------------
-; Another sprite initialization variant
-; Entry from external code
-
-routine_3F8C:
-        lda     #$85                                ; $3F8C
-        and     D_30A9,x                            ; $3F8E - (likely invalid address)
-        sta     D_E84C                              ; $3F91 - Set sprite pointer 1
-        lda     #$40                                ; $3F94
-        sta     D_E856                              ; $3F96 - Set sprite pointer 2
-        ldx     #$42                                ; $3F99 - Sprite page value
-        stx     D_E84D                              ; $3F9B - Set pointer 1 high
-        stx     D_E857                              ; $3F9E - Set pointer 2 high
-        ldx     #$40                                ; $3FA1 - Different page value
-        lda     #$A8                                ; $3FA3 - Sprite routine 1
-        sta     D_E849                              ; $3FA5
-        lda     #$B8                                ; $3FA8 - Sprite routine 2
-        sta     D_E853                              ; $3FAA
+; Sprite Init Routine 5 - sets up sprite display for bubble-dragon-in-bubble
+routine_3F8C = * + 4                                ; Legacy label at $3F8C (mid-instruction)
+        stx     DATLIN                              ; $3F88 - 86 3f - Save entity index
+        lda     D_A9D6,x                            ; $3F8A - bd d6 a9 - Load entity direction flags
+        sta     OLDTXT                              ; $3F8D - 85 3d - Store flags
+        lda     #<D_4230                            ; $3F8F - ORA col1 low (charset work buf)
+        sta     D_E84C                              ; $3F91 - Set ORA col1 operand low
+        lda     #<(D_4230 + $10)                    ; $3F94 - ORA col2 low (+$10)
+        sta     D_E856                              ; $3F96 - Set ORA col2 operand low
+        ldx     #>D_4230                            ; $3F99 - ORA ptr high (charset page)
+        stx     D_E84D                              ; $3F9B - Set ORA col1 operand high
+        stx     D_E857                              ; $3F9E - Set ORA col2 operand high
+        ldx     #>D_40A8                            ; $3FA1 - AND ptr high (charset page)
+        lda     #<D_40A8                            ; $3FA3 - AND col1 low (level header data)
+        sta     D_E849                              ; $3FA5 - Set AND col1 operand low
+        lda     #<(D_40A8 + $10)                    ; $3FA8 - AND col2 low (+$10)
+        sta     D_E853                              ; $3FAA - Set AND col2 operand low
 
 ;-------------------------------------------------------------------------------
 ; D_3FAD - Jump to Shared Setup

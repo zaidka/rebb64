@@ -58,7 +58,7 @@
 ; - D_7E80: Unknown routine
 ; - D_E374: Unknown routine
 ; - D_E3A7: Game state transition
-; - D_E494: Delay/frame wait routine
+; - wait_one_frame: Delay/frame wait routine
 ; - D_E9EA: Random number generator
 ; - D_F1AC: Unknown routine
 ; - entry_0400: Entry point at $0400
@@ -102,13 +102,13 @@ D_3169:
     sta  DATLIN+1               ; $40 = copy counter / destination ptr low
     asl                         ; A = $20
     sta  DATPTR+1               ; $42 = second destination ptr low
-    lda  #$42                   ; Character code or screen offset
-    sta  DATPTR                 ; $41 = first destination screen page
-    sta  INPPTR                 ; $43 = second destination screen page
+    lda  #>D_4210               ; Charset work buffer page (item work buf 1)
+    sta  DATPTR                 ; $41 = first destination page (-> $4x10)
+    sta  INPPTR                 ; $43 = second destination page (-> $4x20)
     ldx  #$0f                   ; Copy 16 bytes (countdown from 15 to 0)
 L_3178:
     lda  #$04                   ; Delay value
-    jsr  D_E494                 ; Wait/delay routine
+    jsr  wait_one_frame                 ; Wait/delay routine
     txa                         ; Use X as index
     tay                         ; Transfer to Y
     lda  (MEMSIZ+1),y           ; Read from source 1 ($38/$39)
@@ -151,8 +151,8 @@ D_3193:
 ; Loops continuously until all platforms are destroyed (D_597F = 0)
 ;-------------------------------------------------------------------------------
 D_31A2:
-    jsr  D_E494                 ; Wait/delay routine
-    jsr  D_E3A7                 ; Game state update
+    jsr  wait_one_frame                 ; Wait/delay routine
+    jsr  update_sprite_animations ; Game state update
     jsr  D_045C                 ; Check player state
     jsr  D_7E80                 ; Unknown routine
     jsr  D_F1AC                 ; Unknown routine
@@ -251,7 +251,7 @@ L_3226:
     jmp  D_31A2                 ; Otherwise, continue collision loop
 
 L_3231:
-    jmp  D_E3A7                 ; All platforms destroyed - transition to next state
+    jmp  update_sprite_animations ; All platforms destroyed - transition to next state
 
 ;-------------------------------------------------------------------------------
 ; Timer and score display routine
@@ -260,7 +260,7 @@ L_3231:
 ;-------------------------------------------------------------------------------
     lda  #$60                   ; Screen row offset
     sta  VARNAM                 ; Store for character encoding
-    lda  #$50                   ; Screen column offset
+    lda  #>__VIC_SCREEN_A__         ; Screen page base
     sta  DATPTR                 ; Store base screen position
     lda  $2a                    ; Load timer value (ZP_2A)
     ldx  #$09                   ; X position offset
@@ -300,7 +300,7 @@ D_3266:
     sty  DATPTR+1               ; Store Y to pointer high
     lda  DATPTR                 ; Load base screen position
     clc
-    adc  #$88                   ; Add offset for color RAM or second screen
+    adc  #(>$D800 - >__VIC_SCREEN_A__) ; Add offset for color RAM ($D800) page
     sta  INPPTR                 ; Store result
     txa                         ; Get X parameter
     ldy  #$00                   ; Y = 0 for indexing
@@ -338,10 +338,10 @@ D_3293:
     lda  #$00                   ; Initialize pointers
     sta  DATLIN+1               ; Destination low = $00
     sta  DATPTR+1               ; Source low = $00
-    lda  #$50                   ; Screen page offset
-    sta  DATPTR                 ; Source high = $50
-    lda  #$8b                   ; Different page offset
-    sta  INPPTR                 ; Destination high = $8B
+    lda  #>__VIC_SCREEN_A__         ; Screen page base
+    sta  DATPTR                 ; Source high
+    lda  #>__SCREEN_BACKUP__   ; Backup buffer page
+    sta  INPPTR                 ; Destination high
     ldx  #$19                   ; 25 rows to copy
 
 L_32A3:

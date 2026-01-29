@@ -24,14 +24,14 @@
 ; Indexed by special item type (0-34)
 ; Used at level-setup.s:365 - lda D_2D65,y
 D_2D65:
-        .byte   $F1                     ; Entry 0:  $7FF1
+        .byte   <final_routine          ; Entry 0:  $7FF1
         .byte   $8A                     ; Entry 1:  $348A
         .byte   $95                     ; Entry 2:  $3495
         .byte   $AB                     ; Entry 3:  $2DAB -> D_2DAB
         .byte   $B2                     ; Entry 4:  $2DB2 -> D_2DB2
         .byte   $CD                     ; Entry 5:  $2DCD
-        .byte   $4D                     ; Entry 6:  $A64D
-        .byte   $53                     ; Entry 7:  $A653
+        .byte   <D_A64D                 ; Entry 6:  $A64D
+        .byte   <D_A653                 ; Entry 7:  $A653
         .byte   $D7                     ; Entry 8:  $2DD7
         .byte   $BE                     ; Entry 9:  $2DBE
         .byte   $C7                     ; Entry 10: $2DC7
@@ -44,9 +44,9 @@ D_2D65:
         .byte   $83                     ; Entry 17: $2F83
         .byte   $89                     ; Entry 18: $2F89
         .byte   $20                     ; Entry 19: $8D20
-        .byte   $A4                     ; Entry 20: $A7A4
+        .byte   <D_7FA4                 ; Entry 20: $7FA4
         .byte   $8D                     ; Entry 21: $988D
-        .byte   $A7                     ; Entry 22: $FAA7
+        .byte   <D_7FA7                 ; Entry 22: $7FA7
         .byte   $98                     ; Entry 23: $A098
         .byte   $A0                     ; Entry 24: $02A0
         .byte   $FA                     ; Entry 25: $0AFA
@@ -57,21 +57,21 @@ D_2D65:
         .byte   $20                     ; Entry 30: $2120
         .byte   $20                     ; Entry 31: $3720
         .byte   $21                     ; Entry 32: $3C21
-        .byte   $37                     ; Entry 33: $7F37
-        .byte   $3C                     ; Entry 34: $343C
+        .byte   <D_7C37                 ; Entry 33: $7C37
+        .byte   <D_7C3C                 ; Entry 34: $7C3C
 
 ; --- Special effect routine address table (high bytes) ---
 ; Indexed by special item type (0-34)
 ; Used at level-setup.s:367 - lda D_2D88,y
 D_2D88:
-        .byte   $7F                     ; Entry 0:  $7FF1
+        .byte   >final_routine          ; Entry 0:  $7FF1
         .byte   $34                     ; Entry 1:  $348A
         .byte   $34                     ; Entry 2:  $3495
         .byte   $2D                     ; Entry 3:  $2DAB -> D_2DAB
         .byte   $2D                     ; Entry 4:  $2DB2 -> D_2DB2
         .byte   $2D                     ; Entry 5:  $2DCD
-        .byte   $A6                     ; Entry 6:  $A64D
-        .byte   $A6                     ; Entry 7:  $A653
+        .byte   >D_A64D                 ; Entry 6:  $A64D
+        .byte   >D_A653                 ; Entry 7:  $A653
         .byte   $2D                     ; Entry 8:  $2DD7
         .byte   $2D                     ; Entry 9:  $2DBE
         .byte   $2D                     ; Entry 10: $2DC7
@@ -84,9 +84,9 @@ D_2D88:
         .byte   $2F                     ; Entry 17: $2F83
         .byte   $2F                     ; Entry 18: $2F89
         .byte   $36                     ; Entry 19: $3620
-        .byte   $7F                     ; Entry 20: $7FA4
+        .byte   >D_7FA4                 ; Entry 20: $7FA4
         .byte   $34                     ; Entry 21: $348D
-        .byte   $7F                     ; Entry 22: $7FA7
+        .byte   >D_7FA7                 ; Entry 22: $7FA7
         .byte   $34                     ; Entry 23: $3498
         .byte   $34                     ; Entry 24: $34A0
         .byte   $34                     ; Entry 25: $34FA
@@ -97,8 +97,8 @@ D_2D88:
         .byte   $36                     ; Entry 30: $3620
         .byte   $36                     ; Entry 31: $3620
         .byte   $36                     ; Entry 32: $3621
-        .byte   $7C                     ; Entry 33: $7C37
-        .byte   $7C                     ; Entry 34: $7C3C
+        .byte   >D_7C37                 ; Entry 33: $7C37
+        .byte   >D_7C3C                 ; Entry 34: $7C3C
 
 ; ==============================================================================
 ; SPECIAL ITEM EFFECT HANDLERS

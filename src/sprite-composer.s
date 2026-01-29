@@ -13,7 +13,7 @@
 ; - Random number generation
 ;
 ; Self-modifying code:
-; - D_E966 ($E967) - Modified to contain sprite frame offset
+; - D_E966 - Low byte of indirect jump address in entity dispatch
 ; - D_E972 ($E973) - Contains ADC immediate operand for screen row advancement
 ;===============================================================================
 
@@ -22,15 +22,16 @@
 ;-------------------------------------------------------------------------------
 
 ; Entry at $E752 - Start composing sprite with character offset $38
-.segment "CODE_E000"
+.segment "CODE_SPRITE_COMPOSER"
 
+D_E752:
     ldy  #$00
     lda  #$38
     bne  L_E75D
 
 ; Entry at $E758 - Alternate entry using table lookup
-; D_E758 is defined as forward reference in bb-master.s
-    ldy  D_A9D6,x              ; D_E758
+D_E758:
+    ldy  D_A9D6,x
     lda  #$34
 
 L_E75D:
@@ -43,6 +44,7 @@ L_E75D:
 D_E765:
     .byte $02, $00
 
+D_E767:
     lda  #$00
     sta  OLDTXT
     lda  D_597F                ; Animation/frame counter
@@ -124,8 +126,8 @@ L_E7CC:
 ; Calculate screen buffer destination pointers
 ; Sets up $3A/$3B, $18/$19, $1A/$1B for three rows of output
 ;-------------------------------------------------------------------------------
-; D_E7CF is defined as forward reference in bb-master.s
-    lda  MEMSIZ1                ; D_E7CF - MEMSIZ+1 - base screen address
+D_E7CF:
+    lda  MEMSIZ1                ; MEMSIZ+1 - base screen address
     sta  CURLIN1                ; CURLIN+1
     ldx  CURLIN                ; CURLIN
     stx  OLDLIN                ; OLDLIN
@@ -220,21 +222,44 @@ D_E83F:
     bne  L_E835
 
 ; Apply masking to sprite edges
+; SMC targets: D_E849/D_E84A through D_E860/D_E861 are operand bytes
+; within the AND/ORA instructions below, patched at runtime to change
+; which mask/background tables are used for sprite composition.
 L_E846:
     lda  (STREND),y            ; STREND - sprite data column 1
+smc_and1:
     and  D_8240,x              ; Mask table 1
+smc_ora1:
     ora  D_8000,x              ; Background bits 1
     sta  (CURLIN1),y            ; CURLIN+1
     
     lda  (FRETOP),y            ; FRETOP - sprite data column 2
+smc_and2:
     and  D_8250,x              ; Mask table 2
+smc_ora2:
     ora  D_8010,x              ; Background bits 2
     sta  ($18),y
     
     lda  ($35),y            ; FRESPC - sprite data column 3
+smc_and3:
     and  D_8260,x              ; Mask table 3
+smc_ora3:
     ora  D_8020,x              ; Background bits 3
     sta  ($1A),y
+
+; Self-modifying code target aliases (operand bytes within instructions above)
+D_E849 := smc_and1 + 1         ; AND col1 operand low byte
+D_E84A := smc_and1 + 2         ; AND col1 operand high byte
+D_E84C := smc_ora1 + 1         ; ORA col1 operand low byte
+D_E84D := smc_ora1 + 2         ; ORA col1 operand high byte
+D_E853 := smc_and2 + 1         ; AND col2 operand low byte
+D_E854 := smc_and2 + 2         ; AND col2 operand high byte
+D_E856 := smc_ora2 + 1         ; ORA col2 operand low byte
+D_E857 := smc_ora2 + 2         ; ORA col2 operand high byte
+D_E85D := smc_and3 + 1         ; AND col3 operand low byte
+D_E85E := smc_and3 + 2         ; AND col3 operand high byte
+D_E860 := smc_ora3 + 1         ; ORA col3 operand low byte
+D_E861 := smc_ora3 + 2         ; ORA col3 operand high byte
     
     dey
     bmi  L_E87B                ; Done with this character row
@@ -368,8 +393,8 @@ L_E905:
 ; Render sprites for all active entities
 ; Iterates through entity table and renders each sprite
 ;-------------------------------------------------------------------------------
-; D_E90E is defined as forward reference in bb-master.s
-    ldx  #$11                  ; D_E90E
+D_E90E:
+    ldx  #$11
     inc  D_597F                ; Increment animation frame counter
     
     ; Save entity states for comparison
@@ -426,7 +451,11 @@ L_E931:
     sta  DATPTR                ; DATPTR
     
     ; Jump to sprite rendering routine via vector
+    ; D_E966: SMC target - low byte of indirect jump address
+    ; Modified by entity rendering loop to select different dispatch vectors
+smc_jmp_indirect:
     jmp  ($0422)
+D_E966 := smc_jmp_indirect + 1 ; SMC target: indirect jump address low byte
 
 ; D_E968 is defined as forward reference in bb-master.s
     ; Entity inactive - advance screen position
@@ -439,8 +468,8 @@ D_E968:
 ;-------------------------------------------------------------------------------
 ; Continue to next entity
 ;-------------------------------------------------------------------------------
-; D_E96F - Self-modifying target
-    lda  MEMSIZ1                ; D_E96F - MEMSIZ+1
+D_E96F:
+    lda  MEMSIZ1                ; MEMSIZ+1
     clc
 
 D_E972:
@@ -508,7 +537,7 @@ L_E9A5:
     beq  L_E9B7                ; No change, return
 
 L_E9B4:
-    jmp  D_E6CD                ; Handle state change
+    jmp  draw_player_digits    ; Handle state change
 
 L_E9B7:
     rts
@@ -518,10 +547,10 @@ L_E9B7:
 ; Input: X = entity index
 ; Output: $11 = screen row, $12 = screen column base, $23 = X offset, $24 = Y offset
 ;-------------------------------------------------------------------------------
-; D_E9B8 is defined as forward reference in bb-master.s
+D_E9B8:
 convert_entity_pos_to_screen:
     ; Calculate Y position (vertical)
-    lda  FA,x              ; D_E9B8 - FA - entity Y position
+    lda  FA,x              ; FA - entity Y position
     sec
     sbc  #$14                  ; Subtract playfield top offset
     tay
@@ -555,7 +584,7 @@ convert_entity_pos_to_screen:
     adc  $11                ; INPFLG - add row offset
     sta  $11                ; INPFLG - final screen row
     lda  D_AC04,y
-    adc  #$85
+    adc  #>D_8500
     sta  $12                ; TANSGN - screen column base
     
     rts
@@ -565,9 +594,9 @@ convert_entity_pos_to_screen:
 ; Updates the random number state in $26/$27
 ; Output: A = new random value in $26 (RESHO)
 ;-------------------------------------------------------------------------------
-; D_E9EA is defined as forward reference in bb-master.s
+D_E9EA:
 prng_update:
-    lda  RESHO                ; D_E9EA - RESHO - random state byte 1
+    lda  RESHO                ; RESHO - random state byte 1
     asl                        ; Shift left
     rol  $27                ; Rotate into byte 2
     rol  RESHO                ; RESHO - rotate back

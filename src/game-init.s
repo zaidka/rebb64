@@ -24,7 +24,7 @@
 
 D_A428:
         inc     MEMSIZ              ; e6 37 - Increment pause flag
-        jsr     D_E494              ; 20 94 e4 - Call screen setup routine
+        jsr     wait_one_frame              ; 20 94 e4 - Call screen setup routine
         jsr     D_2E79              ; 20 79 2e - Initialize game variables
         jsr     D_3293              ; 20 93 32 - Setup sprites
         jsr     D_1E2E              ; 20 2e 1e - Additional init
@@ -74,10 +74,10 @@ D_A428:
         sta     $04                 ; 85 04 - Setup pointer at $04
         sta     $06                 ; 85 06 - Setup pointer at $06
         
-        lda     #$85                ; a9 85
+        lda     #>D_8500            ; a9 85
         sta     ADRAY1              ; 85 03 - High byte for $02 pointer
         
-        lda     #$50                ; a9 50
+        lda     #>__VIC_SCREEN_A__      ; a9 50
         sta     ADRAY2              ; 85 05 - High byte for $04 pointer
         
         lda     #$D8                ; a9 d8
@@ -85,10 +85,11 @@ D_A428:
 
         ;-----------------------------------------------------------------------
         ; Wait for screen setup completion
+        ; Called directly via jsr from extend-bonus.s (READY screen setup)
         ;-----------------------------------------------------------------------
-@wait_screen:
+wait_screen:
         lda     ARYTAB+1            ; a5 30 - Check screen pointer high byte
-        cmp     #$54                ; c9 54 - Is it $54?
+        cmp     #>__VIC_SCREEN_B__    ; c9 54 - Is it screen B page?
         beq     @exit               ; f0 03 - Yes, exit
         jmp     D_1847              ; 4c 47 18 - No, jump to handler
         
@@ -131,7 +132,8 @@ D_A5A0:
 ;-------------------------------------------------------------------------------
 
 D_A5B7:
-        ldx     #$00                ; a2 00
+        ldx     #$00                ; a2 00 (self-modified by joystick-input.s)
+D_A5B8_smc = D_A5B7 + 1            ; SMC target: operand of ldx #imm above
         ldy     D_AB51,x            ; bc 51 ab - Load Y position from table
         dey                         ; 88 - Decrement
         sty     MEMSIZ+1            ; 84 38 - Store Y position
@@ -145,8 +147,8 @@ D_A5B7:
         lda     #$10                ; a9 10 - Parameter for display routine
         ldy     MEMSIZ+1            ; a4 38 - Get Y position
         jsr     D_7C26              ; 20 26 7c - Display/update routine
-        jsr     D_E494              ; 20 94 e4 - Wait one frame
-        jsr     D_E3A7              ; 20 a7 e3 - Update sprites/display
+        jsr     wait_one_frame              ; 20 94 e4 - Wait one frame
+        jsr     update_sprite_animations ; Update sprites/display
         dec     CURLIN              ; c6 39 - Decrement counter
         bne     @anim_loop          ; d0 ef - Loop until counter = 0
         
@@ -159,7 +161,7 @@ D_A5B7:
         
         ldx     #$73                ; a2 73 - X parameter
         ldy     #$17                ; a0 17 - Y parameter
-        jsr     D_E42A              ; 20 2a e4 - Sprite/entity update
+        jsr     display_text_string ; Sprite/entity update
         
         ldy     #$51                ; a0 51 - Parameter
         jsr     D_05AD              ; 20 ad 05 - Game state routine
@@ -188,7 +190,7 @@ D_A5B7:
         ; Wait for fire button press (either joystick port)
         ;-----------------------------------------------------------------------
 @wait_press:
-        jsr     D_E494              ; 20 94 e4 - Wait one frame
+        jsr     wait_one_frame              ; 20 94 e4 - Wait one frame
         lda     CIA1_PRA            ; ad 00 dc - Read joystick port 2
         and     #$10                ; 29 10 - Check fire button bit
         beq     @wait_release       ; f0 07 - Button pressed, wait for release
@@ -200,7 +202,7 @@ D_A5B7:
         ; Wait for fire button release
         ;-----------------------------------------------------------------------
 @wait_release:
-        jsr     D_E494              ; 20 94 e4 - Wait one frame
+        jsr     wait_one_frame              ; 20 94 e4 - Wait one frame
         lda     CIA1_PRA            ; ad 00 dc - Read joystick port 2
         and     #$10                ; 29 10 - Check fire button bit
         beq     @wait_release       ; f0 f6 - Still pressed, keep waiting
@@ -219,9 +221,9 @@ D_A5B7:
 D_A625:
         stx     D_A63D              ; 8e 3d a6 - Store X register
         sty     D_A63C              ; 8c 3c a6 - Store Y register
-        ldx     #$3A                ; a2 3a - Load X parameter
-        ldy     #$A6                ; a0 a6 - Load Y parameter
-        jmp     D_E42A              ; 4c 2a e4 - Jump to sprite/entity update
+        ldx     #<D_A63A            ; a2 3a - Load X parameter
+        ldy     #>D_A63A            ; a0 a6 - Load Y parameter
+        jmp     display_text_string ; Jump to sprite/entity update
 
 ;===============================================================================
 ; End of bb-game-init.s

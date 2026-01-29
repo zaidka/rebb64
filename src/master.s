@@ -258,66 +258,34 @@ D_4100      = charset + $100    ; Character set page 2
 D_4200      = charset + $200    ; Graphics work buffer
 D_4210      = charset + $210    ; Item work buffer 1
 D_4230      = charset + $230    ; Item work buffer 2
-D_42C6      = charset + $2C6    ; Data/flag location
+; D_42C6 is used in a BIT-opcode overlapping-instruction trick:
+; "BIT D_42C6" assembles as $2C $C6 $42. When branched into at offset +1,
+; the CPU decodes $C6 $42 = "DEC $42" (DEC DATPTR+1).
+; The low byte must be $C6 (DEC zp opcode) and the high byte must be $42
+; (the ZP target). This address is NOT relocatable -- it encodes an opcode.
+D_42C6      = (DATPTR+1) * $100 + $C6      ; BIT-trick: hides "DEC DATPTR+1"
 D_4300      = charset + $300    ; HUD font destination (160 bytes copied from $FE90)
 D_43B0      = charset + $3B0    ; Data table 1
 D_43B8      = charset + $3B8    ; Data table 2
 D_43C0      = charset + $3C0    ; Data table 3
-D_4400      = charset + $400    ; Enemy template data table 2 (RAM copy)
-D_4B00      = charset + $B00    ; Enemy template data table (destination)
+D_4400      = charset_ext        ; Enemy template data table 2 (RAM copy)
+; D_4B00 removed: unused symbol (was charset + $B00)
+
+; --- Charset B Backup Work Buffers ---
+; These mirror the Charset A work buffers at VIC Charset B.
+; Charset is copied from $4000 -> $4800 during init; game code updates both
+; copies so VIC can display from either charset bank.
+CHARSETB_A8 = __VIC_CHARSET_B__ + $A8   ; Level header data backup (8 bytes)
+CHARSETB_B0 = __VIC_CHARSET_B__ + $B0   ; Level sidebar chars 1 backup
+CHARSETB_B8 = __VIC_CHARSET_B__ + $B8   ; Level sidebar chars 2 backup
+CHARSETB_C0 = __VIC_CHARSET_B__ + $C0   ; Level sidebar chars 3 backup
+CHARSETB_C8 = __VIC_CHARSET_B__ + $C8   ; Level sidebar chars 4 backup
+CHARSETB_D0 = __VIC_CHARSET_B__ + $D0   ; Level number display backup
+CHARSETB_200 = __VIC_CHARSET_B__ + $200  ; Graphics work buffer backup
 
 ; --- Work RAM Region ($4B00-$57FF) ---
-; This region is initialized from work-ram-init.bin and used during gameplay.
-; VIC config: Bank 1 ($4000-$7FFF), Screen at $4800, Charset at $4000
-; $4B00-$4BFF is overwritten by charset backup during init.
-D_4CF3      = $4CF3     ; External routine (called from sound engine)
-D_4E00      = $4E00     ; Platform screen address low
-D_4E48      = $4E48     ; Graphics output buffer (72 bytes)
-D_4F00      = $4F00     ; Platform screen address high
-D_4FF8      = $4FF8     ; Item table 2
-; Screen RAM pages (VIC double-buffering)
-D_5000      = $5000     ; Screen RAM page 0
-D_5001      = $5001     ; Screen pointer storage
-D_501E      = $501E     ; Level position data
-D_501F      = $501F     ; Level position data
-D_5050      = $5050     ; Level data value
-D_5053      = $5053     ; Screen memory area 1
-D_50AF      = $50AF     ; Screen memory area for animation
-D_5100      = $5100     ; Screen RAM page 1
-D_519C      = $519C     ; Sprite index table 1 (9 bytes)
-D_51D3      = $51D3     ; Screen text output (self-modifying)
-D_51EC      = $51EC     ; Sprite index table 2 (9 bytes)
-D_5200      = $5200     ; Screen RAM page 2
-D_525B      = $525B     ; Screen memory area 2
-D_52AA      = $52AA     ; Screen line pointer array 1
-D_52D2      = $52D2     ; Screen line pointer array 2
-D_52FA      = $52FA     ; Screen line pointer array 3
-D_5300      = $5300     ; Screen RAM page 3
-D_5322      = $5322     ; Screen line pointer array 4
-D_534A      = $534A     ; Screen line pointer array 5
-D_5398      = $5398     ; Source tile table
-D_53C0      = $53C0     ; Screen buffer destination
-D_53C1      = $53C1     ; Screen buffer destination +1
-D_53DE      = $53DE     ; Screen buffer alternate
-D_53DF      = $53DF     ; Screen buffer alternate +1
-D_53E4      = $53E4     ; Data/routine location
-D_53F8      = $53F8     ; Screen 1 sprite pointers (VIC reads at screen + $3F8)
-D_53FA      = $53FA     ; Screen 1 sprite pointers +2
-D_53FC      = $53FC     ; Screen 1 sprite pointers +4
-; Color RAM buffer pages (copied to $D800)
-D_5400      = $5400     ; Color RAM buffer page 0
-D_5401      = $5401     ; Color RAM buffer +1
-D_5500      = $5500     ; Color RAM buffer page 1
-D_559C      = $559C     ; Screen 2 sprite index table 1 (9 bytes)
-D_55D3      = $55D3     ; Screen text output 2 (self-modifying)
-D_55EC      = $55EC     ; Screen 2 sprite index table 2 (9 bytes)
-D_5600      = $5600     ; Color RAM buffer page 2
-D_5700      = $5700     ; Color RAM buffer page 3
-D_57D4      = $57D4     ; Game state storage / animation data
-D_57E4      = $57E4     ; Data/routine location
-D_57F8      = $57F8     ; Screen 2 sprite pointers (VIC reads at screen + $3F8)
-D_57FA      = $57FA     ; Screen 2 sprite pointers +2
-D_57FC      = $57FC     ; Screen 2 sprite pointers +4
+; Labels now defined in work-ram-init.s (GRAPHICS segment, $4B00-$4FFF)
+; and screen-ram-init.s (SCREEN_RAM segment, $5000-$57FF).
 
 ; --- Game Data Tables (in RAM, addresses fixed) ---
 D_0107      = $0107     ; Stack page temp buffer
@@ -341,7 +309,7 @@ D_0181      = $0181     ; Enemy row positions (18 bytes)
 D_016F      = $016F     ; Enemy screen position temp (18 bytes)
 D_015D      = $015D     ; Enemy column positions (18 bytes)
 D_014B      = $014B     ; Enemy render state (18 bytes)
-D_A5B8      = $A5B8     ; Super bonus capture flag
+D_A5B8      = D_A5B8_smc  ; SMC: operand of ldx #imm in D_A5B7 (game-init.s GAMEINIT2)
 D_2922      = $2922     ; Joystick data storage
 D_119F      = $119F     ; Saved game state
 D_3AB8      = $3AB8     ; Hurry-up handler
@@ -361,9 +329,24 @@ D_47F8      = $47F8     ; Item table 1
 ; D_7BA6 - now defined as label in level-data-part2.s
 ; D_7AE3 - now defined as label in level-data-part2.s
 ; D_7BC8 - now defined as label in level-data-part2.s
-D_7D00      = $7D00     ; Level data destination / screen buffer 1
-D_7D80      = $7D80     ; Screen buffer 2
-D_7E00      = $7E00     ; Screen buffer 3
+D_7D00      = sprite_data_7C40 + $C0  ; Level data destination / screen buffer 1
+D_7D80      = sprite_data_7C40 + $140 ; Screen buffer 2
+D_7E00      = sprite_data_7C40 + $1C0 ; Screen buffer 3
+
+; Screen backup buffer at $8B00-$8EFF (4 pages, pinned address)
+; This region is loaded with title music data but overwritten as a
+; screen backup buffer during gameplay. These are fixed hardware addresses
+; independent of the SCREEN_BUFFER segment's link-time position.
+D_8B00      = $8B00     ; Screen backup buffer page 0
+D_8B02      = $8B02     ; Screen backup buffer page 0 + 2
+D_8B03      = $8B03     ; Screen backup buffer page 0 + 3
+D_8B04      = $8B04     ; Screen backup buffer page 0 + 4
+D_8B63      = $8B63     ; Screen backup buffer page 0 + $63
+D_8C00      = $8C00     ; Screen backup buffer page 1
+D_8C9C      = $8C9C     ; Screen backup buffer page 1 + $9C
+D_8CEC      = $8CEC     ; Screen backup buffer page 1 + $EC
+D_8D00      = $8D00     ; Screen backup buffer page 2
+D_8E00      = $8E00     ; Screen backup buffer page 3
 ; D_48D0 defined as label in init-routines.s
 ; D_4460 defined as label in game-init-early.s (Main game code entry point)
 D_4500      = $4500     ; Enemy template data table 3 (RAM copy)
@@ -378,11 +361,11 @@ D_1200      = $1200     ; Temp data buffer
 D_D853      = $D853     ; Color RAM area 1
 D_D9D3      = $D9D3     ; Color RAM text output (self-modifying)
 D_DA5B      = $DA5B     ; Color RAM area 2
-D_E200      = $E200     ; High memory restore target
-D_E42A      = $E42A     ; Sprite/entity update routine
-D_E494      = $E494     ; Wait one frame
-D_E49B      = $E49B     ; Game loop continuation
-EVAL        = $A7E4     ; Sprite data pointer
+; D_E200 - now defined as label (level_decompress_data) in level-renderer.s
+; D_E42A - now defined as label (display_text_string) in sprites-display.s
+; D_E494 - now defined as label (wait_one_frame) in sprites-display.s
+; D_E49B - now defined as label (copy_screen_buffers) in sprites-display.s
+EVAL        = D_A7E4    ; Sprite data pointer
 ADRAY1      = $03       ; Address high byte (used in level complete)
 ADRAY2      = $05       ; Address high byte alternate
 CHARONE     = $07       ; Character/color pointer
@@ -407,7 +390,7 @@ D_0717      = $0717     ; IRQ handler continuation routine
 ; Forward references for routines called from master.s before their definition
 ; These are needed because master.s code calls these before the includes
 ; D_0F73 - now defined as label in enemy-ai.s
-D_F073      = $F073     ; Self-modifying code target (high address)
+; D_F073 now defined as label in entity-system.s
 ; D_105B - now defined as label in enemy-ai.s
 D_1319      = $1319     ; Update player sprites
 ; D_13BE - now defined as label in player-sprites.s
@@ -426,7 +409,7 @@ D_1CBD      = $1CBD     ; Game update routine (called from IRQ)
 D_2020      = $2020     ; Unknown routine
 D_30A9      = $30A9     ; Data table (possibly invalid address)
 D_3BF1      = $3BF1     ; Self-modifying code target in screen scroll
-D_3EF3      = $3EF3     ; Sprite init continuation (in bb-sprite-init.s)
+; D_3EF3 - now defined as label in sprite-init.s
 ; L_0D4A - now defined as label in enemy-ai.s
 ; D_CF2 - now defined as label in enemy-ai.s
 
@@ -439,7 +422,7 @@ D_3EF3      = $3EF3     ; Sprite init continuation (in bb-sprite-init.s)
 
 ; $7Cxx - Score/collision routines - NOW IN level-data-part2.s
 ; D_7C21 - now defined as label in level-data-part2.s
-D_7C26      = $7C26     ; Add score routine (alias for D_7C24)
+D_7C26      = D_7C24 + 2 ; Add score routine (entry at SED instruction)
 
 ; $7Exx - Input/pause routines - NOW IN level-data-part2.s
 ; D_7E80 - now defined as label in level-data-part2.s
@@ -457,103 +440,87 @@ D_7C26      = $7C26     ; Add score routine (alias for D_7C24)
 ; Many of these are defined in include files, but some are in binary data
 
 ; $E0xx - Level renderer
-D_E000      = $E000     ; Level renderer main entry
+; D_E000 - now defined as label (setup_level_screen) in level-renderer.s
 
 ; $E1xx - Screen rendering
-D_E189      = $E189     ; Screen rendering routine
+; D_E189 - now defined as label (decompress_level_data) in level-renderer.s
 
 ; Entity-related forward references
-D_E3A7      = $E3A7     ; Update sprite data
-D_E3D9      = $E3D9     ; Display text line routine
-D_E374      = $E374     ; Screen setup routine
-D_E4C5      = $E4C5     ; Entity setup routine
-D_E4DA      = $E4DA     ; Entity update routine
-D_E554      = $E554     ; Line drawing routine
-D_E658      = $E658     ; Unknown routine
-D_E6CD      = $E6CD     ; State change handler
-D_E740      = $E740     ; Screen/sprite update routine
-D_E758      = $E758     ; Entity cleanup routine
-D_E7CF      = $E7CF     ; Sprite display routine
+; D_E3A7 - now defined as label (update_sprite_animations) in sprites-display.s
+; D_E3D9 - now defined as label (display_score_digits) in sprites-display.s
+; D_E374 - now defined as label (clear_screen) in level-renderer.s
+; D_E4C5 - now defined as label (copy_charset_data) in sprites-display.s
+; D_E4DA - now defined as label (setup_player_sprites) in sprites-display.s
+; D_E554      = $E554     ; Line drawing routine (now alias to draw_animated_sprite)
+
+; D_E758 now defined as label in sprite-composer.s
+; D_E7CF now defined as label in sprite-composer.s
 
 ; $E8xx - Sprite pointers (self-modifying code targets)
-D_E849      = $E849     ; Sprite routine pointer 1
-D_E84A      = $E84A     ; Sprite routine pointer 1 instruction
-D_E84C      = $E84C     ; Sprite pointer 1 low
-D_E84D      = $E84D     ; Sprite pointer 1 high
-D_E853      = $E853     ; Sprite routine pointer 2
-D_E854      = $E854     ; Sprite routine pointer 2 instruction
-D_E856      = $E856     ; Sprite pointer 2 low
-D_E857      = $E857     ; Sprite pointer 2 high
-D_E85D      = $E85D     ; Sprite routine pointer 3
-D_E85E      = $E85E     ; Sprite routine pointer 3 instruction
-D_E860      = $E860     ; Sprite pointer 3 low
-D_E861      = $E861     ; Sprite pointer 3 high
+; D_E849-D_E861 now defined as labels in sprite-composer.s
 
 ; $E9xx - Entity/RNG routines
-D_E90E      = $E90E     ; Update game state
-D_E966      = $E966     ; Self-modifying: sprite frame offset
+; D_E90E now defined as label in sprite-composer.s
+; D_E966 now defined as label in sprite-composer.s
 ; D_E968 now defined as label in sprite-composer.s
-D_E96F      = $E96F     ; Entity loop continuation
+; D_E96F now defined as label in sprite-composer.s
 ; D_E97A now defined as label in sprite-composer.s
-D_E9B8      = $E9B8     ; Get sprite animation frame
-D_E9EA      = $E9EA     ; Random number generator (RNG)
+; D_E9B8 now defined as label in sprite-composer.s
+; D_E9EA now defined as label in sprite-composer.s
 
 ; $EBxx - Entity state handlers
-; L_EB0F now defined as label in entity-bubble-handler.s
-D_EB34      = $EB34     ; Alternate state handler
-D_EB3F      = $EB3F     ; Falling through floor handler
-D_EB94      = $EB94     ; Self-modifying: jump instruction
-D_EBB5      = $EBB5     ; Self-modifying: jump target low
-D_EBB6      = $EBB6     ; Self-modifying: jump target high
-D_EBB8      = $EBB8     ; Jump state handler
-D_EBC4      = $EBC4     ; Reset velocities handler
-D_EBD9      = $EBD9     ; Platform physics handler
+; L_EB0F now defined as label in entity-system.s
+; D_EB34 now defined as label in entity-system.s
+; D_EB3F now defined as label in entity-system.s
+; D_EB94 now defined as label in entity-system.s
+; D_EBB5 now defined as label in entity-system.s
+; D_EBB6 now defined as label in entity-system.s
+; D_EBB8 now defined as label in entity-system.s
+; D_EBC4 now defined as label in entity-system.s
+; D_EBD9 now defined as label in entity-system.s
 
 ; $ECxx - Entity movement
-; L_EC0C now defined as label in entity-movement.s
-D_EC2C      = $EC2C     ; Alternate movement table load
-D_EC3C      = $EC3C     ; Platform collision check after climb
-D_EC7C      = $EC7C     ; Exit climbing state
-; D_EC87 now defined as label in entity-movement.s
-; D_ECDF now defined as label in entity-movement.s
+; L_EC0C now defined as label in entity-system.s
+; D_EC2C now unused (only referenced in comments)
+; D_EC3C now defined as label in entity-system.s
+; D_EC7C now defined as label in entity-system.s
+; D_EC87 now defined as label in entity-system.s
+; D_ECDF now defined as label in entity-system.s
 
 ; $EDxx - Entity input handlers
-; D_ED12 now defined as label in entity-movement.s
-; D_ED18 now defined as label in entity-movement.s
-; D_ED1E now defined as label in entity-movement.s
-; D_ED3B now defined as label in entity-movement.s
-; L_EDC7 now defined as label in entity-ai.s
-; D_EDCD now defined as label in entity-ai.s
+; D_ED12 now defined as label in entity-system.s
+; D_ED18 now defined as label in entity-system.s
+; D_ED1E now defined as label in entity-system.s
+; D_ED3B now defined as label in entity-system.s
+; L_EDC7 now defined as label in entity-system.s
+; D_EDCD now defined as label in entity-system.s
 
 ; $EExx - Entity movement continued
-; L_EE49 now defined as label in entity-ai.s
-; D_EE4A now defined as label in entity-ai.s
-; D_EE62 now defined as label in entity-ai.s
-D_EEB4      = $EEB4     ; Entity movement handler
-; D_EEC8 now defined as label in entity-ai.s
-; D_EEDF now defined as label in entity-ai.s
-; D_EEEB now defined as label in entity-ai.s
+; L_EE49 now defined as label in entity-system.s
+; D_EE4A now defined as label in entity-system.s
+; D_EE62 now defined as label in entity-system.s
+; D_EEB2 now defined as label in entity-system.s
+; D_EEB4 now defined as label in entity-system.s
+; D_EEC8 now defined as label in entity-system.s
+; D_EEDF now defined as label in entity-system.s
+; D_EEEB now defined as label in entity-system.s
 
 ; $EFxx - Entity physics
-; D_EF15 now defined as label in entity-ai.s
-; D_EF1E now defined as label in entity-ai.s
-D_EF3B      = $EF3B     ; Right movement platform check
-; D_EF4C now defined as label in entity-ai.s
-D_EFA0      = $EFA0     ; Normal vertical movement
-; L_EFBC now defined as label in entity-physics-cont.s
-; D_EFEA now defined as label in entity-physics-cont.s
+; D_EF15 now defined as label in entity-system.s
+; D_EF1E now defined as label in entity-system.s
+; D_EF3B now unused (only referenced in comments)
+; D_EF4C now defined as label in entity-system.s
+; D_EFA0 now defined as label in entity-system.s
+; L_EFBC now defined as label in entity-system.s
+; D_EFEA now defined as label in entity-system.s
 D_4985      = $4985     ; Unknown routine
 D_0409      = $0409     ; Score/stat value array
 D_D8AF      = $D8AF     ; State array
-D_F005      = $F005     ; Title screen initialization (referenced recursively)
-D_F0F0      = $F0F0     ; Title screen text data
-D_F0F3      = $F0F3     ; Title screen text data (BUBBLE)
-D_F0FC      = $F0FC     ; Title screen text data
-D_F0FE      = $F0FE     ; Title screen text data
-D_F0FF      = $F0FF     ; Title screen text data
-D_F100      = $F100     ; Title screen text data
-L_F1A8      = $F1A8     ; Title screen data (appears as illegal opcodes)
-D_F1AC      = $F1AC     ; Credits/score check routine
+; D_F005 now defined as label in entity-system.s
+; D_F073 now defined as label in entity-system.s
+; D_F0F0, D_F0F3, D_F0FC, D_F0FE, D_F0FF, D_F100, L_F1A8 - unused equates removed
+; (title screen text data in CODE_TITLE_DATA segment, referenced only by position)
+; D_F1AC now defined as label in credits-handler-partial.s
 ; L_F201 now defined as label in credits-handler-partial.s
 ; L_F20A now defined as label in credits-handler-partial.s
 ; D_F20B, D_F211, D_F217 are now defined in credits-handler-partial.s
@@ -563,81 +530,16 @@ D_F1AC      = $F1AC     ; Credits/score check routine
 ; D_F3B9 and D_F418 are now aliases to FREQ_TABLE_LO and FREQ_TABLE_HI
 ; which are labels defined within the MUSICFREQS segment
 ; L_F846 now defined as label in sound-engine.s
-D_F477      = $F477     ; Initialize sound tables
-D_F4BD      = $F4BD     ; Sound init routine
-D_F53C      = $F53C     ; Sound update routine (called every frame)
+; D_F477 - removed: now music_init_code label in music-freqs-tables.s
+; D_F4BD - removed: now label in sound-engine.s
+; D_F53C - removed: now label in sound-engine.s
 ; D_F887 now defined as label in sound-engine.s
 
 ; --- Music & Sound Data Forward References ---
-; These labels are defined in bb-music-sound-data.s and referenced by sound engine
-D_F2C4      = $F2C4     ; Sound channel data table
-D_F2C5      = $F2C5     ; Sound parameter table
-D_F2C6      = $F2C6     ; Sound configuration table
-D_F2C7      = $F2C7     ; Sound/music data byte
-D_F2C9      = $F2C9     ; Sound/music data byte
-D_F2CA      = $F2CA     ; Sound/music data byte
-D_F305      = $F305     ; Sound channel state array (3 channels)
-D_F306      = $F306     ; Sound/music data byte
-D_F307      = $F307     ; Sound/music data byte
-D_F308      = $F308     ; Sound/music data byte
-D_F309      = $F309     ; Sound/music data byte
-D_F30A      = $F30A     ; Sound/music data byte
-D_F30B      = $F30B     ; Sound/music data byte
-D_F31B      = $F31B     ; Sound effect index/offset table
-D_F31C      = $F31C     ; Sound/music data byte
-D_F31D      = $F31D     ; Sound/music data byte
-D_F31E      = $F31E     ; Sound/music data byte
-D_F31F      = $F31F     ; Sound/music data byte
-D_F320      = $F320     ; Sound/music data byte
-D_F321      = $F321     ; Sound/music data byte
-D_F322      = $F322     ; Sound/music data byte
-D_F323      = $F323     ; Sound frequency/pitch table
-D_F324      = $F324     ; Sound/music data byte
-D_F325      = $F325     ; Sound/music data byte
-D_F326      = $F326     ; Sound/music data byte
-D_F327      = $F327     ; Sound/music data byte
-D_F328      = $F328     ; Sound/music data byte
-D_F329      = $F329     ; Sound/music data byte
-D_F32A      = $F32A     ; Sound/music data byte
-D_F32B      = $F32B     ; Sound/music data byte
-D_F32C      = $F32C     ; Sound/music data byte
-D_F32D      = $F32D     ; Sound/music data byte
-D_F32E      = $F32E     ; Sound/music data byte
-D_F32F      = $F32F     ; Sound/music data byte
-D_F330      = $F330     ; Sound/music data byte
-D_F331      = $F331     ; Sound/music data byte
-D_F332      = $F332     ; Sound/music data byte
-D_F333      = $F333     ; Sound/music data byte
-D_F334      = $F334     ; Sound/music data byte
-D_F335      = $F335     ; Sound/music data byte
-D_F336      = $F336     ; Sound/music data byte
-D_F337      = $F337     ; Sound/music data byte
-D_F338      = $F338     ; Sound/music data byte
-D_F339      = $F339     ; Sound/music data byte
-D_F33A      = $F33A     ; Sound/music data byte
-D_F33B      = $F33B     ; Sound/music data byte
-D_F33C      = $F33C     ; Sound/music data byte
-D_F33D      = $F33D     ; Sound/music data byte
-D_F35A      = $F35A     ; Sound effect configuration block
-D_F37D      = $F37D     ; Sound/music data byte
-D_F384      = $F384     ; Extended sound configuration
-D_F38C      = $F38C     ; Sound channel register offsets
-D_F38D      = $F38D     ; Sound/music data byte
-D_F38E      = $F38E     ; Sound/music data byte
-D_F38F      = $F38F     ; Sound/music data byte
-D_F391      = $F391     ; Sound/music data byte
-D_F392      = $F392     ; Sound/music data byte
-D_F393      = $F393     ; Sound/music data byte
-D_F394      = $F394     ; Sound/music data byte
-D_F395      = $F395     ; Sound/music data byte
-D_F396      = $F396     ; Sound/music data byte
-D_F397      = $F397     ; Sound/music data byte
-D_F398      = $F398     ; Sound/music data byte
-D_F399      = $F399     ; Sound/music data byte
-D_F39A      = $F39A     ; Sound index multiplication table (partial)
-D_F57C      = $F57C     ; Sound engine subroutine
-D_F608      = $F608     ; Sound engine subroutine
-D_F60B      = $F60B     ; Sound engine subroutine
+; Labels now defined in music-sound-data.s (CODE_F2C4 segment) - no longer hardcoded
+; D_F57C - removed: now smc_jmp_vec+1 label in sound-engine.s
+; D_F608 - removed: now smc_copy_src+1 label in sound-engine.s
+; D_F60B - removed: now smc_copy_dst+1 label in sound-engine.s
 
 ; --- Entity Interaction Forward References ---
 ; D_2159 is defined in bb-player-animation.s
@@ -677,11 +579,11 @@ VIC_SPR_XEXP = $D01D    ; VIC sprite X expansion register
 
 ; --- Level Setup Forward References ---
 ; D_2B31, D_2BBD, D_2C32, D_2C8C, D_2C9F, D_2CB7 are defined in bb-level-setup.s
-D_4A10      = $4A10     ; Item work buffer 3
-D_4A30      = $4A30     ; Item work buffer 4
+D_4A10      = __VIC_CHARSET_B__ + $210     ; Item work buffer 3
+D_4A30      = __VIC_CHARSET_B__ + $230     ; Item work buffer 4
 D_0A39      = $0A39     ; Bonus level data
 D_0A3A      = $0A3A     ; Bonus level data
-D_7F83      = $7F83     ; Bonus level handler
+D_7F83      = D_7F53 + $30 ; Level 99 death setup (inside player_death_respawn)
 ; D_7C3C - now defined as label in level-data-part2.s
 
 ; --- Special Item Effects Forward References ---
@@ -700,33 +602,67 @@ D_7F83      = $7F83     ; Bonus level handler
 ; --- Bonus Round Forward References ---
 D_2AE9      = $2AE9     ; Configuration byte storage
 ; D_48A8, D_48B0, D_48B8, D_48C0, D_48C8 defined in init-routines.s
-D_7D37      = $7D37     ; Bonus stage 1 pattern A destination (8 bytes)
-D_7D76      = $7D76     ; Bonus stage 1 pattern B destination (8 bytes)
+D_7D37      = sprite_data_7C40 + $F7  ; Bonus stage 1 pattern A destination (8 bytes)
+D_7D76      = sprite_data_7C40 + $136 ; Bonus stage 1 pattern B destination (8 bytes)
 
 ; --- Bonus Stage Extended Forward References ---
 ; D_35B0, D_35C0, D_3621, D_362F, D_370C, D_3771, D_3794 are defined in bb-bonus-stage-extended.s
 D_37C9      = $37C9     ; Routine defined later (after $37C6)
 D_392A      = $392A     ; Routine defined later (after this module)
-D_4880      = $4880     ; Level layout buffer 2
-D_4850      = $4850     ; Temporary item data storage
-D_7D3E      = $7D3E     ; Screen buffer 1 offset $3E
-D_7DBC      = $7DBC     ; Screen buffer 1 offset $BC
-D_7DC2      = $7DC2     ; Screen buffer 1 offset $C2
-D_7E40      = $7E40     ; Screen buffer 2 offset $40
-D_E09B      = $E09B     ; Engine routine
-D_E2C3      = $E2C3     ; Engine routine with pointer
-D_F192      = $F192     ; Level data index table
-D_F19F      = $F19F     ; Level data value table
+D_4880      = __VIC_CHARSET_B__ + $80     ; Level layout buffer 2
+D_4850      = __VIC_CHARSET_B__ + $50     ; Temporary item data storage
+D_7D3E      = sprite_data_7C40 + $FE  ; Screen buffer 1 offset $3E
+D_7DBC      = sprite_data_7C40 + $17C ; Screen buffer 1 offset $BC
+D_7DC2      = sprite_data_7C40 + $182 ; Screen buffer 1 offset $C2
+D_7E40      = sprite_data_7C40 + $200 ; Screen buffer 2 offset $40
+; D_E09B - now defined as label (setup_level_data_pointers) in level-renderer.s
+; D_E2C3 - now defined as label (L_E2C3) in level-renderer.s
+; D_F192, D_F19F - now defined as labels in title-screen-data.s (credit_index_table, credit_timing_table)
 
 ; D_7B53 - now defined as label in level-data-part2.s
 ; D_7BC6 - now defined as label in level-data-part2.s
-L_A474      = $A474     ; READY label
+L_A474      = wait_screen  ; READY label (wait_screen in game-init.s GAMEINIT1)
+
+; ============================================================================
+; VIC Bank Configuration
+; ============================================================================
+; Layout defined in build/c64-prg.cfg (SYMBOLS section).
+; To relocate the VIC bank, change __VIC_BANK_BASE__ and offsets there.
+; ============================================================================
+
+.import __VIC_BANK_BASE__
+.import __VIC_CHARSET_A__, __VIC_CHARSET_B__
+.import __VIC_SCREEN_A__, __VIC_SCREEN_B__
+.import __VIC_SPRITES_START__
+.import __SCREEN_BACKUP__
+.import __VIC_BANK_BITS__
+.import __CIA2_PRA_GAME__, __CIA2_PRA_INIT__
+.import __VIC_MEMPTR_INIT__, __VIC_MEMPTR_A__, __VIC_MEMPTR_B__
+.import __SPRITE_PTR_BASE__
+
+; Toggle masks and ColorRAM EOR (need bitwise ops not available in cfg)
+ARYTAB_CHARSET_TOGGLE  = >__VIC_CHARSET_A__ ^ >__VIC_CHARSET_B__
+ARYTAB_SCREEN_TOGGLE   = >__VIC_SCREEN_A__ ^ >__VIC_SCREEN_B__
+SCREEN_TO_COLORRAM_EOR = >__VIC_SCREEN_B__ ^ >$D800
 
 ; ============================================================================
 ; Binary data files - memory positions defined in linker config
 ; ============================================================================
 ; Included here so labels (e.g., FREQ_TABLE_LO) are defined before use
 .include "binaries.s"
+.include "work-ram-init.s"
+.include "screen-ram-init.s"
+
+; Music sequence data ($7040-$7304, 709 bytes)
+.include "music-sequence.s"
+
+; Entity state arrays, bubble masks ($8480-$8AFF) & title screen music ($8B00-$8EFF)
+.include "sprites2-tables.s"
+
+; Game tables - sprites, positions, items ($A632-$AE50, 2079 bytes)
+.include "game-tables-1.s"
+.include "game-tables-2.s"
+.include "game-tables-3.s"
 
 ; ============================================================================
 ; CODE START - $0400
@@ -822,17 +758,8 @@ L_A474      = $A474     ; READY label
 ; Sprite composition and masking ($E752-$E9FC, 682 bytes)
 .include "sprite-composer.s"
 
-; Entity bubble physics & climbing handler ($E9FD-$EC0B, 527 bytes)
-.include "entity-bubble-handler.s"
-
-; Entity movement & direction handler ($EC0C-$EDC6, 443 bytes)
-.include "entity-movement.s"
-
-; Entity AI & attack logic ($EDC7-$EFBB, 501 bytes)
-.include "entity-ai.s"
-
-; Entity physics continuation & title screen init ($EFBC-$F0ED, 306 bytes)
-.include "entity-physics-cont.s"
+; Entity system: bubble physics, movement, AI & physics continuation ($E9FD-$F0ED, 1777 bytes)
+.include "entity-system.s"
 
 ; Title screen text data ($F0EE-$F1AB, 190 bytes)
 .include "title-screen-data.s"
@@ -840,7 +767,10 @@ L_A474      = $A474     ; READY label
 ; Credits handler, music tables & level init ($F1AC-$F23F, 148 bytes)
 .include "credits-handler-partial.s"
 
-; Music tables ($F240-$F2C3, 132 bytes)
+; Music pointer table (aligned, separate file)
+.include "music-ptr-table.s"
+
+; Music tables ($F240-$F2C3, 132 bytes) – now only timing & control data
 .include "music-tables.s"
 
 ; Level data part 2 ($7440-$7FFF, 3008 bytes)

@@ -4,9 +4,9 @@
 
 ; External references
 L10D3           := $10D3                ; Baron Von Blubba handler
-L7BFE           := $7BFE                ; Platform collision check
-L7C26           := $7C26                ; Apply damage/effect
-LE9EA           := $E9EA                ; Random number generator
+L7BFE           := D_7BFE               ; Platform collision check (label in level-data-part2.s)
+L7C26           := D_7C26               ; Apply damage/effect (defined in master.s from D_7C24)
+LE9EA           := D_E9EA               ; Random number generator (alias to label in sprite-composer.s)
 
 ; ============================================================================
 ; ENEMY_AI_UPDATE ($0CF2) - Main enemy AI loop
@@ -212,7 +212,7 @@ L0E0E:                                                  ; $0E0E
         sta     $40
         lda     D_AD3D,y
         and     #$03
-        adc     #$85
+        adc     #>D_8500
         sta     $41
         ldy     #$29
         lda     ($40),y                 ; Read level data
@@ -321,7 +321,7 @@ L0EC5:                                                  ; $0EC5
         adc     $DC,x
         sta     $40
         lda     D_AC02,y
-        adc     #$85
+        adc     #>D_8500
         sta     $41
         ldy     #$78
         lda     ($40),y

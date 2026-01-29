@@ -25,7 +25,7 @@
 ; - Configures CIA chip
 ;-------------------------------------------------------------------------------
 
-.segment "CODE_4800"
+.segment "CHARSET_B"
 
 D_4800:
         sei                                         ; $4800 - Disable interrupts
@@ -44,7 +44,7 @@ D_4803:
         
         lda     #$34                                ; $4816 - Source page: $34xx
         ldx     #$00                                ; $4818 - Copy $00 pages (256 bytes)
-        ldy     #$4B                                ; $481A - Destination: $4Bxx
+        ldy     #>work_ram_init                     ; $481A - Destination: work_ram_init
         jsr     D_4900                              ; $481C - Copy memory block (different routine)
         
         lda     VIC_CTRL1                           ; $481F - Get VIC control register 1
@@ -53,19 +53,23 @@ D_4803:
         
         lda     #$35                                ; $4827 - Source page: $35xx
         ldx     #$00                                ; $4829 - Copy 256 bytes
-        ldy     #$4B                                ; $482B - Destination: $4Bxx
+        ldy     #>work_ram_init                     ; $482B - Destination: work_ram_init
         jsr     D_4900                              ; $482D - Copy memory block
         
+; Entry point for release build (TSCrunch -x flag).
+; Skips tape loader memory copy; jumps straight to VIC init + game entry.
+.export game_entry
+game_entry:
         lda     #$1B                                ; $4830 - VIC control: screen on, 25 rows
         sta     VIC_CTRL1                           ; $4832 - Enable screen
         
         lda     #$C8                                ; $4835 - VIC control 2: multicolor on
         sta     VIC_CTRL2                           ; $4837 - Set multicolor mode
         
-        lda     #$C7                                ; $483A - CIA port config
+        lda     #<__CIA2_PRA_INIT__                      ; $483A - CIA port config (Bank 0)
         sta     CIA2_PRA                            ; $483C - VIC bank selection
         
-        lda     #$15                                ; $483F - Memory pointers
+        lda     #$15                                ; $483F - Memory pointers (Bank 0 context)
         sta     VIC_MEMPTR                          ; $4841 - Set screen/charset location
         
         jmp     D_4460                              ; $4844 - Jump to main game code

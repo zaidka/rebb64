@@ -135,7 +135,7 @@ L_0B05:
 
         lda     D_AD3D,y                        ; $0B1B - Get screen row high byte
         and     #$03                            ; $0B1E - Mask to valid range
-        adc     #$85                            ; $0B20 - Add base address ($85xx)
+        adc     #>D_8500                        ; $0B20 - Add base address (D_8500 page)
         sta     DATPTR                          ; $0B22 - Store pointer high byte ($41)
 
         ; Check for walls in 3 positions
@@ -259,7 +259,7 @@ D_0BB0:
 
         lda     D_AD3D,y                        ; $0BB4 - Get screen row high byte
         and     #$03                            ; $0BB7 - Mask to valid range
-        adc     #$85                            ; $0BB9 - Add base address ($85xx)
+        adc     #>D_8500                        ; $0BB9 - Add base address (D_8500 page)
         sta     DATPTR                          ; $0BBB - Store pointer high byte ($41)
 
         ; Check for walls in 3 positions

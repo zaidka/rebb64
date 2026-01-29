@@ -21,8 +21,9 @@
 ; ==============================================================================
 
 ; Title screen text data with embedded control codes
-.segment "CODE_E000"
+.segment "CODE_TITLE_DATA"
 
+title_screen_text:
     .byte $1F, $0B              ; Position control
 
     ; D_F0F0 - Special codes + £
@@ -95,11 +96,13 @@
 
 ; D_F192 - Index table (13 bytes)
 ; Used at $3673 for credit display indexing
+credit_index_table:
     .byte $00, $02, $04, $06, $07, $0C, $0D, $12
     .byte $13, $18, $19, $1E, $1F
 
 ; D_F19F - Timing/delay values (9 bytes)
 ; Used at $3676 for credit scroll/display timing
+credit_timing_table:
     .byte $C8, $C8, $C8, $FF, $C0, $07, $C0, $FF
     .byte $E0
 

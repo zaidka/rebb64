@@ -109,13 +109,14 @@ music_handler_03:
 ; ============================================================================
 ; Data/Code overlap ($7357-$735C) - 6 bytes
 ; ============================================================================
-; This section is executable code that's also read as data by sound-engine.s
-; The bytes represent: LDX $E8CB; SLO $613E,y (illegal opcode)
-; But they're accessed as data tables via D_7357 and D_735A
+; These tables hold LOW BYTES of voice parameter block addresses, used by
+; self-modifying code in sound-engine.s to patch lda/sta absolute,y operands.
+; D_7357: source block low bytes (voice 0 in MUSICTABLES, voices 1-2 in CODE_F2C4)
+; D_735A: destination block low bytes (all in CODE_F2C4)
 D_7357:
-        .byte   $AE, $CB, $E8           ; ae cb e8     $7357 (LDX $E8CB)
+        .byte   <D_F2AE, <voice1_src_block, <voice2_src_block
 D_735A:
-        .byte   $1B, $3E, $61           ; 1b 3e 61     $735a (SLO $613E,y)
+        .byte   <D_F31B, <voice1_dst_block, <voice2_dst_block
 
 ; ============================================================================
 ; Handler 4 ($735D) - Set voice parameter
@@ -134,7 +135,7 @@ music_handler_05:
         lda     ($85),y                 ; b1 85        $7366
         ldy     D_742D,x                ; bc 2d 74     $7368
         sta     D_F2B6,y                ; 99 b6 f2     $736b
-        lda     #>D_F2B6                ; a9 f2        $736e (high byte of $F2B6)
+        lda     #>D_F276                ; a9 f2        $736e (high byte of MUSICTABLES timing data)
         sta     D_F2B7,y                ; 99 b7 f2     $7370
         lda     #$02                    ; a9 02        $7373
         jmp     D_F56C                  ; 4c 6c f5     $7375

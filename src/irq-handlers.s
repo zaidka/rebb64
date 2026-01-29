@@ -105,7 +105,9 @@ L072E:
         bne     L_078C                  ; If non-zero, skip animation
 L0746:
         lda     D_53F8,x                ; Get sprite pointer
-        cmp     #$D5                    ; Compare to threshold
+        ; Threshold for ending sprite animation (midpoint of bubble-dragon-in-bubble set).
+        ; Value = (sprite_data_7440 + $100 - VIC_bank) / 64, computed as hibyte(X*4).
+        cmp     #>(sprite_data_7440 + $100 - __VIC_BANK_BASE__ + sprite_data_7440 + $100 - __VIC_BANK_BASE__ + sprite_data_7440 + $100 - __VIC_BANK_BASE__ + sprite_data_7440 + $100 - __VIC_BANK_BASE__)
         bcs     L0751                   ; If >= $D5, subtract
         adc     #$04                    ; Add 4
         bne     L0753                   ; Store (always branches)
@@ -118,11 +120,11 @@ L0753:
         bmi     L_078C                  ; Always branch to exit
 
 L075B:
-        lda     #$52                    ; VIC memory: charset at $4800
+        lda     #<__VIC_MEMPTR_B__           ; VIC memory: screen B + charset B
         ldx     ARYTAB                  ; Get screen pointer ($2F)
-        cpx     #$48                    ; Compare to $48
+        cpx     #>__VIC_CHARSET_B__       ; Charset backup page?
         bne     L0765                   ; If not equal, use default
-        lda     #$40                    ; VIC memory: charset at $4000
+        lda     #<__VIC_MEMPTR_A__           ; VIC memory: screen A + charset A
 L0765:
         sta     VIC_MEMPTR              ; Set VIC memory pointer
 

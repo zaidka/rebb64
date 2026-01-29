@@ -23,7 +23,7 @@
 ;   Y = Destination address high
 ;-------------------------------------------------------------------------------
 
-.segment "CODE_4800"
+.segment "CHARSET_B"
 
 D_4900:
         sei                                         ; $4900 - Disable interrupts
@@ -180,20 +180,22 @@ D_49C2:
 ; IRQ Handlers ($49CE-$4A02)
 ;-------------------------------------------------------------------------------
 
-        sei                                         ; $49CE
-        jsr     D_4A03                              ; $49CF - Check CIA status
-        lda     ROESSION                            ; $49D2
-        cmp     BSOUR                               ; $49D4
-        bne     D_4A00                              ; $49D6
-        lda     #$01                                ; $49D8
-        sta     ROESSION                            ; $49DA
-        lda     #$E9                                ; $49DC - IRQ vector low
-        sta     CINV                                ; $49DE
-        lda     #$49                                ; $49E1 - IRQ vector high ($49E9)
-        sta     CINV_HI                             ; $49E3
-        jmp     D_4A00                              ; $49E6
+irq_sync_handler:                                   ; $49CE
+        sei
+        jsr     D_4A03                              ; Check CIA status
+        lda     ROESSION
+        cmp     BSOUR
+        bne     D_4A00
+        lda     #$01
+        sta     ROESSION
+        lda     #<irq_data_handler                  ; IRQ vector low
+        sta     CINV
+        lda     #>irq_data_handler                  ; IRQ vector high
+        sta     CINV_HI
+        jmp     D_4A00
 
-        sei                                         ; $49E9 - IRQ handler at $49E9
+irq_data_handler:                                   ; $49E9 - Data reception IRQ handler
+        sei
         jsr     D_4A03                              ; $49EA - Check status
         bcc     D_4A00                              ; $49ED - No data
         ldy     $72                                 ; $49EF - Buffer write pointer
@@ -241,10 +243,10 @@ D_4A1F:
         sta     $72                                 ; $4A22 - Buffer pointers
         sta     FBUFPT                              ; $4A24
         sta     ROESSION                            ; $4A26
-        lda     #$CE                                ; $4A28 - IRQ vector low
-        sta     CINV                                ; $4A2A
-        lda     #$49                                ; $4A2D - IRQ vector high ($49CE)
-        sta     CINV_HI                             ; $4A2F
+        lda     #<irq_sync_handler                  ; IRQ vector low
+        sta     CINV
+        lda     #>irq_sync_handler                  ; IRQ vector high
+        sta     CINV_HI
         cli                                         ; $4A32 - Enable interrupts
 
 L_4A33:
@@ -361,6 +363,37 @@ D_4AC4:
         .byte   $FF,$00,$00,$FF,$FF                 ; $4AF1 - Padding data
         .byte   $00,$00,$FF,$FF,$00                 ; $4AF6 - Padding data
         .byte   $00,$FF,$FF,$00,$00                 ; $4AFB - Final padding data
+
+;-------------------------------------------------------------------------------
+; Charset B Overwrite Zone ($4B00-$4BFF)
+;-------------------------------------------------------------------------------
+; This 256-byte region completes the 1024-byte VIC charset B area ($4800-$4BFF).
+; The charset backup loop in game-init-early.s overwrites this entire region
+; with character bitmap data from charset A ($4300-$43FF).
+;
+; The initial byte values here are the original game binary contents, preserved
+; for hash verification. At runtime they are immediately overwritten.
+;
+; The work_ram_init label is referenced by init-routines.s as the destination
+; for tape loader memory copies (using >work_ram_init for the high byte).
+;-------------------------------------------------------------------------------
+work_ram_init:
+        .byte   $0c, $0f, $01, $04, $09, $0e, $07, $20, $0f, $f2, $34, $33, $c0, $02, $cf, $f7
+        .byte   $ef, $f2, $c0, $07, $e0, $02, $cf, $f7, $ef, $f2, $c0, $07, $e0, $02, $cf, $f7
+        .byte   $ef, $f2, $c0, $07, $c0, $02, $cf, $f7, $8f, $f2, $c0, $07, $80, $02, $c0, $07
+        .byte   $00, $02, $c0, $00, $00, $02, $c0, $00, $00, $02, $c0, $07, $00, $02, $c0, $07
+        .byte   $00, $02, $c0, $00, $00, $02, $c0, $00, $00, $00, $c0, $00, $00, $00, $c0, $00
+        .byte   $20, $20, $20, $20, $20, $20, $20, $20, $20, $20, $20, $20, $00, $00, $40, $00
+        .byte   $00, $00, $00, $00, $3f, $ff, $30, $80, $3f, $ff, $30, $84, $30, $00, $3f, $ff
+        .byte   $30, $84, $30, $04, $3f, $ff, $30, $84, $30, $04, $3f, $ff, $30, $84, $30, $84
+        .byte   $3f, $ff, $30, $84, $3f, $ff, $00, $00, $00, $00, $00, $00, $c0, $00, $00, $00
+        .byte   $ca, $00, $60, $50, $d5, $00, $d0, $a8, $d1, $0f, $c0, $88, $ca, $3f, $e0, $50
+        .byte   $c4, $7f, $f0, $20, $c0, $7f, $f8, $00, $c0, $ff, $f8, $00, $c0, $ff, $dc, $00
+        .byte   $c0, $ff, $bc, $00, $c0, $af, $be, $00, $e0, $af, $bf, $04, $c0, $af, $de, $00
+        .byte   $c0, $af, $e7, $00, $f0, $7f, $f8, $0c, $c0, $0e, $70, $00, $c0, $0e, $70, $00
+        .byte   $f8, $0e, $70, $1c, $c0, $0e, $70, $00, $c0, $3e, $7c, $00, $fc, $fe, $7f, $3c
+        .byte   $c0, $00, $00, $00, $c0, $00, $00, $00, $ff, $ff, $ff, $fc, $e0, $40, $40, $d4
+        .byte   $ef, $5f, $5e, $d4, $ef, $df, $5f, $d4, $e0, $5f, $40, $d4, $ff, $5f, $7e, $d4
 
 ;===============================================================================
 ; End of bb-loader.s

@@ -307,9 +307,9 @@ D_3080:
     jsr  D_3169                 ; Fill screen area
     jsr  D_3293                 ; Update screen
     jsr  D_312E                 ; Fill middle/bottom screen areas
-    ldx  #$c8                   ; Data pointer low
-    ldy  #$a7                   ; Data pointer high
-    jsr  D_E42A                 ; Update sprites/entities
+    ldx  #<D_A7C8               ; Data pointer low
+    ldy  #>D_A7C8               ; Data pointer high
+    jsr  display_text_string    ; Update sprites/entities
     ldx  #$01                   ; Start with player 2
     stx  MEMSIZ+1               ; Set player index
     lda  #$51                   ; Screen position
@@ -386,22 +386,22 @@ L_30F9:
 ; D_30FC - Player Data Update Entry
 ;===============================================================================
 D_30FC:
-    ldx  #$e2                   ; Data pointer low
-    ldy  #$a7                   ; Data pointer high
-    jsr  D_E42A                 ; Update sprites
+    ldx  #<D_A7E2               ; Data pointer low
+    ldy  #>D_A7E2               ; Data pointer high
+    jsr  display_text_string    ; Update sprites
     dec  MEMSIZ+1               ; Next player (1 -> 0)
     bpl  L_309B                 ; Loop for player 1
 
     ; Both players processed - finalize level start
     lda  #$c8                   ; Delay value (200 frames)
     jsr  D_7BC8                 ; Wait
-    jsr  D_E3A7                 ; Update sprite data
+    jsr  update_sprite_animations ; Update sprite data
     jsr  D_311E                 ; Fill top screen area
     jsr  D_3293                 ; Update screen
     lda  #$32                   ; Timer value (50 seconds for gameplay)
     sta  $2a                    ; Set level timer
     sta  TXTTAB                 ; Set frame sub-counter
-    jmp  D_E49B                 ; Jump to game loop
+    jmp  copy_screen_buffers    ; Jump to game loop
 
 ;===============================================================================
 ; D_311E - Fill Top Screen Area

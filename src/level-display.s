@@ -28,7 +28,7 @@
 ; D_37C9 is already declared as an equate in bb-master.s
         lda     #$00                                            ; $37C9
         sta     ZP_02                                           ; $37CB
-        lda     #$54                                            ; $37CD
+        lda     #>__VIC_SCREEN_B__                              ; $37CD
         sta     ADRAY1                                          ; $37CF
         dec     SUBFLG                                          ; $37D1 - Decrement level number
         ldx     #$03                                            ; $37D3
@@ -112,7 +112,7 @@ L_385E:
 
 ; --- D_3860: Setup level display numbers (BCD conversion) ---
 D_3860:
-        lda     #$40                                            ; $3860
+        lda     #>__VIC_BANK_BASE__                             ; $3860
         sta     VERCK                                           ; $3862 - Store to $0A
         lda     D_5050                                          ; $3864 - Load level data
         asl                                                     ; $3867 - Multiply by 8
@@ -194,12 +194,12 @@ L_38E3:
 
 ; --- D_38E9: Copy screen row with delay ---
 D_38E9:
-        jsr     D_E494                                          ; $38E9 - Wait for frame
+        jsr     wait_one_frame                                          ; $38E9 - Wait for frame
         lda     #$00                                            ; $38EC
         sta     DATPTR+1                                        ; $38EE - Initialize pointers
         lda     #$28                                            ; $38F0
         sta     DATLIN+1                                        ; $38F2
-        lda     #$50                                            ; $38F4
+        lda     #>__VIC_SCREEN_A__                              ; $38F4
         sta     DATPTR                                          ; $38F6
         sta     INPPTR                                          ; $38F8
         ldy     #$1F                                            ; $38FA
@@ -258,7 +258,7 @@ L_3940:
         ; --- Process screen tiles (fix tile indices) ---
         ldy     #$00                                            ; $394C
         sty     ZP_02                                           ; $394E
-        lda     #$50                                            ; $3950
+        lda     #>__VIC_SCREEN_A__                              ; $3950
         sta     ADRAY1                                          ; $3952
         ldx     #$04                                            ; $3954 - 4 pages to process
 L_3956:
@@ -276,20 +276,20 @@ L_3964:
         dex                                                     ; $3969
         bne     L_3956                                          ; $396A - Loop for all pages
 
-        jsr     D_E494                                          ; $396C - Wait for frame
+        jsr     wait_one_frame                                          ; $396C - Wait for frame
         lda     ZP_1D                                           ; $396F - Copy color values
         sta     ZP_1C                                           ; $3971
         lda     ZP_1F                                           ; $3973
         sta     ZP_1E                                           ; $3975
-        jsr     D_E494                                          ; $3977 - Wait for frame
+        jsr     wait_one_frame                                          ; $3977 - Wait for frame
 
         ; --- Mark platforms with high bit set ---
         ldy     #$00                                            ; $397A
         sty     ZP_02                                           ; $397C
         sty     ZP_04                                           ; $397E
-        lda     #$50                                            ; $3980
+        lda     #>__VIC_SCREEN_A__                              ; $3980
         sta     ADRAY1                                          ; $3982
-        lda     #$85                                            ; $3984
+        lda     #>D_8500                                        ; $3984
         sta     ADRAY2                                          ; $3986
         ldx     #$04                                            ; $3988 - 4 pages
 L_398A:
@@ -312,9 +312,9 @@ L_399E:
         bne     L_398A                                          ; $39A6 - Loop for all pages
 
         ; --- Process enemy spawn data for current level ---
-        lda     #$51                                            ; $39A8 - Spawn data pointer
+        lda     #<enemy_spawns                                  ; $39A8 - Spawn data pointer
         sta     ZP_02                                           ; $39AA
-        lda     #$AE                                            ; $39AC
+        lda     #>enemy_spawns                                  ; $39AC
         sta     ADRAY1                                          ; $39AE
         ldx     SUBFLG                                          ; $39B0 - Current level
         beq     L_39CD                                          ; $39B2 - Skip if level 0

@@ -36,7 +36,7 @@
 ; - L_2AAD: Sprite/entity handler
 ; - D_344A: 2x2 character block placement (from bb-extend-bonus.s)
 ; - D_1853: Screen rendering
-; - D_E374, D_E49B, D_E189, D_E09B, D_E2C3, D_E42A, D_E740: Various engine routines
+; - clear_screen, copy_screen_buffers, decompress_level_data, setup_level_data_pointers, L_E2C3, display_text_string, fill_color_ram: Various engine routines
 ; - D_37C9, D_392A: Forward references to routines after this module
 ; - D_7BC3, D_7BC6, D_7BC8: Wait/timing routines
 ; - D_1805, D_05C5, D_05AD, D_1E2E, D_7B53: Setup/init routines
@@ -80,14 +80,14 @@ D_35C0:
     sta  D_7E40                 ; Store to screen buffer 2 offset $40
     
     ; Set up pointers for double-buffer copy
-    lda  #$7C                   ; Pointer to $7C7C (will decrement)
+    lda  #<(sprite_data_7C40 + $13C) ; Pointer low byte (originally $7C)
     sta  DATLIN+1               ; $40 = low byte
-    lda  #$7D                   ; High byte $7D
-    sta  DATPTR                 ; $41 = $7D
-    lda  #$00                   ; Start at $0000 (will increment)
+    lda  #>(sprite_data_7C40 + $13C) ; Pointer high byte (originally $7D)
+    sta  DATPTR                 ; $41 = high byte
+    lda  #<(sprite_data_7C40 + $1C0) ; Second pointer low byte (originally $00)
     sta  DATPTR+1               ; $42 = low byte
-    lda  #$7E                   ; High byte $7E
-    sta  INPPTR                 ; $43 = $7E
+    lda  #>(sprite_data_7C40 + $1C0) ; Second pointer high byte (originally $7E)
+    sta  INPPTR                 ; $43 = high byte
     
     ldx  #$1A                   ; Copy 27 bytes (indices $1A-$00)
 
@@ -165,8 +165,8 @@ L_3618:
 ;-------------------------------------------------------------------------------
 D_3621:
     jsr  D_A428                 ; Unknown initialization routine
-    jsr  D_E374                 ; Engine routine
-    jsr  D_E49B                 ; Game loop related routine
+    jsr  clear_screen             ; Engine routine
+    jsr  copy_screen_buffers    ; Game loop related routine
     
     ; Save and modify SUBFLG
     lda  SUBFLG                 ; Get current value ($10)
@@ -175,7 +175,7 @@ D_3621:
 
 D_362F:
     sta  SUBFLG                 ; Store (self-modifying code?)
-    jsr  D_E189                 ; Call engine routine
+    jsr  decompress_level_data  ; Call engine routine
     pla                         ; Restore original SUBFLG
     sta  SUBFLG                 ; Restore value
     
@@ -223,30 +223,30 @@ L_3660:
     ldx  #$0C                   ; 13 bytes (indices $0C-0)
 
 L_3673:
-    ldy  D_F192,x               ; Get index from D_F192
-    lda  D_F19F,x               ; Get value from D_F19F
+    ldy  credit_index_table,x    ; Get index from credit_index_table
+    lda  credit_timing_table,x  ; Get value from credit_timing_table
     sta  D_8C00,y               ; Store to D_8C00 at index Y
     dex                         ; Next byte
     bpl  L_3673                 ; Continue for all 13
     
-    ; Set up pointer to D_8C00
-    lda  #$00                   ; Low byte
+    ; Set up pointer to D_8C00 (screen backup buffer page 1)
+    lda  #<D_8C00               ; Low byte
     sta  DATLIN+1               ; $40 = $00
-    lda  #$8C                   ; High byte
+    lda  #>D_8C00               ; High byte
     sta  DATPTR                 ; $41 = $8C (pointer = $8C00)
     
     ldx  #$00                   ; Parameter = 0
-    jsr  D_E2C3                 ; Engine routine with pointer
-    jsr  D_E09B                 ; Another engine routine
+    jsr  L_E2C3                 ; Engine routine with pointer
+    jsr  setup_level_data_pointers ; Another engine routine
     
     inc  SUBFLG                 ; Increment game mode flag ($10)
     jsr  D_37C9                 ; Call routine at $37C9 (later in this file)
     jsr  D_392A                 ; Call routine at $392A (after this module)
     
     ; Set up sprite/entity parameters
-    ldx  #$E1                   ; Parameter low byte
-    ldy  #$7E                   ; Parameter high byte ($7EE1)
-    jsr  D_E42A                 ; Sprite/entity routine
+    ldx  #<gameover_text_data    ; Parameter low byte
+    ldy  #>gameover_text_data   ; Parameter high byte ($7EE1)
+    jsr  display_text_string    ; Sprite/entity routine
     
     ; Initialize screen line pointer arrays
     ; Fill 5 arrays with $77, then set first byte of each to $78
@@ -277,7 +277,7 @@ L_36A2:
     lda  #$14                   ; Wait time = 20 frames
     jsr  D_7BC8                 ; Wait routine
     lda  #$09                   ; Parameter = 9
-    jsr  D_E740                 ; Engine routine
+    jsr  fill_color_ram         ; Fill color RAM
     jsr  D_7B53                 ; Another setup routine
     
     ; Process player states for both players
@@ -342,7 +342,7 @@ D_370C:
     sta  DATLIN+1               ; Store in $40
     lda  #$24                   ; Color/attribute $24
     sta  DATPTR                 ; Store in $41
-    lda  #$50                   ; Screen config $50
+    lda  #>__VIC_SCREEN_A__         ; Screen config
     jsr  D_1853                 ; Screen rendering
     
     ; Place character blocks using D_344A routine
@@ -354,7 +354,7 @@ D_370C:
     ldy  #$02                   ; Y position = 2
     jsr  D_344A                 ; Place 2x2 character block
     
-    jsr  D_E49B                 ; Game loop routine
+    jsr  copy_screen_buffers    ; Game loop routine
     
     ; Update character and position for next blocks
     lda  #$42                   ; Character code $42
@@ -454,7 +454,7 @@ L_379A:
     bne  L_379A                 ; Continue for 16 frames
     
     ; Complete transition
-    jsr  D_E374                 ; Engine routine
+    jsr  clear_screen             ; Engine routine
     jsr  D_7BC6                 ; Wait routine
     
     ; Copy data from D_4850 to D_4050 (48 bytes)

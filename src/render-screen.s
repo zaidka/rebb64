@@ -14,14 +14,14 @@
 ; ============================================================================
 update_player_input:
 D_1844:
-    jsr  D_E494                 ; Wait for frame sync
+    jsr  wait_one_frame                 ; Wait for frame sync
 D_1847:
     ; Toggle double-buffer screen pointers
-    lda  ARYTAB                 ; Screen pointer low
-    eor  #$08                   ; Toggle between $48/$40
+    lda  ARYTAB                 ; Screen pointer low (charset page)
+    eor  #ARYTAB_CHARSET_TOGGLE ; Toggle between charset A/B pages
     sta  ARYTAB
     lda  ARYTAB+1               ; Screen pointer high
-    eor  #$04                   ; Toggle between $50/$54
+    eor  #ARYTAB_SCREEN_TOGGLE  ; Toggle between screen A/B pages
     sta  ARYTAB+1
 D_1853:
     ldx  #$00
@@ -139,7 +139,7 @@ L_18F5:
     adc  D_AD3D,y
     sta  DATPTR
     and  #$03
-    adc  #$8b
+    adc  #>__SCREEN_BACKUP__    ; Convert screen page to backup buffer page
     sta  INPPTR
     ldy  #$00
     lda  (DATPTR+1),y
@@ -233,7 +233,7 @@ L_198A:
     sta  DATPTR
     and  #$03
     clc
-    adc  #$8b
+    adc  #>__SCREEN_BACKUP__    ; Convert screen page to backup buffer page
     sta  INPPTR
     ldx  #$09
 L_19B0:

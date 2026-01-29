@@ -176,8 +176,7 @@ L_1F2B:
         jmp     D_EBB8                  ; 4c b8 eb     $1f36 - Jump to alternate handler
 
 L_1F39:
-        .byte   $bd                     ; bd           $1f39 - LDA abs,X opcode
-        ldy     #$87                    ; a0 87        $1f3a - High byte for D_87A0
+        lda     D_87A0,x                ; Load collision state
         bmi     L_1F41                  ; 30 03        $1f3c - Branch taken (Y=$87 is negative)
         jmp     D_1FEF                  ; 4c ef 1f     $1f3e - Never executed
 
@@ -320,8 +319,7 @@ D_1FEF:
         rts                             ; 60           $2002
 
 L_2003:
-        .byte   $de                     ; de           $2003 - DEC abs,X opcode
-        ldy     #$87                    ; a0 87        $2004 - High byte for D_87A0
+        dec     D_87A0,x                ; Decrement collision state
 
         ; Check movement flags and apply vertical movement
         lda     D_8840,x                ; bd 40 88     $2006 - Check left/right flag
@@ -339,8 +337,7 @@ D_2015:
         jmp     D_214A                  ; 4c 4a 21     $201b - Update animation frame
 
 L_201E:
-        .byte   $de                     ; de           $201e - DEC abs,X opcode
-        ldy     #$87                    ; a0 87        $201f - High byte for D_87A0
+        dec     D_87A0,x                ; Decrement collision state
 D_2021:
         and     #$03                    ; 29 03        $2021 - Mask animation state
         bne     L_2036                  ; d0 11        $2023 - Not zero, done

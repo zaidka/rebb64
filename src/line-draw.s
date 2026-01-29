@@ -20,7 +20,7 @@
 ; Uses Bresenham algorithm to draw lines between previous and current positions
 ; Creates motion blur / animation trail effect for player sprites
 ; ============================================================================
-.segment "CODE_E000"
+.segment "CODE_LINE_DRAW"
 
 draw_animated_sprite:
         lda     #$60                    ; RTS opcode
@@ -242,9 +242,9 @@ L_E640:
 ; Then performs masked blitting using lookup tables
 ; ============================================================================
 copy_and_mask_graphics:
-        lda     #$50                    ; Screen pointer low
+        lda     #<(D_4200 + $50)        ; Graphics work buffer pointer low
         sta     $02
-        lda     #$42                    ; Screen pointer high
+        lda     #>(D_4200 + $50)        ; Graphics work buffer pointer high
         sta     $03
         ldx     #$08
         
@@ -318,7 +318,7 @@ L_E6BC:
         ldx     #$00
 L_E6C3:
         lda     D_4200,x                ; Source
-        sta     D_4A00,x                ; Destination
+        sta     CHARSETB_200,x           ; Destination (charset B work buffer)
         inx
         bne     L_E6C3
         rts
@@ -347,11 +347,11 @@ draw_player_digits:
 ; ============================================================================
 draw_digit_sprite:
         sta     $41                     ; Screen pointer high
-        ora     #$04                    ; Color RAM offset
-        sta     $43                     ; Color pointer high
+        ora     #ARYTAB_SCREEN_TOGGLE   ; Advance to screen B page
+        sta     $43                     ; Screen B pointer high
         and     #$03                    ; Mask to page
         clc
-        adc     #$8B                    ; Buffer base page
+        adc     #>__SCREEN_BACKUP__     ; Convert to backup buffer page
         sta     $3D                     ; Buffer pointer high
         sty     $40                     ; Screen pointer low
         sty     $42                     ; Color pointer low
@@ -422,7 +422,7 @@ L_E73A:
 ; Input: A = color value to fill
 ; Called from multiple locations to set color RAM
 ; ============================================================================
-; D_E740 defined in bb-master.s
+; fill_color_ram - fills color RAM with value in A
 fill_color_ram:
         ldx     #$00
 L_E742:

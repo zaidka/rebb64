@@ -181,7 +181,14 @@ score_display:                                          ; $2921
         sta     D_87A0,x
         txa
         sta     D_8520,x
-        lda     #$F2
+        ; VIC sprite pointer base for score/item display sprites.
+        ; Entities 2-7 each get a 64-byte sprite slot in the screen buffer,
+        ; starting at sprite_data_7C40+$40 (entity 0/1 are players).
+        ; VIC pointer = D_8520[x] + D_8598[x], where D_8520[x] = x (entity index).
+        ; So D_8598 = (sprite_data_7C40 + $40 - VIC_bank) / 64.
+        ; ca65 can't divide relocatable expressions, so we use the identity:
+        ;   X / 64 = hibyte(X * 4) = hibyte(X + X + X + X)
+        lda     #>(sprite_data_7C40 + $40 - __VIC_BANK_BASE__ + sprite_data_7C40 + $40 - __VIC_BANK_BASE__ + sprite_data_7C40 + $40 - __VIC_BANK_BASE__ + sprite_data_7C40 + $40 - __VIC_BANK_BASE__)
         sta     D_8598,x
         lda     D_A8E4,y
         and     #$07

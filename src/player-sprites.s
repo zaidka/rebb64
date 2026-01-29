@@ -78,8 +78,8 @@ use_color_ram:
         lda     DATPTR                  ; a5 41    - Get screen address (high)
         and     #$03                    ; 29 03    - Mask to get page offset
         clc                             ; 18
-        adc     #$8b                    ; 69 8b    - Convert to color RAM ($D800)
-        sta     INPPTR                  ; 85 43    - Store color RAM high byte
+        adc     #>__SCREEN_BACKUP__     ; 69 8b    - Convert to backup buffer page
+        sta     INPPTR                  ; 85 43    - Store backup buffer high byte
         
 copy_color:
         lda     (DATPTR+1),y            ; b1 42    - Read from screen

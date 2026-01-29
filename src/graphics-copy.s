@@ -44,12 +44,12 @@ D_3C01:
         sta     D_A9B0
 
 @setup_ptrs:
-        lda     #$46                ; Setup graphics pointers
+        lda     #>D_4600            ; Setup graphics pointers (page)
         sta     $0A
         sta     $0C
         ldx     #$00
         stx     $09
-        lda     #$48
+        lda     #<D_4648              ; READY buffer offset within page
         sta     $0B
 
 @comp_loop:
@@ -58,14 +58,14 @@ D_3C01:
         lda     D_0200,y            ; Sprite pointer low
         sta     $02
         lda     D_0300,y            ; Sprite pointer high
-        ora     #$40
+        ora     #>__VIC_BANK_BASE__      ; Set to VIC bank base page
         sta     $03
         lda     D_51EC,x            ; Get sprite index 2
         tay
         lda     D_0200,y
         sta     $04
         lda     D_0300,y
-        ora     #$40
+        ora     #>__VIC_BANK_BASE__      ; Set to VIC bank base page
         sta     $05
         lda     D_A9A8,x            ; Get "ROUND" font index
         asl
@@ -108,19 +108,19 @@ D_3C01:
         cpx     #$09                ; 9 sprites
         bne     @comp_loop
         
-        ldx     #$47                ; Copy buffers
+        ldx     #$47                ; Copy composited text to work RAM
 
 @buf_loop:
-        lda     D_4600,x
-        sta     D_4E00,x
-        lda     D_4648,x
-        sta     D_4E48,x
+        lda     D_4600,x            ; "ROUND" composited text source
+        sta     D_4E00,x            ; Work RAM destination
+        lda     D_4648,x            ; "READY" composited text source
+        sta     D_4E48,x            ; Work RAM destination
         dex
         bpl     @buf_loop
         
-        jsr     D_E494              ; Wait/sync
+        jsr     wait_one_frame              ; Wait/sync
         lda     #$02
         sta     D_A9B1              ; Set complete flag
-        ldx     #$FD
-        ldy     #$AC
-        jmp     D_E42A              ; Continue
+        ldx     #<D_ACFD
+        ldy     #>D_ACFD
+        jmp     display_text_string ; Continue

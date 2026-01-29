@@ -26,12 +26,12 @@
 ; 2. Converting to hex digits and displaying them
 ; 3. Comparing and updating high score if needed
 ; ============================================================================
-; D_E3A7 defined in bb-master.s
-.segment "CODE_E000"
+; D_E3A7 now defined as label below (update_sprite_animations)
+.segment "CODE_SPRITES_DISPLAY"
 
 update_sprite_animations:
         lda     $30                     ; Get screen page
-        eor     #$04                    ; Toggle between pages
+        eor     #ARYTAB_SCREEN_TOGGLE   ; Toggle between pages
         sta     $41                     ; Store high byte of pointer
         lda     #$E9                    ; Low byte for first display
         sta     $40
@@ -133,7 +133,7 @@ L_E40D:
 ;   $1F xx yy= Set screen position (xx=offset, yy=page)
 ;   $20+     = Character code - $20
 ; ============================================================================
-; D_E42A defined in bb-master.s
+; D_E42A now defined as label below (display_text_string)
 display_text_string:
         stx     $0D                     ; Store pointer low
         sty     $0E                     ; Store pointer high
@@ -168,11 +168,11 @@ L_E451  = * - 1                         ; Label points to ADC operand
         sta     L_E476
         sta     L_E47B
         lda     D_AC0A,x                ; Get screen address high
-        adc     #$50                    ; Add base page
+        adc     #>__VIC_SCREEN_A__          ; Add screen A page base
         sta     L_E474
-        adc     #$04                    ; Color RAM offset
+        adc     #ARYTAB_SCREEN_TOGGLE   ; Advance to screen B page
         sta     L_E477
-        adc     #$84                    ; Another offset
+        adc     #(>$D800 - >__VIC_SCREEN_B__) ; Advance to color RAM ($D800) page
         sta     L_E47C
         bcc     L_E491
         
@@ -208,7 +208,7 @@ L_E491:
 ; The IRQ handler increments $08 (ENDCHR) every frame
 ; This is the fundamental timing routine used throughout the game
 ; ============================================================================
-; D_E494 defined in bb-master.s
+; D_E494 now defined as label below (wait_one_frame)
 wait_one_frame:
         lda     $08                     ; Get current frame counter
 L_E496:
@@ -224,7 +224,7 @@ L_E496:
 ; - Working buffer at $5400-$5700
 ; Used for double-buffering screen updates
 ; ============================================================================
-; D_E49B defined in bb-master.s
+; D_E49B now defined as label below (copy_screen_buffers)
 copy_screen_buffers:
         ldx     #$00
 L_E49D:
@@ -254,7 +254,7 @@ copy_charset_data:
         ldx     #$0F
 L_E4C7:
         lda     D_40D0,x
-        sta     D_48D0,x
+        sta     CHARSETB_D0,x
         dex
         bpl     L_E4C7
         ldy     #$1A                    ; Character code
@@ -342,7 +342,10 @@ L_E52C:
 L_E539:
         rts                             ; May be modified to LDA #$xx
 
-        .byte   $D4                     ; Unused byte
+        ; Sprite pointer base for bubble-dragon-in-bubble sprites (sprite 3 of 8).
+        ; set_sprite_pointers steps -1/+4 to fill sprites 0-7 with pointers $D1-$D8.
+        ; Value = (sprite_data_7440 + 3*64 - VIC_bank) / 64, computed as hibyte(X*4).
+        .byte   >(sprite_data_7440 + $C0 - __VIC_BANK_BASE__ + sprite_data_7440 + $C0 - __VIC_BANK_BASE__ + sprite_data_7440 + $C0 - __VIC_BANK_BASE__ + sprite_data_7440 + $C0 - __VIC_BANK_BASE__)
 
 ; ============================================================================
 ; SET_SPRITE_POINTERS ($E53B)

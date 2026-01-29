@@ -67,7 +67,7 @@ D_1B02:
     jsr  D_E90E                 ; Update game state
 D_1B05:
     jsr  D_1844                 ; Update rendering (now in bb-render-screen.s)
-    jsr  D_E3A7                 ; Update sprites
+    jsr  update_sprite_animations ; Update sprites
     lda  PESSION
     bpl  L_1B13
     lda  LSXP
@@ -81,7 +81,7 @@ L_1B19:
     ldy  #$00
     sty  DATLIN+1
     sty  DATPTR+1
-    lda  #$8b
+    lda  #>__SCREEN_BACKUP__
     sta  INPPTR
     ldx  #$04
 
@@ -121,10 +121,10 @@ D_1B50:
     lda  D_AD3D,y
     adc  #$00
     sta  ADRAY1
-    eor  #$04
+    eor  #ARYTAB_SCREEN_TOGGLE
     sta  ADRAY2
     and  #$03
-    adc  #$8b
+    adc  #>__SCREEN_BACKUP__    ; Convert screen page to backup buffer page
     sta  CHARONE
     ldy  #$00
     lda  #$1f
@@ -158,10 +158,10 @@ L_1B7D:
     lda  D_AD3D,y
     adc  #$00
     sta  ADRAY1
-    eor  #$04
+    eor  #ARYTAB_SCREEN_TOGGLE
     sta  ADRAY2
     and  #$03
-    adc  #$d8
+    adc  #$d8                   ; Color RAM ($D800) base - hardware fixed
     sta  CHARONE
     ldy  #$00
     lda  #$1f                   ; Item character
@@ -261,7 +261,7 @@ L_1C32:
     adc  D_A755
     sta  $02
     lda  D_AC02,y
-    adc  #$85
+    adc  #>D_8500
     sta  ADRAY1
     dec  $02
     lda  $02

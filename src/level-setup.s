@@ -238,7 +238,7 @@ L_2C8E:
         bpl     L_2C8E                  ; 10 f0        $2c9c
         rts                             ; 60           $2c9e
 
-; Helper: Calculate data address (multiply by 16, add $9AE0)
+; Helper: Calculate data address (multiply by 16, add sprites_rom base)
 D_2C9F:
         asl                             ; 0a           $2c9f - x2
         asl                             ; 0a           $2ca0 - x4
@@ -249,10 +249,10 @@ D_2C9F:
         rol     ADRAY2                  ; 26 05        $2ca7
         asl                             ; 0a           $2ca9 - x32 (but only lower 5 bits used)
         rol     ADRAY2                  ; 26 05        $2caa
-        adc     #$e0                    ; 69 e0        $2cac - Add low byte of base
+        adc     #<sprites_rom           ; 69 e0        $2cac - Add low byte of base
         sta     $04                     ; 85 04        $2cae
         lda     ADRAY2                  ; a5 05        $2cb0
-        adc     #$9a                    ; 69 9a        $2cb2 - Add high byte (base $9AE0)
+        adc     #>sprites_rom           ; 69 9a        $2cb2 - Add high byte of base
         sta     ADRAY2                  ; 85 05        $2cb4
         rts                             ; 60           $2cb6
 

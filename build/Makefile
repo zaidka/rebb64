@@ -23,6 +23,7 @@ CONFIG = c64-prg.cfg
 # Output
 OUTPUT = rebb64-raw.prg
 RELEASE = rebb64.prg
+LBLFILE = rebb64.lbl
 
 # SHA256 hash of original Bubble Bobble C64 PRG (decompressed)
 REFERENCE_SHA256 = fdba2390782653ba2533b2d87c44c8f0480ab18968a2c0ccc0cef8300fcee7b6
@@ -112,9 +113,9 @@ loadaddr.o: $(SRC_DIR)/loadaddr.s
 master.o: $(SRC_DIR)/master.s hud-font.bin sidebars.bin level-tiles.bin sprites-game.bin zone-data.bin charset.bin bubble-masks.bin software-sprites.bin bonus-sprites.bin diamond-sprite.bin digit-font.bin bubble-dragon-in-bubble.bin grumple-gromit.bin $(LEVEL_BINS)
 	$(CA65) --cpu 6502 -I $(SRC_DIR) -o $@ $<
 
-# Link
+# Link (generates label file for release target)
 $(OUTPUT): loadaddr.o master.o $(CONFIG)
-	$(LD65) -C $(CONFIG) -o $@ loadaddr.o master.o
+	$(LD65) -C $(CONFIG) -Ln $(LBLFILE) -o $@ loadaddr.o master.o
 
 # Verify against original hash
 verify: $(OUTPUT)
@@ -122,11 +123,12 @@ verify: $(OUTPUT)
 	@echo "$(REFERENCE_SHA256)  $(OUTPUT)" | sha256sum -c - && echo "SUCCESS: Hash matches original!"
 
 # Create runnable PRG with TSCrunch
+# Entry address (game_entry) is read directly from the VICE label file.
 release: $(OUTPUT)
-	$(TSCRUNCH) -p -x '$$4830' $(OUTPUT) $(RELEASE)
+	$(TSCRUNCH) -p -x '$$$(shell awk '/\.game_entry$$/ { print toupper($$2) }' $(LBLFILE))' $(OUTPUT) $(RELEASE)
 
 # Clean build artifacts
 clean:
-	rm -f loadaddr.o master.o $(OUTPUT) $(RELEASE) *.bin
+	rm -f loadaddr.o master.o $(OUTPUT) $(RELEASE) $(LBLFILE) *.bin
 
 .PHONY: all clean verify release

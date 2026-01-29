@@ -22,8 +22,9 @@
 
 .segment "CODE_FE00"
 
-D_FE00:
-    .byte $C4, $FD               ; $FE00 - Sequence pointer/reference
+; NOTE: D_FE00 and its first 2 bytes ($C4, $FD) are now defined at the end of
+; SFXMUSIC segment in sfx-music-data.s to keep them adjacent to the $96 loop command
+D_FE02:                          ; Music sequence entry point (now starts CODE_FE00)
     .byte $80, $02               ; $FE02 - Command
     .byte $11, $02               ; $FE04 - Note sequence
     .byte $13, $02               ; $FE06
@@ -53,17 +54,20 @@ D_FE00:
     .byte $1A, $02               ; $FE32
     .byte $26, $02               ; $FE34
     .byte $82                    ; $FE36 - Command marker
+D_FE37:                          ; Music sequence entry point
     .byte $18, $02               ; $FE37
     .byte $24, $02               ; $FE39
     .byte $18, $02               ; $FE3B
     .byte $24, $02               ; $FE3D
     .byte $98                    ; $FE3F - Sequence control
+D_FE40:                          ; Music sequence entry point (waveform table group 3 voice 0)
     .byte $60, $02               ; $FE40
     .byte $86                    ; $FE42 - Command marker
 
 ; NMI_MAIN label from reference - but this is actually music data
 D_FE43:
-    .byte $3D, $FB               ; $FE43 - Sequence reference
+    .byte <sfx_instr_1, >sfx_instr_1 ; $FE43 - copy instrument -> sfx_instr_1 ($FB3D)
+D_FE45:                          ; Loop target for music sequence
     .byte $30, $02               ; $FE45
     .byte $34, $02               ; $FE47
     .byte $37, $02               ; $FE49
@@ -97,7 +101,7 @@ D_FE43:
     .byte $39, $02               ; $FE81
     .byte $35, $02               ; $FE83
     .byte $96                    ; $FE85 - Sequence control (loop back)
-    .byte $45, $FE               ; $FE86 - Loop target address low/high
+    .word D_FE45                 ; $FE86 - Loop target address (relocatable)
     .byte $EF, $FF               ; $FE88 - Terminator/marker
     .byte $A6                    ; $FE8A
     .byte $5D, $FF               ; $FE8B
