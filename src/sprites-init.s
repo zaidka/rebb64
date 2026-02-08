@@ -24,12 +24,13 @@
 ; ============================================================================
 
 L_078C:
-        ldx     #$ab                            ; $078C
-        ldy     #$06                            ; $078E
+        ldx     #<irq_frame_update              ; $078C
+        ldy     #>irq_frame_update              ; $078E
         lda     #$fb                            ; $0790
         jmp     D_0717                          ; $0792 - Jump to earlier routine
         
         ; Stack preservation and bank switching
+irq_super_bonus:                                ; $0795
         pha                                     ; $0795
         txa                                     ; $0796
         pha                                     ; $0797
@@ -63,8 +64,8 @@ L_07B9:
         bpl     L_07B9                          ; $07C3
         
         ; IRQ vector setup
-        ldx     #$ab                            ; $07C5
-        ldy     #$06                            ; $07C7
+        ldx     #<irq_frame_update              ; $07C5
+        ldy     #>irq_frame_update              ; $07C7
         lda     #$fb                            ; $07C9
         sta     VIC_RASTER                      ; $07CB - VIC_RASTER
         stx     IRQ_VEC                         ; $07CE - IRQ_VEC low

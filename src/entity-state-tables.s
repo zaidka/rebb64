@@ -19,7 +19,7 @@
 
 .segment "CODE"
 
-L_3CB2:                                             ; Label at byte before D_3CB2 table
+D_3CB2:                                             ; Screen scroll data buffer 1
         lda     PESSION,x                          ; $3CB2 - b5 ca
         sec                                         ; $3CB4 - 38
         sbc     #$18                                ; $3CB5 - e9 18
@@ -27,24 +27,26 @@ L_3CB2:                                             ; Label at byte before D_3CB
         tay                                         ; $3CB8 - a8
         lda     D_AA42,x                            ; $3CB9 - bd 42 aa
 
-L_3CBA = L_3CB2 + 8                                ; Preserve equate for D_3CBB references
+L_3CBA = D_3CB2 + 8                                ; Preserve equate for D_3CBB references
+D_3CBB := D_3CB2 + 9                               ; Screen scroll color buffer
 L_3CBB_continued:
         sta     D_8522,y                             ; $3CBC - 99 22 85
         lda     #$00                                ; $3CBF
         sta     D_872A,y                            ; $3CC1
 
-L_3CC4:                                             ; Use D_3CC4 equate for correct address
+D_3CC4:                                             ; Screen scroll saved data 1
         lda     D_AA0C,x                            ; $3CC4 - Entity X positions
         sta     a:ZP_BC,y                           ; $3CC7
         lda     D_AA1E,x                            ; $3CCA - Entity Y positions
 
-L_3CCD:                                             ; Use D_3CCD equate for correct address
+D_3CCD:                                             ; Screen scroll saved data 2
         sta     a:ZP_C4,y                           ; $3CCD
         jmp     D_E968                              ; $3CD0 - Continue entity processing
 
+routine_3CD3:                                       ; $3CD3 - inc PESSION,x; inc prefix
         .byte   $F6,$CA,$F6                         ; $3CD3 - Data fragment
 
-L_3CD6:                                             ; Use D_3CD6 equate for correct address
+D_3CD6:                                             ; Screen scroll output buffer 1
         .byte   $CA                                 ; $3CD6 - Entry point data
 
 ;-------------------------------------------------------------------------------
@@ -65,17 +67,19 @@ L_3CD6:                                             ; Use D_3CD6 equate for corr
 
 routine_3CD7:
         lda     #$00                                ; $3CD7
-        beq     @common_setup                       ; $3CD9 - Always branches
+        beq     L_3CE5_common_setup                 ; $3CD9 - Always branches
 
+routine_3CDB:                                       ; $3CDB - Sprite init entry (load $40)
         lda     #$40                                ; $3CDB - Entry point 2
-        bne     @set_pession                        ; $3CDD - Always branches
+        bne     L_3CE1_set_pession                  ; $3CDD - Always branches
 
+routine_3CDF:                                       ; $3CDF - Sprite init entry (load $38)
         lda     #$38                                ; $3CDF - Entry point 3
-@set_pession:
+L_3CE1_set_pession:
         sta     PESSION,x                           ; $3CE1
         lda     #$04                                ; $3CE3
 
-@common_setup:                                      ; $3CE5 - Main entry point
+L_3CE5_common_setup:                                ; $3CE5 - Main entry point
         stx     DATLIN                              ; $3CE5 - Save entity index
         ora     D_A9C4,x                            ; $3CE7 - Combine with level data
         tay                                         ; $3CEA - Use as table index
@@ -114,6 +118,7 @@ routine_3CD7:
         sta     D_E849                              ; $3D16 - Set AND col1 operand low
         sta     D_E853                              ; $3D19 - Set AND col2 operand low
         sta     D_E85D                              ; $3D1C - Set AND col3 operand low
+D_3D1E := * - 1                                     ; Screen scroll output buffer 2
         
         lda     #>D_8260                            ; $3D1F - AND mask high byte
         sta     D_E84A                              ; $3D21 - Set AND col1 operand high

@@ -117,8 +117,8 @@ L_32C3:
 L_32CD:
     txa                         ; Save player index (0 or 1)
     pha                         ; Push to stack for later use
-    ldy  #$2E                   ; Parameter for D_05AD
-    jsr  D_05AD                 ; Call unknown setup routine
+    ldy  #(song_extend - music_song_table) ; EXTEND fanfare
+    jsr  D_05AD                 ; Start EXTEND music
     inc  MEMSIZ                 ; Increment memory pointer
     jsr  L_A474                 ; READY - screen setup
     lda  ARYTAB+1               ; Get screen config byte

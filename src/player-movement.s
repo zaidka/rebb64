@@ -118,11 +118,13 @@ D_276E:
         bpl  D_2782                 ; 10 04        $277c
 L_277E:
         lda  #$11                   ; a9 11        $277e
+D_277F := * - 1                     ; SMC: operand byte
         sta  ENESSION,x             ; 95 b2        $2780
 D_2782:
         jmp  L_2713                 ; 4c 13 27     $2782
 
 ; Continued movement and collision routines
+D_2785:
         lda  #$0e                   ; a9 0e        $2785
         sta  D_8548,x               ; 9d 48 85     $2787
         ldy  #$29                   ; a0 29        $278a
@@ -201,6 +203,7 @@ L_2804:
         rts                         ; 60           $2807
 
 ; More movement handlers
+D_2808:
         lda  D_87A0,x               ; bd a0 87     $2808
         sta  D_277F                 ; 8d 7f 27     $280b
         jsr  D_1E87                 ; 20 87 1e     $280e

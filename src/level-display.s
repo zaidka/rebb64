@@ -15,9 +15,9 @@
 ; DATA STORAGE ($37C7-$37C8)
 ;===============================================================================
 ; Two-byte storage area used for level completion bonus tracking
-; D_37C7 is already declared as an equate in bb-master.s
 .segment "CODE"
 
+D_37C7:
         .byte   $00,$00                                         ; $37C7
 
 ;===============================================================================
@@ -25,7 +25,7 @@
 ;===============================================================================
 
 ; --- D_37C9: Initialize screen pointers and prepare level display ---
-; D_37C9 is already declared as an equate in bb-master.s
+D_37C9:
         lda     #$00                                            ; $37C9
         sta     ZP_02                                           ; $37CB
         lda     #>__VIC_SCREEN_B__                              ; $37CD
@@ -234,7 +234,7 @@ L_391D:
         rts                                                     ; $3929
 
 ; --- D_392A: Level-specific timer setup ---
-; D_392A is already declared as an equate in bb-master.s
+D_392A:
         lda     SUBFLG                                          ; $392A - Get current level
         ldx     #$1E                                            ; $392C - Default: 30 seconds
         cmp     #$37                                            ; $392E - Level 55?

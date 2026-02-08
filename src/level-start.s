@@ -52,6 +52,7 @@
 ; These bytes represent: LDA $1C, EOR #$07, STA $1C, LDA $1E, EOR #$07, STA $1E
 .segment "CODE"
 
+D_2F68:
 .byte   $A5,$1C,$49,$07,$85,$1C,$A5,$1E        ; $2F68
 .byte   $49,$07,$85,$1E                        ; $2F70
 
@@ -75,16 +76,19 @@
 ;===============================================================================
 
 ; Entry point 1: Screen at $C000
+D_2F7D:
     lda  #$c0                   ; Screen page high byte
     ldx  #$0d                   ; Screen index
     bne  L_2F8D                 ; Jump to common code
 
 ; Entry point 2: Screen at $0000
+D_2F83:
     lda  #$00                   ; Screen page high byte
     ldx  #$0c                   ; Screen index
     bne  L_2F8D                 ; Jump to common code
 
 ; Entry point 3: Screen at $E000
+D_2F89:
     lda  #$e0                   ; Screen page high byte
     ldx  #$0f                   ; Screen index
 

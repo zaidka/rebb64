@@ -7,11 +7,11 @@
 ; External references
 .segment "CODE"
 
-L1E6C           := $1E6C
-L2162           := $2162
-L220C           := $220C
-L2301           := $2301
-L2C9F           := $2C9F
+L1E6C           := D_1E6C
+L2162           := D_2162
+L220C           := D_220C
+L2301           := D_2301
+L2C9F           := D_2C9F
 
 ; -----------------------------------------------------------------------------
 ; SPAWN_POSITION_INIT ($284D)
@@ -93,7 +93,7 @@ spawn_animation:                                        ; $28A5
 @L28BB:                                                 ; $28BB
         dec     D_8610,x
         lda     D_8610,x
-        bmi     @L28E9
+        bmi     L_28E9
         lsr     a
         and     #$03
         beq     @L28CE
@@ -105,7 +105,7 @@ spawn_animation:                                        ; $28A5
         lda     D_87A0,x
         bpl     @L28DB
         lda     D_87F0,x
-        bmi     @L28E8
+        bmi     L_28E8
 @L28DB:                                                 ; $28DB
         lda     $C2,x
         clc
@@ -115,10 +115,10 @@ spawn_animation:                                        ; $28A5
         lda     #$15
 @L28E6:                                                 ; $28E6
         sta     $C2,x
-@L28E8:                                                 ; $28E8
+L_28E8:                                                 ; $28E8
         rts
 
-@L28E9:                                                 ; $28E9
+L_28E9:                                                 ; $28E9
         tay
         lsr     a
         and     #$03
@@ -126,7 +126,7 @@ spawn_animation:                                        ; $28A5
         adc     #$0F
         sta     D_8520,x
         cpy     #$C8
-        bne     @L28E8
+        bne     L_28E8
         inc     $B2,x
         rts
 
@@ -170,8 +170,9 @@ smc_score_operand := score_display + 1                  ; $2922
 
 score_display:                                          ; $2921
         .byte   $A9                     ; LDA immediate opcode
+D_2922 := score_display + 1             ; $2922 - self-modified operand
         .byte   $00                     ; $2922 - self-modified operand
-        bne     @L2995
+        bne     L_2995
         inc     smc_score_operand       ; Self-modify: inc $2922
         ldy     D_8890,x
         lda     D_A790,y
@@ -199,23 +200,25 @@ score_display:                                          ; $2921
         lda     D_A892,y
         jsr     L2C9F
         lda     D_A783,x
-        sta     @L2970+1                ; Self-modify store address low
-        sta     @L298D                  ; Store low byte to $298D
+        sta     smc_L2970+1             ; Self-modify store address low
+        sta     L_298D                  ; Store low byte to $298D
         lda     D_A789,x
-        sta     @L2970+2                ; Self-modify store address high
-        sta     @L298E                  ; Store high byte to $298E
+        sta     smc_L2970+2             ; Self-modify store address high
+        sta     L_298E                  ; Store high byte to $298E
         ldy     #$0F
         ldx     #$3D
-@L296A:                                                 ; $296A
+smc_L296A:                                              ; $296A
         lda     ($04),y
-        jsr     @L2996
-@L2970:                                                 ; $2970 - self-modified STA abs,x
+        jsr     L_2996
+smc_L2970:                                              ; $2970 - self-modified STA abs,x
         sta     D_0400,x                ; Address modified at runtime
+D_2970 := smc_L2970                                     ; SMC: instruction byte
+D_2971 := smc_L2970 + 1                                 ; SMC: low byte of address operand
         dex
         dex
         dex
         dey
-        bpl     @L296A
+        bpl     smc_L296A
         lda     $04
         clc
         adc     #$10
@@ -224,21 +227,22 @@ score_display:                                          ; $2921
         inc     $05
 @L2983:                                                 ; $2983
         ldy     #$0F
+D_2985:
         ldx     #$3E
-@L2987:                                                 ; $2987
+L_2987:                                                 ; $2987
         lda     ($04),y
-        jsr     @L2996
+        jsr     L_2996
         .byte   $9D                     ; $298C - STA abs,x opcode
-@L298D:                                                 ; $298D - low byte of address (self-modified)
+L_298D:                                                 ; $298D - low byte of address (self-modified)
         .byte   $00
-@L298E:                                                 ; $298E - high byte of address (self-modified)
+L_298E:                                                 ; $298E - high byte of address (self-modified)
         .byte   $04
         dex
         dex
         dex
         dey
-        bpl     @L2987
-@L2995:                                                 ; $2995
+        bpl     L_2987
+L_2995:                                                 ; $2995
         rts
 
 ; -----------------------------------------------------------------------------
@@ -247,7 +251,7 @@ score_display:                                          ; $2921
 ; Input: A = byte to mirror
 ; Output: A = mirrored byte
 ; -----------------------------------------------------------------------------
-@L2996:                                                 ; $2996
+L_2996:                                                 ; $2996
         sta     $02
         and     #$80
         beq     @L299D

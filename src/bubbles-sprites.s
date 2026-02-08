@@ -174,8 +174,8 @@ player_spawn_check:
 ; ============================================================================
 
 game_init_sequence:
-        ldy     #$43                    ; a0 43    - Offset for text
-        jsr     D_05AD                  ; 20 ad 05 - Display text routine
+        ldy     #(song_round_start - music_song_table) ; a0 43
+        jsr     D_05AD                  ; 20 ad 05 - Start round music
         jsr     D_1AE8                  ; 20 e8 1a - Additional init routine
         
         ldx     #$ff                    ; a2 ff
@@ -227,21 +227,22 @@ entity_table_clear:
 player_init_loop:
         ldx     #$01                    ; a2 01    - Start with player 2
         
-@player_loop:
+player_init_loop_inner:
         lda     ENESSION,x              ; b5 b2    - Get player state
-        beq     @skip_player            ; f0 0e    - Skip if inactive
+        beq     player_init_skip        ; f0 0e    - Skip if inactive
         lda     ZP_02,x                 ; b5 02    - Get temp X
         sta     ZP_DC,x                 ; 95 dc    - Store screen column
         lda     ZP_04,x                 ; b5 04    - Get temp Y
         sta     ZP_EE,x                 ; 95 ee    - Store screen row
+D_1677:
         txa                             ; 8a       - Transfer X to A
         asl     a                       ; 0a       - Multiply by 2
         adc     #$2e                    ; 69 2e    - Add offset $2E
         sta     PESSION,x               ; 95 ca    - Store enemy type
 
-@skip_player:
+player_init_skip:
         dex                             ; ca       - Next player
-        bpl     @player_loop            ; 10 eb    - Loop both players
+        bpl     player_init_loop_inner  ; 10 eb    - Loop both players
         stx     TXTTAB                  ; 86 2b    - Store -1 to sub-counter
 
 ; ============================================================================
@@ -254,12 +255,15 @@ wait_for_frame_sync:
         inx                             ; e8       - X = 0
         stx     VARTAB                  ; 86 2d    - Clear hurry-up state
         
+.if !SOUND_SONGS_LOOP
+; Non-looping engine: wait for song to finish before starting next one.
 @wait_loop:
-        lda     SYESSION                ; a5 a4    - Get loader flag
-        bne     @wait_loop              ; d0 fc    - Wait until clear
+        lda     SYESSION                ; a5 a4    - Wait for song to finish
+        bne     @wait_loop              ; d0 fc
+.endif
         
-        ldy     #$27                    ; a0 27    - Offset
-        jsr     D_05AD                  ; 20 ad 05 - Display text routine
+        ldy     #(song_level_complete - music_song_table) ; a0 27
+        jsr     D_05AD                  ; 20 ad 05 - Level complete music
         lda     TXTTAB1                 ; a5 2c    - Get level timer setting
 D_168F:                                 ; $168F - Entry point when A already set
         sta     ZP_2A                   ; 85 2a    - Store to level timer
@@ -322,6 +326,7 @@ baron_enemy_check:                      ; $16E0 - target for bne at $16F9
         bne     check_bubble_states     ; d0 12    - Exit early if not
 
         ; Clear enemy invincibility when last one
+D_16E4:
         ldx     #$05                    ; a2 05    - Start at entity 5
 
 baron_clear_invincibility:
@@ -330,6 +335,7 @@ baron_clear_invincibility:
         cmp     #$0b                    ; c9 0b    - State >= $0B?
         bcs     baron_next_entity       ; b0 05    - Skip if >= $0B
         lda     #$ff                    ; a9 ff    - Set invincibility
+D_16EF := * - 1                         ; SMC: operand byte
         sta     D_872A,x                ; 9d 2a 87 - Store to flags
 
 baron_next_entity:

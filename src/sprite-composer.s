@@ -454,7 +454,7 @@ L_E931:
     ; D_E966: SMC target - low byte of indirect jump address
     ; Modified by entity rendering loop to select different dispatch vectors
 smc_jmp_indirect:
-    jmp  ($0422)
+    jmp  (game_variables + $22)
 D_E966 := smc_jmp_indirect + 1 ; SMC target: indirect jump address low byte
 
 ; D_E968 is defined as forward reference in bb-master.s

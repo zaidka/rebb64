@@ -361,132 +361,13 @@ bubble_anim_masks:
 
 
 ; ============================================================================
-; Region 3: Title Screen Music Data ($8B00-$8EFF)
+; Region 3: Screen Backup Buffer ($8B00-$8EFF)
 ; ============================================================================
-;
-; Three-voice music data played by the SFX engine during the title screen.
-; Voice start addresses (from sfx_index_table group 7 at $F953):
-;   Voice 0: $8B00 (title_music_voice0)
-;   Voice 1: $8BDC (title_music_voice1)
-;   Voice 2: $8CBF (title_music_voice2)
-;
-; Music command format:
-;   $00-$5E: Note value (frequency table index), followed by duration byte
-;   $5F:     Rest/silence, followed by duration byte
-;   $60:     End-of-pattern / stop voice
-;   $80 nn:  Set loop counter to nn
-;   $82:     Decrement loop counter; if >0, loop back
-;   $84 lo hi: Load 14-byte instrument block from address
-;   $86 lo hi: Load 29-byte instrument block from address
-;   $88 nn:  Set transpose value
-;   $8A nn:  Set frequency table pointer (low byte)
-;   $8C:     Set SID filter cutoff = $F7 (bright)
-;   $8D:     Separator (not a valid command - used as data delimiter)
-;   $8E:     Set SID filter from per-voice table
-;   $90:     Set SID filter cutoff = $78 (mid), mode = 3
-;   $92 nn lo hi: Set transpose + call subroutine
-;   $94 lo hi: Call music subroutine
-;   $98:     Return from subroutine / end voice
-;
-; NOTE: $86/$84 instrument address operands use label references for
-; relocatability (sfx_instr_* symbols from the SFXMUSIC segment).
-;
-; NOTE: Screen buffer labels (D_8B00, D_8C00, D_8D00, D_8E00, etc.) are
-; defined as fixed constants in master.s. The labels below (title_music_voice0,
-; etc.) are segment-relative and will relocate with this segment.
+; Title screen music ($8B00-$8DDF) is now in sound.s (SCREEN_BUFFER segment).
+; Post-music padding and screen buffer data remain here.
 ; ============================================================================
 
         .segment "SCREEN_BUFFER"
-
-; --- Voice 0: Title screen music ($8B00) ---
-; Segment placement guaranteed by start = __SCREEN_BACKUP__ in c64-prg.cfg
-title_music_voice0:
-; Voice 0 ($8B00)
-        .byte   $86                     ; $8B00: LOAD_INSTR_29B
-        .byte   <sfx_instr_12           ; $8B01: -> sfx_instr_12 (lo)
-        .byte   >sfx_instr_12           ; $8B02: -> sfx_instr_12 (hi)
-        .byte   $60
-        .byte   $02, $4e, $04, $49, $04, $44, $04, $49, $04, $44, $04, $3f, $04, $44, $04  ; $8B03
-        .byte   $3f, $04, $3a, $04, $3f, $04, $3a, $04, $36, $04, $86, $a8, $8d, $80, $08, $5f  ; $8B13
-        .byte   $10, $82, $80, $04, $35, $18, $35, $04, $34, $20, $5f, $04, $82, $86  ; $8B23
-        .byte   <sfx_instr_2, >sfx_instr_2
-                                        ; $8B31: $86 cmd -> sfx_instr_2
-        .byte   $8a, <D_F279, $80, $02, $80, $20, $30, $04, $82, $82, $80, $08, $35, $04, $82, $8a  ; $8B33
-        .byte   <D_F27C, $80, $08, $32, $04, $82, $8a, <D_F279, $80, $08, $37, $04, $82, $80, $08, $30  ; $8B43
-        .byte   $04, $82, $80, $08, $35, $04, $82, $8a, <D_F27C, $80, $06, $32, $04, $82, $34, $04  ; $8B53
-        .byte   $34, $04, $8a, <D_F283, $32, $04, $32, $04, $8a, <D_F27C, $34, $04, $34, $04, $8a, <D_F279  ; $8B63
-        .byte   $35, $04, $35, $04, $36, $04, $36, $04, $80, $08, $37, $04, $82, $80, $10, $30  ; $8B73
-        .byte   $04, $82, $35, $04, $35, $04, $35, $04, $35, $04, $37, $04, $37, $04, $37, $04  ; $8B83
-        .byte   $37, $04, $8a, <D_F27C, $80, $08, $34, $04, $82, $8a, <D_F279, $80, $10, $30, $04, $82  ; $8B93
-        .byte   $35, $04, $35, $04, $35, $04, $35, $04, $37, $04, $37, $04, $37, $04, $37, $04  ; $8BA3
-        .byte   $8a, <D_F27C, $34, $04, $34, $04, $39, $04, $39, $04, $8a, <D_F279, $37, $04, $37, $04  ; $8BB3
-        .byte   $37, $04, $37, $04, $30, $04, $5f, $1c, $5f, $20, $86, $a8, $8d, $80, $03, $35  ; $8BC3
-        .byte   $18, $35, $04, $34, $20, $5f, $04, $82, $98  ; $8BD3
-
-; --- Voice 1: Title screen music ($8BDC) ---
-title_music_voice1:
-; Voice 1 ($8BDC)
-        .byte   $60, $02, $86  ; $8BDC
-        .byte   <sfx_instr_12, >sfx_instr_12
-                                        ; $8BDF: $86 cmd -> sfx_instr_12
-        .byte   $5f, $02, $4b, $04, $46, $04, $42, $04, $46, $04, $42, $04, $3d, $04, $42, $04  ; $8BE1
-        .byte   $3d, $04, $38, $04, $3d, $04, $38, $04, $33, $02, $86, $a8, $8d, $84  ; $8BF1
-        .byte   <sfx_instr_21           ; $8BFF: $84 cmd -> sfx_instr_21 (lo)
-        .byte   >sfx_instr_21           ; $8C00: -> sfx_instr_21 (hi)
-        .byte   $80, $08, $5f, $10, $82, $80, $04, $3c, $18, $3c, $04, $3c, $20, $5f, $04, $82  ; $8C01
-        .byte   $84, $a8, $8d, $80, $02, $34, $10, $34, $04, $35, $04, $37, $04, $3c, $0c, $37  ; $8C11
-        .byte   $08, $35, $08, $37, $04, $34, $1c, $86  ; $8C21
-        .byte   <sfx_instr_1, >sfx_instr_1
-                                        ; $8C29: $86 cmd -> sfx_instr_1
-        .byte   $84  ; $8C2B
-        .byte   <sfx_instr_22, >sfx_instr_22
-                                        ; $8C2C: $84 cmd -> sfx_instr_22
-        .byte   $3c, $04, $3c, $08, $3c, $04, $8a, <D_F26C, $3c, $08, $8a, <D_F273, $3c, $04, $8a, <D_F26C  ; $8C2E
-        .byte   $3c, $0c, $86, $a8, $8d, $82, $39, $10, $34, $04, $35, $04, $37, $04, $35, $10  ; $8C3E
-        .byte   $5f, $14, $37, $10, $32, $04, $34, $04, $35, $04, $34, $10, $5f, $14, $39, $10  ; $8C4E
-        .byte   $34, $04, $35, $04, $37, $04, $35, $10, $5f, $0c, $34, $08, $32, $08, $34, $08  ; $8C5E
-        .byte   $35, $08, $36, $08, $37, $14, $37, $04, $39, $04, $80, $02, $3c, $08, $3c, $04  ; $8C6E
-        .byte   $3b, $08, $39, $04, $3b, $08, $82, $5f, $04, $35, $10, $37, $0c, $34, $18, $37  ; $8C7E
-        .byte   $04, $39, $04, $80, $02, $3c, $08, $3c, $04, $3b, $08, $39, $04, $3b  ; $8C8E
-        .byte   $08, $82                ; $8C9C
-        .byte   $5f, $04, $35, $10, $37, $0c, $34, $0c, $39, $08, $3b  ; $8C9E
-        .byte   $08, $37, $08, $3c, $20 ; $8CA9
-        .byte   $5f, $20, $84  ; $8CAE
-        .byte   <sfx_instr_21, >sfx_instr_21
-                                        ; $8CB1: $84 cmd -> sfx_instr_21
-        .byte   $80, $03, $3c, $18, $3c, $04, $3c, $20, $5f, $04, $82, $98  ; $8CB3
-
-; --- Voice 2: Title screen music ($8CBF) ---
-title_music_voice2:
-; Voice 2 ($8CBF)
-        .byte   $60, $01, $90, $86  ; $8CBF
-        .byte   <sfx_instr_12, >sfx_instr_12
-                                        ; $8CC3: $86 cmd -> sfx_instr_12
-        .byte   $60, $01, $5a, $02, $57, $02, $55, $02, $54, $02, $50, $02, $4e, $02, $55, $02  ; $8CC5
-        .byte   $54, $02, $50, $02, $4e, $02, $4b, $02, $49  ; $8CD5
-
-; --- Voice 2 continued: Note sequence ($8CDE) ---
-        .byte   $02, $50, $02, $4e, $02, $4b, $02, $49, $02, $46, $02, $44, $02, $4b  ; $8CDE
-        .byte   $02, $49                ; $8CEC
-        .byte   $02, $46, $02, $44, $02, $42, $02, $3f, $02, $94, <L_7048, >L_7048, $80, $17, $18, $04  ; $8CEE
-        .byte   $18, $04                ; $8CFE
-        .byte   $18, $04, $18, $04, $82, $18, $04, $18, $04, $94, <L_7040, >L_7040, $1f, $04  ; $8D00
-        .byte   $21, $04, $80, $08, $92, $00, $8d, $8d, $82, $92, $05, $8d, $8d, $92, $02, $8d  ; $8D0E
-        .byte   $8d, $92, $04, $8d, $8d, $92, $00, $8d, $8d, $92, $05, $8d, $8d, $92, $02, $8d  ; $8D1E
-        .byte   $8d, $88, $00, $1a, $04, $26, $04, $1c, $04, $28, $04, $1d, $04, $29, $04, $1e  ; $8D2E
-        .byte   $04, $2a, $04, $92, $07, $8d, $8d, $80, $02, $92, $00, $8d, $8d, $82, $92, $05  ; $8D3E
-        .byte   $9a, $8d, $92, $07, $9a, $8d, $92, $04, $8d, $8d, $80, $02, $92, $00, $8d, $8d  ; $8D4E
-        .byte   $82, $92, $05, $9a, $8d, $92, $07, $9a, $8d, $88, $00, $1c, $08, $21, $08, $23  ; $8D5E
-        .byte   $08, $1f, $08, $94, <L_7048, >L_7048, $80, $0c, $18, $04, $18, $04, $18, $04, $18, $04  ; $8D6E
-        .byte   $82, $94, <L_7040, >L_7040, $18, $10, $21, $04, $1f, $04, $21, $04, $18, $0c, $98, $18  ; $8D7E
-        .byte   $08, $86, $c5, $8d, $90, $38, $04, $94, <L_7040, >L_7040, $18, $04, $18, $08, $86, $c5  ; $8D8E
-        .byte   $8d, $90, $38, $04, $94, <L_7040, >L_7040, $18, $04, $98  ; $8D9E
-
-; --- Title screen music: SFX parameter data ($8DA8) ---
-        .byte   $23, $00, $dd, $ff, $23, $00, $00, $00, $02, $04, $02, $00, $02, $05, $3c, $3c  ; $8DA8
-        .byte   $00, $05, $20, $00, $e0, $ff, $00, $01, $41, $07, $cc, $1e, $5a, $a0, $0f, $c0  ; $8DB8
-        .byte   $e0, $40, $1f, $60, $f0, $02, $02, $02, $02, $01, $05, $00, $00, $00, $00, $00  ; $8DC8
-        .byte   $00, $00, $00, $00, $00, $81, $06, $f9  ; $8DD8
 
 ; --- Post-music padding ($8DE0) ---
         .byte   $03, $0f, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00  ; $8DE0

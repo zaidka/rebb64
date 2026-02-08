@@ -502,6 +502,7 @@ L_0CB7:
 ; Standard enemy type chooser
 D_0CC1:
         and     #$00                            ; $0CC1 - Clear accumulator (use seed)
+D_0CC2 := * - 1                                 ; SMC: operand byte
         sta     DATLIN1                         ; $0CC3 - Store random bits
         lda     #$82                            ; $0CC5 - Set special flag
         sta     D_A9FA,y                        ; $0CC7 - Store in enemy flags

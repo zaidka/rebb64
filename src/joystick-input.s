@@ -13,6 +13,7 @@
 ; ============================================================================
 ; Read joystick ports and initialize player state loop
 ; ============================================================================
+D_1CBD:
     lda  #$7f
     sta  CIA1_PRA               ; Set up CIA port A
     ldx  #$ff
@@ -271,28 +272,28 @@ D_1E3A = * + 1          ; D_1E3A points to the BPL operand byte (State 0 low)
 D_1E3B:                 ; D_1E3B is the RTS (State 0 high byte = $60)
     rts
     ; States 1-23 (23 entries = 46 bytes, State 0 is implicit from BPL+RTS = $60F7)
-    .byte   $62,$21             ; $1E3C - State 1 handler ($2162)
+    .byte   <D_2162,>D_2162     ; $1E3C - State 1 handler
     .byte   <L_EA08,>L_EA08     ; $1E3E - State 2 handler
     .byte   <D_E9FD,>D_E9FD     ; $1E40 - State 3 handler
-    .byte   $2E,$1F             ; $1E42 - State 4 handler ($1F2E)
+    .byte   <D_1F2E,>D_1F2E     ; $1E42 - State 4 handler
     .byte   <D_EFC0,>D_EFC0     ; $1E44 - State 5 handler
     .byte   <D_EEB2,>D_EEB2     ; $1E46 - State 6 handler
     .byte   <D_E9FD,>D_E9FD     ; $1E48 - State 7 handler
     .byte   <D_E9FD,>D_E9FD     ; $1E4A - State 8 handler
-    .byte   $9F,$1E             ; $1E4C - State 9 handler ($1E9F)
-    .byte   $08,$28             ; $1E4E - State 10 handler ($2808)
-    .byte   $7C,$26             ; $1E50 - State 11 handler ($267C)
-    .byte   $3D,$27             ; $1E52 - State 12 handler ($273D)
-    .byte   $4D,$28             ; $1E54 - State 13 handler ($284D)
-    .byte   $A5,$28             ; $1E56 - State 14 handler ($28A5)
-    .byte   $E8,$28             ; $1E58 - State 15 handler ($28E8)
-    .byte   $0D,$29             ; $1E5A - State 16 handler ($290D)
-    .byte   $21,$29             ; $1E5C - State 17 handler ($2921)
-    .byte   $BB,$29             ; $1E5E - State 18 handler ($29BB)
-    .byte   $18,$2A             ; $1E60 - State 19 handler ($2A18)
-    .byte   $74,$2A             ; $1E62 - State 20 handler ($2A74)
-    .byte   $CB,$2A             ; $1E64 - State 21 handler ($2ACB)
-    .byte   $85,$27             ; $1E66 - State 22 handler ($2785)
-    .byte   $CB,$27             ; $1E68 - State 23 handler ($27CB)
+    .byte   <D_1E9F,>D_1E9F     ; $1E4C - State 9 handler
+    .byte   <D_2808,>D_2808     ; $1E4E - State 10 handler
+    .byte   <L267B,>L267B       ; $1E50 - State 11 handler
+    .byte   <D_273D,>D_273D     ; $1E52 - State 12 handler
+    .byte   <spawn_position_init,>spawn_position_init   ; $1E54 - State 13 handler
+    .byte   <spawn_animation,>spawn_animation           ; $1E56 - State 14 handler
+    .byte   <L_28E8,>L_28E8     ; $1E58 - State 15 handler
+    .byte   <spawn_timer,>spawn_timer                   ; $1E5A - State 16 handler
+    .byte   <score_display,>score_display               ; $1E5C - State 17 handler
+    .byte   <D_29BB,>D_29BB     ; $1E5E - State 18 handler
+    .byte   <D_2A18,>D_2A18     ; $1E60 - State 19 handler
+    .byte   <D_2A74,>D_2A74     ; $1E62 - State 20 handler
+    .byte   <D_2ACB,>D_2ACB     ; $1E64 - State 21 handler
+    .byte   <D_2785,>D_2785     ; $1E66 - State 22 handler
+    .byte   <L_27CB,>L_27CB     ; $1E68 - State 23 handler
 ; Two padding/dead code bytes after the jump table
     .byte   $FA,$28             ; $1E6A - Padding (illegal NOP + PLP)

@@ -3,7 +3,7 @@
 ; ============================================================================
 
 ; External references
-L10D3           := $10D3                ; Baron Von Blubba handler
+L10D3           := baron_von_blubba     ; Baron Von Blubba handler
 L7BFE           := D_7BFE               ; Platform collision check (label in level-data-part2.s)
 L7C26           := D_7C26               ; Apply damage/effect (defined in master.s from D_7C24)
 LE9EA           := D_E9EA               ; Random number generator (alias to label in sprite-composer.s)
@@ -91,9 +91,9 @@ L0D4E:                                                  ; $0D4E
         sta     L0D67
         .byte   $4C                     ; JMP opcode
 L0D66:                                                  ; $0D66 - self-modified address
-        .byte   $00
+        .byte   <entry_0400
 L0D67:                                                  ; $0D67
-        .byte   $04
+        .byte   >entry_0400
 
 ; Jump table for entity types $24-$33
 ; Interleaved low/high bytes: lo0,hi0,lo1,hi1,...
@@ -157,6 +157,7 @@ L0DBF:                                                  ; $0DBF
         bcs     L0DFD
         jsr     LE9EA                   ; Random direction
         cmp     #$1E
+D_0DC7 := * - 1                                 ; SMC: operand byte
         bcs     L0DE4
         lda     $EE,x                   ; Get row position
         cmp     #$04

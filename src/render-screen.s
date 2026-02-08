@@ -100,12 +100,15 @@ L_18C2:
     adc  #$d8
     sta  DATPTR
     ldy  #$00
+D_18D6 := * - 1                         ; SMC: operand byte
     lda  #$00
+D_18D8 := * - 1                         ; SMC: operand byte
 L_18D9:
     sta  (DATLIN+1),y
     dey
     bpl  L_18D9
     ldy  #$00
+D_18DF := * - 1                         ; SMC: operand byte
 L_18E0:
     iny
     dec  OLDLIN+1
@@ -152,6 +155,7 @@ D_191E:
     lda  (DATPTR+1),y
     sta  (DATLIN+1),y
     ldy  #$00
+D_1929 := * - 1                         ; SMC: operand byte
 L_192A:
     iny
     dec  OLDLIN+1

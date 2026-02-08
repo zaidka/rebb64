@@ -88,9 +88,7 @@
 ;-------------------------------------------------------------------------------
 .segment "CODE"
 
-D_31B2 = $31B2      ; Operand high byte of JSR at $31B1 (modified at $3196)
-D_31B3 = $31B3      ; Operand low byte of JSR at $31B1 (modified at $319C)
-D_3200 = $3200      ; Operand byte of LDA #$xx at $31FF (modified at $319F)
+; D_31B2/D_31B3/D_3200: SMC targets defined below as label+offset
 
 ;-------------------------------------------------------------------------------
 ; D_3169 - Screen area fill subroutine
@@ -123,14 +121,18 @@ L_3178:
     rts
 
 ;-------------------------------------------------------------------------------
-; Data tables used by D_3193
-; D_318F: Screen page values for self-modifying code
-; D_3190: Screen offset values for self-modifying code
+; Overlapping dispatch tables for D_3193 self-modifying JSR
+; Forms two indexed tables sharing middle bytes:
+;   X=0: lo=<routine_3234, hi=>routine_3234  → JSR routine_3234
+;   X=2: lo=<D_3771,       hi=>D_3771        → JSR D_3771
+;   X=1: unused (target $7132 in sound data)
 ;-------------------------------------------------------------------------------
 D_318F:
-    .byte $34                   ; Screen page for player index 0 or 1
+    .byte <routine_3234         ; X=0 lo byte
 D_3190:
-    .byte $32, $71, $37         ; Screen offsets
+    .byte >routine_3234         ; X=0 hi byte (also X=1 lo, unused)
+    .byte <D_3771               ; X=2 lo byte (also X=1 hi, unused)
+    .byte >D_3771               ; X=2 hi byte
 
 ;-------------------------------------------------------------------------------
 ; D_3193 - Platform collision detection setup
@@ -156,8 +158,11 @@ D_31A2:
     jsr  D_045C                 ; Check player state
     jsr  D_7E80                 ; Unknown routine
     jsr  D_F1AC                 ; Unknown routine
+smc_plat_jsr:
     jsr  entry_0400             ; Self-modified call - address set by D_3193
                                 ; (JSR operand at $31B2-$31B3 is overwritten at runtime)
+D_31B2 = smc_plat_jsr + 1      ; SMC: low byte of JSR target
+D_31B3 = smc_plat_jsr + 2      ; SMC: high byte of JSR target
     ldx  #$01                   ; Check both players (1 down to 0)
 
 ;-------------------------------------------------------------------------------
@@ -213,7 +218,9 @@ L_31DA:
     sta  VARNAM                 ; Store result
     
     ldy  D_AB51,x               ; Get value from table (animation frame?)
+smc_plat_lda:
     lda  #$00                   ; Load value for comparison (operand at $3200 modified by D_3193)
+D_3200 = smc_plat_lda + 1      ; SMC: operand of LDA #imm
     cmp  #$32                   ; Compare with 50
     bcs  L_3206                 ; Branch if >= 50
     dey                         ; Decrement Y
@@ -254,10 +261,11 @@ L_3231:
     jmp  update_sprite_animations ; All platforms destroyed - transition to next state
 
 ;-------------------------------------------------------------------------------
-; Timer and score display routine
+; Timer and score display routine ($3234)
 ; Displays level timer and player scores on screen
 ; Special handling: exits via stack manipulation if timer reaches zero
 ;-------------------------------------------------------------------------------
+routine_3234:
     lda  #$60                   ; Screen row offset
     sta  VARNAM                 ; Store for character encoding
     lda  #>__VIC_SCREEN_A__         ; Screen page base

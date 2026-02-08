@@ -71,15 +71,15 @@ L_049D:
 
 L_04A0:
         jsr     D_7F53              ; 20 53 7f
-        lda     D_5C3F              ; ad 3f 5c
-        cmp     #$20                ; c9 20
-        bcc     L_04BB              ; 90 11
-        cmp     #$4A                ; c9 4a
-        beq     L_04BB              ; f0 0d
+        lda     D_5C3F              ; ad 3f 5c  Current song Y-value
+        cmp     #(song_game_over - music_song_table)  ; c9 20
+        bcc     L_04BB              ; 90 11  Skip if below game_over
+        cmp     #(song_super_bonus - music_song_table) ; c9 4a
+        beq     L_04BB              ; f0 0d  Skip if super_bonus playing
         stx     DATLIN1             ; 86 40
         sty     DATPTR              ; 84 41
-        ldy     #$0B                ; a0 0b
-        jsr     D_05AD              ; 20 ad 05
+        ldy     #(song_level_resume - music_song_table) ; a0 0b
+        jsr     D_05AD              ; 20 ad 05  Resume level music
         ldx     DATLIN1             ; a6 40
         ldy     DATPTR              ; a4 41
 L_04BB:
@@ -244,10 +244,10 @@ L_05AC:
 ; Calls BASIC ROM routines and sound player initialization
 
 D_05AD:
-        jsr     wait_one_frame                  ; Call BASIC initialization
+        jsr     wait_one_frame                  ; Sync to frame boundary
         sty     D_5C3F                  ; Store Y to temp
-        jsr     music_init_code         ; Initialize sound tables
-        jmp     D_F53C                  ; Jump to sound update
+        jsr     music_start             ; Queue new song (IRQ picks it up next frame)
+        jmp     sound_update            ; Process first frame immediately
 
 ; ============================================================================
 ; LEVEL COLUMN OFFSET TABLE ($05B9) - DATA
@@ -277,18 +277,18 @@ D_05C5:
         pha                             ; Save on stack
         lda     D_8728                  ; Get saved state low
         pha                             ; Save on stack
-        ldy     #$0B                    ; Default Y offset = 11
+        ldy     #(song_level_resume - music_song_table) ; Default: resume
         lda     SUBFLG                  ; Get current level
         cmp     #$63                    ; Is it level 99?
         bne     L05E5                   ; If not, continue
-        ldy     #$12                    ; Level 99: Y offset = 18
+        ldy     #(song_level_final - music_song_table) ; Level 99 theme
         .byte   $2C                     ; Skip next instruction (BIT abs)
 L05E5:
-        lda     D_5C3F                  ; Get temp value
-        cmp     #$12                    ; Compare to 18
-        bcc     L05F3                   ; If < 18, skip
-        cmp     #$4A                    ; Compare to 74
-        beq     L05F3                   ; If == 74, skip
+        lda     D_5C3F                  ; Current song Y-value
+        cmp     #(song_level_final - music_song_table) ; Compare to level_final
+        bcc     L05F3                   ; If below, skip
+        cmp     #(song_super_bonus - music_song_table) ; Compare to super_bonus
+        beq     L05F3                   ; If super_bonus playing, skip
         jsr     D_05AD                  ; Re-init sound
 L05F3:
         ldx     #$07                    ; Initialize 8 entities

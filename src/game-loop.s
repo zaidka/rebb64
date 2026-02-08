@@ -24,8 +24,8 @@
 ; ============================================================================
 D_08E4:
         jsr     D_0885                          ; $08E4 - Initialize game state
-        ldy     #$04                            ; $08E7
-        jsr     D_05AD                          ; $08E9 - Delay routine
+        ldy     #(song_level_theme - music_song_table) ; $08E7
+        jsr     D_05AD                          ; $08E9 - Start level theme
         ldx     #<D_AC41                        ; $08EC
         ldy     #>D_AC41                        ; $08EE
         jsr     display_text_string              ; $08F0 - Load data
@@ -125,9 +125,9 @@ L_098A:
         lda     #$4c                            ; $0992 - JMP opcode
         sta     D_0F73                          ; $0994
         sta     D_049D                          ; $0997
-        lda     #$ed                            ; $099A
+        lda     #<D_0BED                        ; $099A
         sta     D_0A39                          ; $099C - Modify instruction at D_0A39
-        lda     #$0b                            ; $099F
+        lda     #>D_0BED                        ; $099F
         sta     D_0A3A                          ; $09A1 - Modify instruction at D_0A3A
         sec                                     ; $09A4
 
@@ -224,6 +224,8 @@ L_0A30:
         dec     D_A825                          ; $0A35
 L_0A38:
         jsr     D_0BED                          ; $0A38 - Spawn enemies
+D_0A39 := L_0A38 + 1                           ; SMC: low byte of JSR operand
+D_0A3A := L_0A38 + 2                           ; SMC: high byte of JSR operand
         lda     D_58FF                          ; $0A3B - Boss active flag
         beq     L_0A48                          ; $0A3E
         lda     D_593F                          ; $0A40 - Boss state
@@ -284,9 +286,9 @@ L_0A99:
         ; Game over sequence
         inc     MEMSIZ                          ; $0A99 - Pause flag
         jsr     update_sprite_animations         ; $0A9B
-        ldy     #$20                            ; $0A9E
+        ldy     #(song_game_over - music_song_table) ; $0A9E
 D_0AA0:
-        jsr     D_05AD                          ; $0AA0 - Delay routine
+        jsr     D_05AD                          ; $0AA0 - Start game over music
         lda     #$96                            ; $0AA3
         jmp     D_7BC8                          ; $0AA5 - Wait routine
 

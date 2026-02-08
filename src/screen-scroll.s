@@ -16,6 +16,7 @@
 ;-------------------------------------------------------------------------------
 .segment "CODE"
 
+D_3AB8:
         jsr     wait_one_frame              ; Wait for frame sync
         
         ; Setup self-modifying code addresses (store screen page)
@@ -49,11 +50,13 @@
         jsr     D_16E4              ; Setup call
         inx
 
+smc_copy_init_loop:
 @copy_init_data:
         lda     D_3CB2,x            ; Source data
         sta     D_1200,x            ; Copy to destination
         inx
         bne     @copy_init_data     ; Loop until X wraps to 0
+D_3AF0 := smc_copy_init_loop + 5   ; SMC: high byte of sta D_1200,x operand
         
         ; Setup scroll parameters
         lda     #$19                ; 25 rows to scroll
@@ -71,7 +74,7 @@
         bpl     @save_row_data      ; Loop at $3B08
         
         ; Main scroll loop - process each row (D_3B0A in reference)
-@scroll_loop_init:
+scroll_loop_init_3B0A:
         ldx     #$00
         stx     $3D                 ; OLDTXT (row index)
         stx     $3C                 ; OLDLIN+1
@@ -154,7 +157,7 @@
         ; Check if scroll complete
         lda     $42                 ; DATPTR+1 (row counter)
         cmp     #$0C                ; 12 rows remaining?
-        bne     @advance_scroll
+        bne     advance_scroll_3BA7
         
         ; Final rows - copy second buffer
         ldy     #$47
@@ -166,14 +169,16 @@
         bpl     @copy_final
         
         ; Delay loop for final animation
-        ldy     #$3C
-        jsr     D_05AD              ; Delay routine
+        ldy     #(song_hurry_up - music_song_table)
+        jsr     D_05AD              ; Start hurry-up music
         ldx     #$06
 
-@delay_loop:
+smc_delay_loop:
         lda     #$08
         jsr     D_7BC8              ; More delay
+smc_3BA0:
         lda     #$0C
+D_3BA1 := smc_3BA0 + 1             ; SMC: operand byte (self-modified)
         eor     #$03                ; Calculate value
         sta     D_3BA1              ; Self-modify instruction (!)
         ldy     #$08
@@ -183,16 +188,19 @@
         dey
         bpl     @inner_delay
         dex
-        bne     @delay_loop
+        bne     smc_delay_loop
 
+.if !SOUND_SONGS_LOOP
+; Non-looping engine: wait for song to finish before starting next one.
 @wait_sync:
-        lda     $A4                 ; SYESSION
-        bne     @wait_sync          ; Wait for completion
+        lda     SYESSION            ; a5 a4    - Wait for song to finish
+        bne     @wait_sync          ; d0 fc
+.endif
         
-        ldy     #$27
-        jsr     D_05AD              ; Final delay
+        ldy     #(song_level_complete - music_song_table)
+        jsr     D_05AD              ; Level complete music
 
-@advance_scroll:
+advance_scroll_3BA7:
         ; Advance screen pointers up one row (40 bytes)
         lda     $40                 ; DATLIN+1
         sec
@@ -206,7 +214,7 @@
 @no_page_wrap:
         dec     $42                 ; DATPTR+1 (decrement row counter)
         beq     @scroll_done        ; If zero, scroll complete
-        jmp     @scroll_loop_init   ; Continue scrolling (JMP $3B0A)
+        jmp     scroll_loop_init_3B0A ; Continue scrolling (JMP $3B0A)
 
 @scroll_done:
         ; Cleanup after scroll complete
@@ -234,12 +242,15 @@
         bpl     @final_copy
         
         ; Restore saved data
-@restore_saved:
+smc_restore_saved:
         lda     D_0100,x            ; Stack page data
+D_3BF1 := smc_restore_saved + 2    ; SMC: high byte of address operand
         sta     D_3CB2,x            ; Restore to buffer
+smc_restore_src2:
         lda     D_8B00,x            ; High memory data
         sta     level_decompress_data,x ; Restore to high memory
+D_3BFA := smc_restore_src2 + 5     ; SMC: high byte of address operand
         dex
-        bne     @restore_saved
+        bne     smc_restore_saved
         
         jmp     D_7B53              ; Jump to next routine

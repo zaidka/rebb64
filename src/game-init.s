@@ -163,8 +163,8 @@ D_A5B8_smc = D_A5B7 + 1            ; SMC target: operand of ldx #imm above
         ldy     #$17                ; a0 17 - Y parameter
         jsr     display_text_string ; Sprite/entity update
         
-        ldy     #$51                ; a0 51 - Parameter
-        jsr     D_05AD              ; 20 ad 05 - Game state routine
+        ldy     #(song_ending - music_song_table)
+        jsr     D_05AD              ; Start ending music
         
         ;-----------------------------------------------------------------------
         ; Initialize title screen variables

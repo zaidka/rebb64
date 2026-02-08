@@ -157,6 +157,7 @@ L_3618:
     dex                         ; Next sprite
     bpl  L_3618                 ; Continue for all 5 sprites
     
+D_3620:
     rts                         ; Return
 
 ;-------------------------------------------------------------------------------
@@ -272,8 +273,8 @@ L_36A2:
     
     ; Additional setup calls
     jsr  D_1E2E                 ; Setup routine
-    ldy  #$4A                   ; Parameter = $4A
-    jsr  D_05AD                 ; Init routine with Y parameter
+    ldy  #(song_super_bonus - music_song_table)
+    jsr  D_05AD                 ; Start super bonus music
     lda  #$14                   ; Wait time = 20 frames
     jsr  D_7BC8                 ; Wait routine
     lda  #$09                   ; Parameter = 9
@@ -474,8 +475,8 @@ L_37B2:
     
     ; Finalize level completion
     dec  $21                    ; Decrement level completion flag
-    ldy  #$0B                   ; Parameter = 11
-    jsr  D_05AD                 ; Finalization routine
+    ldy  #(song_level_resume - music_song_table)
+    jsr  D_05AD                 ; Resume level music
     rts                         ; Return
 
 ;-------------------------------------------------------------------------------

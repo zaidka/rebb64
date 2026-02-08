@@ -22,6 +22,7 @@
 ;-------------------------------------------------------------------------------
 .segment "CODE"
 
+routine_3E77:                                       ; $3E77 - Sprite Init Routine 1 entry
         .byte   $86,$3F                             ; $3E77 - STX DATLIN (fragment)
 
 ;-------------------------------------------------------------------------------
@@ -93,6 +94,7 @@ D_3EB6:
 ; Initialize sprite display from table data
 ; Uses Y register as index into sprite data tables
 
+routine_3ED4:                                       ; $3ED4 - Sprite Init Routine 3 entry
 D_3ED5 = * + 1                                      ; Entry point label at $3ED5
         stx     DATLIN                              ; $3ED4 - 86 3f - Save entity index
         ldy     D_A9C4,x                            ; $3ED6 - bc c4 a9 - Get entity sub-position
@@ -148,6 +150,7 @@ D_3F0F:
         bne     L_3EAF_common_end                   ; $3F26 - Branch to common end
 
         ; Alternate exit path
+routine_3F28:                                       ; $3F28 - Alt entry for graphics copy check
         txa                                         ; $3F28 - Check X
         beq     L_3F2E_do_copy                      ; $3F29 - Branch if zero
         jmp     D_E97A                              ; $3F2B - Otherwise jump to handler
@@ -221,9 +224,11 @@ L_3F74_no_carry:
 ;-------------------------------------------------------------------------------
 D_3F84:
         .byte   $09,$13                             ; $3F84 - Data values
-        .byte   $42,$46                             ; $3F86 - Data fragment (D_3F86 defined in bb-master.s)
+D_3F86:
+        .byte   $42,$46                             ; $3F86 - Data fragment
 
 ; Sprite Init Routine 5 - sets up sprite display for bubble-dragon-in-bubble
+routine_3F88:                                       ; $3F88 - Sprite Init Routine 5 entry
 routine_3F8C = * + 4                                ; Legacy label at $3F8C (mid-instruction)
         stx     DATLIN                              ; $3F88 - 86 3f - Save entity index
         lda     D_A9D6,x                            ; $3F8A - bd d6 a9 - Load entity direction flags

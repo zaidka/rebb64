@@ -69,6 +69,7 @@ L_1E9C:
 ; Bubble Shooting Handler
 ; ============================================================================
 ; Checks if player can shoot a bubble and spawns it
+D_1E9F:
         lda     D_8890,x                ; bd 90 88     $1e9f - Get shooting cooldown timer
         beq     L_1EA9                  ; f0 05        $1ea2 - Timer expired, can shoot
         dec     D_8890,x                ; de 90 88     $1ea4 - Decrement cooldown
@@ -170,6 +171,7 @@ L_1F2B:
 ; ============================================================================
 ; Jumping/Falling State Handler
 ; ============================================================================
+D_1F2E:
         jsr     D_EE62                  ; 20 62 ee     $1f2e
         lda     D_87F0,x                ; bd f0 87     $1f31 - Check player flag
         bmi     L_1F39                  ; 30 03        $1f34 - If negative, continue
@@ -377,10 +379,9 @@ L_2046:
         jmp     D_20B0                  ; 4c b0 20     $2046 - Jump reached apex
 
 L_2049:
-        .byte   $bd                     ; bd           $2049 - LDA abs,X opcode
-        .byte   $20,$85,$29             ; 20 85 29     $204a - JSR $2985 (handler - hard-coded address)
-        .byte   $03                     ; 03           $204d - Part of SLO instruction
-        cmp     #$02                    ; c9 02        $204e - (continuation)
+        lda     D_8520,x                ; bd 20 85     $2049 - Get animation frame
+        and     #$03                    ; 29 03        $204c - Mask to 0-3
+        cmp     #$02                    ; c9 02        $204e - Check threshold
 L_2050:
         bcs     L_2046                  ; b0 f4        $2050 - Branch back to JMP D_20B0
 

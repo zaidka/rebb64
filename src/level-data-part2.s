@@ -49,7 +49,7 @@ ZP_40       = DATLIN1               ; Temp storage ($40)
 ZP_41       = DATPTR                ; Temp storage ($41)
 
 ; Symbols needed but not defined elsewhere
-D_1288      = $1288                 ; Score handler routine
+D_1288      = L1288                 ; Score handler routine
 D_587F      = $587F                 ; Target level storage
 ; D_A739..D_A789 are now labels in GAMETABLES segment (binaries.s)
 
@@ -528,7 +528,7 @@ D_7EC1:
         ldx     #$07                ; a2 07
         jsr     D_1E30              ; 20 30 1e
         jsr     D_1805              ; 20 05 18
-        jsr     D_F4BD              ; 20 bd f4 - Init sound
+        jsr     sound_init              ; 20 bd f4 - Init sound
         pla                         ; 68    - Clean up stack
         pla                         ; 68
         lda     #$19                ; a9 19

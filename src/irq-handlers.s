@@ -58,7 +58,7 @@ frame_skip_check:
         beq     L_06F0              ; f0 03
         jsr     D_1B40              ; 20 40 1b
 L_06F0:
-        jsr     D_F53C              ; 20 3c f5 - Update music
+        jsr     sound_update              ; 20 3c f5 - Update music
         lda     D_5AFF              ; ad ff 5a
         beq     L_0703              ; f0 0b
         jsr     D_07E1              ; 20 e1 07
@@ -72,15 +72,15 @@ L_0703:
         sta     VIC_BG2             ; 8d 23 d0
 
 ; --- Setup raster split and return from IRQ ($070D) ---
-        ldx     #$2E                    ; IRQ vector low = $072E
-        ldy     #$07                    ; IRQ vector high = $07
+        ldx     #<L072E                 ; IRQ vector low
+        ldy     #>L072E                 ; IRQ vector high
         lda     ZP_20                   ; Get split-screen flag
         bne     L0717                   ; If split, use default
         lda     #$32                    ; Raster line 50
 L0717:
         sta     VIC_RASTER              ; Set raster compare
-        stx     $FFFE                   ; Set IRQ vector low
-        sty     $FFFF                   ; Set IRQ vector high
+        stx     IRQ_VEC                 ; Set IRQ vector low
+        sty     IRQ_VEC_HI              ; Set IRQ vector high
 L0720:
         dec     VIC_IRQ                 ; Acknowledge VIC interrupt
         lda     ZP_2E                   ; Get saved CPU port
@@ -88,6 +88,7 @@ L0720:
         ldy     ZP_17                   ; Restore Y
         ldx     ZP_16                   ; Restore X
         lda     ZP_15                   ; Restore A
+nmi_handler:                            ; $072D - NMI handler (immediate RTI)
         rti                             ; Return from interrupt
 
 ; --- Split-screen IRQ handler ($072E) ---
@@ -133,9 +134,9 @@ L0765:
 D_0768:
         jmp     D_077C                  ; Jump to next section (or skip)
 
-        lda     #$95                    ; IRQ vector low
+        lda     #<irq_super_bonus       ; IRQ vector low
         sta     IRQ_VEC                 ; Set IRQ vector
-        lda     #$07                    ; IRQ vector high
+        lda     #>irq_super_bonus       ; IRQ vector high
         sta     IRQ_VEC_HI              ; Set IRQ vector
         lda     ROESSION                ; Get super bonus Y ($BD)
         adc     #$1E                    ; Add 30

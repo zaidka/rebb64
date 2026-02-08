@@ -297,7 +297,7 @@ D_0200      = $0200     ; Level pointer table (low bytes, 100 entries)
 D_0300      = $0300     ; Level pointer table (high bytes, 100 entries)
 ; D_7305-$7429: Music command handlers - now defined in music-command-handlers.s
 ; D_742A-$743F: Music data tables - now defined in music-command-handlers.s
-D_3F86      = $3F86     ; Bubble character table
+;D_3F86      = $3F86     ; Bubble character table - now defined in sprite-init.s
 
 ; Sprite masking tables
 
@@ -310,21 +310,21 @@ D_016F      = $016F     ; Enemy screen position temp (18 bytes)
 D_015D      = $015D     ; Enemy column positions (18 bytes)
 D_014B      = $014B     ; Enemy render state (18 bytes)
 D_A5B8      = D_A5B8_smc  ; SMC: operand of ldx #imm in D_A5B7 (game-init.s GAMEINIT2)
-D_2922      = $2922     ; Joystick data storage
-D_119F      = $119F     ; Saved game state
-D_3AB8      = $3AB8     ; Hurry-up handler
-D_3AF0      = $3AF0     ; Self-modifying code target (screen scroll)
-D_3BA1      = $3BA1     ; Self-modifying code target (screen scroll)
-D_3BFA      = $3BFA     ; Self-modifying code target (screen scroll)
-D_3D1E      = $3D1E     ; Screen scroll output buffer 2
-D_3CB2      = $3CB2     ; Screen scroll data buffer 1
-D_3CBB      = $3CBB     ; Screen scroll color buffer
-D_3CC4      = $3CC4     ; Screen scroll saved data 1
-D_3CCD      = $3CCD     ; Screen scroll saved data 2
-D_3CD6      = $3CD6     ; Screen scroll output buffer 1
+;D_2922      = $2922     ; Joystick data storage - now defined in spawn-handlers.s
+;D_119F      = $119F     ; Saved game state - now defined in special-enemies.s
+;D_3AB8      = $3AB8     ; Hurry-up handler - now defined in screen-scroll.s
+;D_3AF0      = $3AF0     ; Self-modifying code target (screen scroll) - now defined in screen-scroll.s
+;D_3BA1      = $3BA1     ; Self-modifying code target (screen scroll) - now defined in screen-scroll.s
+;D_3BFA      = $3BFA     ; Self-modifying code target (screen scroll) - now defined in screen-scroll.s
+;D_3D1E      = $3D1E     ; Screen scroll output buffer 2 - now defined in entity-state-tables.s
+;D_3CB2      = $3CB2     ; Screen scroll data buffer 1 - now defined in entity-state-tables.s
+;D_3CBB      = $3CBB     ; Screen scroll color buffer - now defined in entity-state-tables.s
+;D_3CC4      = $3CC4     ; Screen scroll saved data 1 - now defined in entity-state-tables.s
+;D_3CCD      = $3CCD     ; Screen scroll saved data 2 - now defined in entity-state-tables.s
+;D_3CD6      = $3CD6     ; Screen scroll output buffer 1 - now defined in entity-state-tables.s
 ; D_3F84 defined as label in sprite-init.s
 D_47F0      = $47F0     ; Sprite/charset data buffer
-D_045C      = $045C     ; Check player state routine
+D_045C      = check_player_state     ; Check player state routine
 D_47F8      = $47F8     ; Item table 1
 ; D_7BA6 - now defined as label in level-data-part2.s
 ; D_7AE3 - now defined as label in level-data-part2.s
@@ -353,11 +353,11 @@ D_4500      = $4500     ; Enemy template data table 3 (RAM copy)
 D_4600      = $4600     ; Platform Y position table / Enemy template data table 4
 D_4648      = $4648     ; Graphics work buffer (72 bytes)
 D_0100      = $0100     ; Stack page (used for temp storage)
-D_0A38      = $0A38     ; Entity spawn result storage
+D_0A38      = L_0A38     ; Entity spawn result storage
 ; D_0C9C defined as label in collision.s
-D_0CC2      = $0CC2     ; Self-modifying code target (entity spawn)
-D_0DC7      = $0DC7     ; Level number storage (credits handler)
-D_1200      = $1200     ; Temp data buffer
+;D_0CC2      = $0CC2     ; Self-modifying code target (entity spawn) - now defined in collision.s
+;D_0DC7      = $0DC7     ; Level number storage (credits handler) - now defined in enemy-ai.s
+;D_1200      = $1200     ; Temp data buffer - now defined in special-enemies.s
 D_D853      = $D853     ; Color RAM area 1
 D_D9D3      = $D9D3     ; Color RAM text output (self-modifying)
 D_DA5B      = $DA5B     ; Color RAM area 2
@@ -378,13 +378,13 @@ CHARONE     = $07       ; Character/color pointer
 ; Labels defined as "D_XXXX:" in include files don't need equates here
 
 ; Game variable area
-entry_0400  = $0400     ; Game variable area (used by special enemies)
-D_040A      = $040A     ; Score byte +1
-D_0400      = $0400     ; Score data / game variables base
-D_0406      = $0406     ; High score storage (3 bytes)
-D_040B      = $040B     ; Player name/initials storage
-D_049D      = $049D     ; Self-modifying code target (L_049D)
-D_0717      = $0717     ; IRQ handler continuation routine
+entry_0400  = game_variables     ; Game variable area (used by special enemies)
+D_040A      = game_variables + $0A     ; Score byte +1
+D_0400      = game_variables     ; Score data / game variables base
+D_0406      = game_variables + 6     ; High score storage (3 bytes)
+D_040B      = game_variables + $0B     ; Player name/initials storage
+D_049D      = L_049D     ; Self-modifying code target
+D_0717      = L0717     ; IRQ handler continuation routine
 ; D_0CF2 - now defined as label in enemy-ai.s
 
 ; Forward references for routines called from master.s before their definition
@@ -392,23 +392,23 @@ D_0717      = $0717     ; IRQ handler continuation routine
 ; D_0F73 - now defined as label in enemy-ai.s
 ; D_F073 now defined as label in entity-system.s
 ; D_105B - now defined as label in enemy-ai.s
-D_1319      = $1319     ; Update player sprites
+D_1319      = update_player_sprites     ; Update player sprites
 ; D_13BE - now defined as label in player-sprites.s
-D_1578      = $1578     ; Update bubbles physics
-D_1677      = $1677     ; Skip timer continuation (in .byte section)
-D_16E4      = $16E4     ; Continue game routine
-D_16EF      = $16EF     ; Continue flag
+D_1578      = update_bubbles     ; Update bubbles physics
+;D_1677      = $1677     ; Skip timer continuation (in .byte section) - now defined in bubbles-sprites.s
+;D_16E4      = $16E4     ; Continue game routine - now defined in bubbles-sprites.s
+;D_16EF      = $16EF     ; Continue flag - now defined in bubbles-sprites.s
 ; D_17BE - now defined as label in bubbles-sprites.s
-D_1805      = $1805     ; Update player sprite positions
-D_18D6      = $18D6     ; Self-modifying code storage
-D_18D8      = $18D8     ; Self-modifying code storage
-D_18DF      = $18DF     ; Self-modifying code storage
-D_1929      = $1929     ; Self-modifying code storage
-D_1CA0      = $1CA0     ; Player falling handler (in bb-level-complete.s)
-D_1CBD      = $1CBD     ; Game update routine (called from IRQ)
-D_2020      = $2020     ; Unknown routine
-D_30A9      = $30A9     ; Data table (possibly invalid address)
-D_3BF1      = $3BF1     ; Self-modifying code target in screen scroll
+D_1805      = update_sprite_positions     ; Update player sprite positions
+;D_18D6      = $18D6     ; Self-modifying code storage - now defined in render-screen.s
+;D_18D8      = $18D8     ; Self-modifying code storage - now defined in render-screen.s
+;D_18DF      = $18DF     ; Self-modifying code storage - now defined in render-screen.s
+;D_1929      = $1929     ; Self-modifying code storage - now defined in render-screen.s
+;D_1CA0     = $1CA0     ; Player falling handler - now alias to L_1CA0 in level-complete.s (unused equate)
+;D_1CBD      = $1CBD     ; Game update routine (called from IRQ) - now defined in joystick-input.s
+;D_2020      = $2020     ; Unknown routine - unused equate, removed
+;D_30A9      = $30A9     ; Data table (possibly invalid address) - unused equate, removed
+;D_3BF1      = $3BF1     ; Self-modifying code target in screen scroll - now defined in screen-scroll.s
 ; D_3EF3 - now defined as label in sprite-init.s
 ; L_0D4A - now defined as label in enemy-ai.s
 ; D_CF2 - now defined as label in enemy-ai.s
@@ -514,7 +514,7 @@ D_7C26      = D_7C24 + 2 ; Add score routine (entry at SED instruction)
 ; L_EFBC now defined as label in entity-system.s
 ; D_EFEA now defined as label in entity-system.s
 D_4985      = $4985     ; Unknown routine
-D_0409      = $0409     ; Score/stat value array
+;D_0409      = $0409     ; Score/stat value array - now defined in game-variables.s
 D_D8AF      = $D8AF     ; State array
 ; D_F005 now defined as label in entity-system.s
 ; D_F073 now defined as label in entity-system.s
@@ -528,29 +528,29 @@ D_D8AF      = $D8AF     ; State array
 
 ; Frequency tables - defined in music-freqs.s (relocatable)
 ; D_F3B9 and D_F418 are now aliases to FREQ_TABLE_LO and FREQ_TABLE_HI
-; which are labels defined within the MUSICFREQS segment
+; which are labels defined within the SOUND_HI segment
 ; L_F846 now defined as label in sound-engine.s
-; D_F477 - removed: now music_init_code label in music-freqs-tables.s
-; D_F4BD - removed: now label in sound-engine.s
-; D_F53C - removed: now label in sound-engine.s
-; D_F887 now defined as label in sound-engine.s
+; D_F477 - removed: now music_start label in sound.s
+; D_F4BD - removed: now sound_init label in sound.s
+; D_F53C - removed: now sound_update label in sound.s
+; D_F887 - removed: now sfx_start label in sound.s
 
 ; --- Music & Sound Data Forward References ---
-; Labels now defined in music-sound-data.s (CODE_F2C4 segment) - no longer hardcoded
+; Labels now defined in sound.s (SOUND_HI segment) - no longer hardcoded
 ; D_F57C - removed: now smc_jmp_vec+1 label in sound-engine.s
 ; D_F608 - removed: now smc_copy_src+1 label in sound-engine.s
 ; D_F60B - removed: now smc_copy_dst+1 label in sound-engine.s
 
 ; --- Entity Interaction Forward References ---
 ; D_2159 is defined in bb-player-animation.s
-D_37C7      = $37C7     ; Player attribute table
+;D_37C7      = $37C7     ; Player attribute table - now defined in level-display.s
 
 ; --- Player Movement Forward References ---
 ; D_272F, D_273D, D_2782 are defined in bb-player-movement.s
 ; D_1A6F is defined in bb-render-screen.s
 ; D_1E87 is defined in bb-player-animation.s
 ; D_1E2E is defined in bb-joystick-input.s
-D_277F      = $277F     ; Temp storage
+;D_277F      = $277F     ; Temp storage - now defined in player-movement.s
 
 ; --- Spawn Handler Forward References ---
 ; D_2916, D_2996, D_2923, D_292E, D_2985, D_289A are defined in bb-spawn-handlers.s
@@ -558,10 +558,10 @@ D_277F      = $277F     ; Temp storage
 ; D_2301, D_220C, D_2162 are defined in bb-entity-interaction.s
 ; D_1E6C is defined in bb-player-animation.s
 ; D_A754, D_A75F already defined above in Spawn Point Data section
-D_2970      = $2970     ; Self-modifying code target
-D_2971      = $2971     ; Self-modifying code target
-D_298D      = $298D     ; Self-modifying code target
-D_298E      = $298E     ; Self-modifying code target
+;D_2970      = $2970     ; Self-modifying code target - now defined in spawn-handlers.s
+;D_2971      = $2971     ; Self-modifying code target - now defined in spawn-handlers.s
+;D_298D     = $298D     ; Self-modifying code target - now defined as L_298D in spawn-handlers.s (unused equate)
+;D_298E     = $298E     ; Self-modifying code target - now defined as L_298E in spawn-handlers.s (unused equate)
 
 ; --- Item Collision Forward References ---
 ; D_29BC, D_29C0 are defined in bb-item-collision.s
@@ -581,8 +581,8 @@ VIC_SPR_XEXP = $D01D    ; VIC sprite X expansion register
 ; D_2B31, D_2BBD, D_2C32, D_2C8C, D_2C9F, D_2CB7 are defined in bb-level-setup.s
 D_4A10      = __VIC_CHARSET_B__ + $210     ; Item work buffer 3
 D_4A30      = __VIC_CHARSET_B__ + $230     ; Item work buffer 4
-D_0A39      = $0A39     ; Bonus level data
-D_0A3A      = $0A3A     ; Bonus level data
+;D_0A39      = $0A39     ; Bonus level data - now defined in game-loop.s
+;D_0A3A      = $0A3A     ; Bonus level data - now defined in game-loop.s
 D_7F83      = D_7F53 + $30 ; Level 99 death setup (inside player_death_respawn)
 ; D_7C3C - now defined as label in level-data-part2.s
 
@@ -600,15 +600,15 @@ D_7F83      = D_7F53 + $30 ; Level 99 death setup (inside player_death_respawn)
 ; D_32C1, D_3421, D_344A are defined in bb-extend-bonus.s
 
 ; --- Bonus Round Forward References ---
-D_2AE9      = $2AE9     ; Configuration byte storage
+;D_2AE9      = $2AE9     ; Configuration byte storage - now defined in super-bonus.s
 ; D_48A8, D_48B0, D_48B8, D_48C0, D_48C8 defined in init-routines.s
 D_7D37      = sprite_data_7C40 + $F7  ; Bonus stage 1 pattern A destination (8 bytes)
 D_7D76      = sprite_data_7C40 + $136 ; Bonus stage 1 pattern B destination (8 bytes)
 
 ; --- Bonus Stage Extended Forward References ---
 ; D_35B0, D_35C0, D_3621, D_362F, D_370C, D_3771, D_3794 are defined in bb-bonus-stage-extended.s
-D_37C9      = $37C9     ; Routine defined later (after $37C6)
-D_392A      = $392A     ; Routine defined later (after this module)
+;D_37C9      = $37C9     ; Routine defined later (after $37C6) - now defined in level-display.s
+;D_392A      = $392A     ; Routine defined later (after this module) - now defined in level-display.s
 D_4880      = __VIC_CHARSET_B__ + $80     ; Level layout buffer 2
 D_4850      = __VIC_CHARSET_B__ + $50     ; Temporary item data storage
 D_7D3E      = sprite_data_7C40 + $FE  ; Screen buffer 1 offset $3E
@@ -653,8 +653,10 @@ SCREEN_TO_COLORRAM_EOR = >__VIC_SCREEN_B__ ^ >$D800
 .include "work-ram-init.s"
 .include "screen-ram-init.s"
 
-; Music sequence data ($7040-$7304, 709 bytes)
-.include "music-sequence.s"
+; Unified sound & music system (all sound code and data)
+; The sound source is selected by SOUND_SRC in the Makefile, which generates
+; sound-select.inc (a one-line file containing e.g. '.include "sound.s"').
+.include "sound-select.inc"
 
 ; Entity state arrays, bubble masks ($8480-$8AFF) & title screen music ($8B00-$8EFF)
 .include "sprites2-tables.s"
@@ -767,32 +769,13 @@ SCREEN_TO_COLORRAM_EOR = >__VIC_SCREEN_B__ ^ >$D800
 ; Credits handler, music tables & level init ($F1AC-$F23F, 148 bytes)
 .include "credits-handler-partial.s"
 
-; Music pointer table (aligned, separate file)
-.include "music-ptr-table.s"
-
-; Music tables ($F240-$F2C3, 132 bytes) – now only timing & control data
-.include "music-tables.s"
+; (Music pointer table and music tables are now in sound.s)
 
 ; Level data part 2 ($7440-$7FFF, 3008 bytes)
 .include "level-data-part2.s"
 
-; Music command handlers ($7305-$743F, 315 bytes)
-.include "music-command-handlers.s"
-
-; Music & sound effect data tables
-.include "music-sound-data.s"
-
-; Music frequency tables and related code
-.include "music-freqs-tables.s"
-
-; Sound engine - SID music and effects system
-.include "sound-engine.s"
-
-; Sound Effects and Music Sequence Data
-.include "sfx-music-data.s"
-
-; Final data section
-.include "final-data.s"
+; (Music command handlers, sound data, sound engine, SFX data, and
+; final data section are all now in sound.s)
 
 ; ============================================================================
 ; END OF PRG FILE ($FFF8-$FFFA)

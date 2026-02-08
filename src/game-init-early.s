@@ -148,9 +148,9 @@ L_44B0:
         ;-----------------------------------------------------------------------
         ; Hardware IRQ Vector Setup ($FFFE-$FFFF in banked RAM)
         ;-----------------------------------------------------------------------
-        lda     #$AB                                ; IRQ handler address low byte
+        lda     #<irq_frame_update                  ; IRQ handler address low byte
         sta     IRQ_VEC                             ; Set hardware IRQ vector low
-        lda     #$06                                ; IRQ handler address high byte
+        lda     #>irq_frame_update                  ; IRQ handler address high byte
         sta     IRQ_VEC_HI                          ; Set hardware IRQ vector high
                                                     ; IRQ vector now points to $06AB
 
@@ -171,9 +171,9 @@ L_44B0:
         ;-----------------------------------------------------------------------
         ; NMI Vector Setup
         ;-----------------------------------------------------------------------
-        lda     #$2D                                ; NMI handler address low byte
+        lda     #<nmi_handler                       ; NMI handler address low byte
         sta     NMI_VEC                             ; Set NMI vector low
-        lda     #$07                                ; NMI handler address high byte
+        lda     #>nmi_handler                       ; NMI handler address high byte
         sta     NMI_VEC_HI                          ; Set NMI vector high
                                                     ; NMI vector now points to $072D
 
@@ -184,7 +184,7 @@ L_44B0:
         sta     $37
         sta     D_5AFF
 
-        jsr     D_F4BD                              ; Sound initialization routine
+        jsr     sound_init                              ; Sound initialization routine
         cli                                         ; Enable interrupts
         jsr     clear_screen                         ; Screen initialization routine
 
@@ -243,8 +243,8 @@ L_4556:
         ldy     #>credits_page_2                    ; Credits text high
         jsr     display_text_string                  ; Call routine with params
 
-        ldy     #$35
-        jsr     D_05AD                              ; Call routine
+        ldy     #(song_title_screen - music_song_table)
+        jsr     D_05AD                              ; Start title music
 
         ;-----------------------------------------------------------------------
         ; Title Screen Wait Loop - Check for Fire Button or Cheat Code
@@ -286,7 +286,7 @@ L_4590:
         beq     L_4590                              ; Wait for release
 
 L_45A1:
-        jsr     D_F4BD                              ; Sound routine
+        jsr     sound_init                              ; Sound routine
         jmp     D_F005                              ; Jump to main game loop
 
 ;-------------------------------------------------------------------------------

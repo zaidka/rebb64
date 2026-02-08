@@ -203,6 +203,7 @@ D_2EC0:
     jmp  D_1844                 ; Render routine 2 again and return
 
 ; Level transition continuation - copies data and manages entity states
+D_2ECC:
     jsr  L_069B                 ; Level data load routine
     ldx  #$22                   ; Copy 35 bytes
 L_2ED1:

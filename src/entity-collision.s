@@ -88,6 +88,7 @@ L_3D74_next_entity:
         bpl     L_3D31_check_entity_loop            ; $3D75 - Loop for all entities
 
         ; Check if current entity was captured
+routine_3D77:                                       ; $3D77 - Captured entity state check
         lda     D_AA42,x                            ; $3D77 - Check saved state
         cmp     #$24                                ; $3D7A - Is it >= $24?
         bcs     routine_3DB0                        ; $3D7C - Skip to bubble handler

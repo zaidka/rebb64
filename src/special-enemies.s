@@ -190,6 +190,7 @@ skip_item_check_far:
         lda     #$FF                    ; Set special flag
         sta     D_872A
         lda     #$00                    ; Clear game state
+D_119F := * - 1                         ; SMC: operand byte
         sta     ZP_BE
         rts
 
@@ -253,6 +254,7 @@ L11F2:
         lda     #$00                    ; Clear path length
         sta     INPPTR                  ; Path counter
         jsr     D_E9EA                  ; Random number
+D_1200:
         and     #$0F                    ; Mask to 0-15
         sta     OLDLIN1                 ; Left path length
         jsr     D_E9EA                  ; Random number
@@ -340,6 +342,7 @@ L1282:
 ; --- Move toward player ($1286) ---
 L1286:
         lda     #$3A                    ; Default: collected type
+L1288:                                  ; $1288 - Entry point for score handler
         sta     smc_collect_type+1      ; Self-mod: store type
         jsr     D_7BFE                  ; Get screen position
         ldy     D_0193,x                ; Get player tracking

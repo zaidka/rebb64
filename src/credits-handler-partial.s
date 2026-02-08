@@ -96,7 +96,7 @@ L_F1F9:
 L_F201:
     lda  D_F20B,x               ; Load music index from table
     ldy  D_F211,x               ; Load music parameter from table
-    jmp  D_F887                 ; Jump to music handler
+    jmp  sfx_start                 ; Jump to music handler
 
     ; L_F20A - Return point (branch target from F1DC and F1FB)
 L_F20A:
@@ -110,19 +110,19 @@ L_F20A:
 ; ==============================================================================
 
 D_F20B:
-    .byte <sfx_voice_config_0            ; -> sfx_voice_config_0 ($F976)
-    .byte <sfx_voice_config_1            ; -> sfx_voice_config_1 ($F994)
-    .byte <sfx_voice_config_2            ; -> sfx_voice_config_2 ($F9B2)
-    .byte <sfx_voice_config_3            ; -> sfx_voice_config_3 ($F9D0)
-    .byte <sfx_voice_config_4            ; -> sfx_voice_config_4 ($F9F5)
-    .byte <sfx_voice_config_5            ; -> sfx_voice_config_5 ($FA13)
+    .byte <sfx_preset_0            ; -> sfx_preset_0 ($F976)
+    .byte <sfx_preset_1            ; -> sfx_preset_1 ($F994)
+    .byte <sfx_preset_2            ; -> sfx_preset_2 ($F9B2)
+    .byte <sfx_preset_3            ; -> sfx_preset_3 ($F9D0)
+    .byte <sfx_preset_4            ; -> sfx_preset_4 ($F9F5)
+    .byte <sfx_preset_5            ; -> sfx_preset_5 ($FA13)
 D_F211:
-    .byte >sfx_voice_config_0            ; -> sfx_voice_config_0 ($F976)
-    .byte >sfx_voice_config_1            ; -> sfx_voice_config_1 ($F994)
-    .byte >sfx_voice_config_2            ; -> sfx_voice_config_2 ($F9B2)
-    .byte >sfx_voice_config_3            ; -> sfx_voice_config_3 ($F9D0)
-    .byte >sfx_voice_config_4            ; -> sfx_voice_config_4 ($F9F5)
-    .byte >sfx_voice_config_5            ; -> sfx_voice_config_5 ($FA13)
+    .byte >sfx_preset_0            ; -> sfx_preset_0 ($F976)
+    .byte >sfx_preset_1            ; -> sfx_preset_1 ($F994)
+    .byte >sfx_preset_2            ; -> sfx_preset_2 ($F9B2)
+    .byte >sfx_preset_3            ; -> sfx_preset_3 ($F9D0)
+    .byte >sfx_preset_4            ; -> sfx_preset_4 ($F9F5)
+    .byte >sfx_preset_5            ; -> sfx_preset_5 ($FA13)
 
 ; ==============================================================================
 ; Level-Specific Initialization ($F217-$F23F, 41 bytes)

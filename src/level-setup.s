@@ -215,9 +215,9 @@ L_2C48:
         ; Bonus level specific setup
         lda     #$32                    ; a9 32        $2c75 - 50 frames
         sta     D_5BBF                  ; 8d bf 5b     $2c77 - Special item countdown
-        lda     #$34                    ; a9 34        $2c7a
+        lda     #<special_item_handler   ; a9 34        $2c7a
         sta     D_0A39                  ; 8d 39 0a     $2c7c
-        lda     #$11                    ; a9 11        $2c7f
+        lda     #>special_item_handler  ; a9 11        $2c7f
         sta     D_0A3A                  ; 8d 3a 0a     $2c81
         lda     #$20                    ; a9 20        $2c84
         sta     L_0A38                  ; 8d 38 0a     $2c86
@@ -369,13 +369,14 @@ L_2D40:
         lda     D_2D88,y                ; b9 88 2d     $2d4b - Get effect routine high byte
         sta     D_2D53                  ; 8d 53 2d     $2d4e - Store in JSR target (self-modifying)
 
+smc_effect_jsr:
         jsr     entry_0400              ; 20 00 04     $2d51 - Call effect routine (self-modified)
+D_2D52      = smc_effect_jsr + 1        ; SMC: low byte of JSR target
+D_2D53      = smc_effect_jsr + 2        ; SMC: high byte of JSR target
         ldy     #$01                    ; a0 01        $2d54
+smc_player_ldx:
         ldx     #$00                    ; a2 00        $2d56 - Restore player index (self-modified)
-
-D_2D52      = $2D52                     ; Self-modified JSR target (low byte)
-D_2D53      = $2D53                     ; Self-modified JSR target (high byte)
-D_2D57      = $2D57                     ; Self-modified LDX operand
+D_2D57      = smc_player_ldx + 1        ; SMC: operand of LDX #imm
 
 L_2D58:
         dey                             ; 88           $2d58 - Next item slot

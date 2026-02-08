@@ -12,6 +12,7 @@
 
 .segment "CODE"
 
+D_29BB:
         dec     D_87A0,x                ; Decrement collision state
         beq     L_2A0B                  ; f0 4b        $29be
 

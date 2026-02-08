@@ -18,6 +18,7 @@
 .segment "CODE"
 
 ; Position update code for super bonus items ($2A18-$2A27)
+D_2A18:
         lda     $BA,x               ; $2A18 - Get X position
         clc
         adc     D_A7A3,x            ; Add X velocity from table
@@ -28,15 +29,16 @@
         sta     $C2,x               ; Store new Y position
 
 ; Code fragment at $2A28-$2A3E (23 bytes)
-.byte   $bd                             ; $2a28
-.byte   $48                             ; 48           $2a29 - PHA
-.byte   $85,$49                         ; 85 49        $2a2a - STA FORPNT
-.byte   $05,$9d                         ; 05 9d        $2a2c - ORA PTR2
-.byte   $48                             ; 48           $2a2e - PHA
-.byte   $85,$a9                         ; 85 a9        $2a2f - STA BAUDOF
-.byte   $00                             ; 00           $2a31 - BRK
-.byte   $9d, $28, $87, $e0, $02, $d0, $3a, $b5  ; $2a32
-.byte   $c2, $c9, $50, $b0, $34         ; $2a3a
+        lda     D_8548,x                ; bd 48 85     $2a28 - Get entity timer
+        eor     #$05                    ; 49 05        $2a2b - Toggle bits
+        sta     D_8548,x                ; 9d 48 85     $2a2d - Store updated timer
+        lda     #$00                    ; a9 00        $2a30 - Clear value
+        sta     D_8728,x                ; 9d 28 87     $2a32 - Clear entity data
+        cpx     #$02                    ; e0 02        $2a35 - Check entity index
+        bne     L_2A73                  ; d0 3a        $2a37 - Not player, return
+        lda     ZP_C2,x                 ; b5 c2        $2a39 - Get Y position
+        cmp     #$50                    ; c9 50        $2a3b - Check Y threshold
+        bcs     L_2A73                  ; b0 34        $2a3d - Too low, return
 
 ; Spawn special items from data tables at $4700
 D_2A3F:
@@ -77,18 +79,15 @@ L_2A73:
         rts                             ; 60           $2a73
 
 ; Code fragment at $2A74-$2A85 (18 bytes)
-; Mixed code/data section
-.byte   $bd                             ; $2a74
-.byte   $48                             ; 48           $2a75 - PHA
-.byte   $85,$49                         ; 85 49        $2a76 - STA FORPNT
-.byte   $03,$9d                         ; 03 9d        $2a78 - SLO (PTR2,x) - illegal opcode
-.byte   $48                             ; 48           $2a7a - PHA
-.byte   $85,$a5                         ; 85 a5        $2a7b - STA SHCNL
-.byte   $08                             ; 08           $2a7d - PHP
-.byte   $29,$02                         ; 29 02        $2a7e - AND #$02
-.byte   $d0,$f1                         ; d0 f1        $2a80 - BNE L_2A73
-.byte   $e0,$02                         ; e0 02        $2a82 - CPX #$02
-.byte   $d0,$ed                         ; d0 ed        $2a84 - BNE L_2A73
+D_2A74:
+        lda     D_8548,x                ; bd 48 85     $2a74 - Get entity timer
+        eor     #$03                    ; 49 03        $2a77 - Toggle bits
+        sta     D_8548,x                ; 9d 48 85     $2a79 - Store updated timer
+        lda     ENDCHR                  ; a5 08        $2a7c - Get frame counter
+        and     #$02                    ; 29 02        $2a7e - Check bit 1
+        bne     L_2A73                  ; d0 f1        $2a80 - Skip if set
+        cpx     #$02                    ; e0 02        $2a82 - Check entity index
+        bne     L_2A73                  ; d0 ed        $2a84 - Not player, return
 
 ; Super bonus sprite expansion handler
         ldx     #$05                    ; a2 05        $2a86 - 6 sprites
@@ -129,14 +128,16 @@ L_2AAD:
         bpl     L_2AAD                  ; 10 eb        $2ac0 - Loop for all sprites
 
 ; Code fragment at $2AC2-$2ACA (9 bytes)
-.byte   $a5                             ; $2ac2 - LDA
-.byte   $08                             ; 08           $2ac3 - PHP
-.byte   $c9,$3c                         ; c9 3c        $2ac4 - CMP #$3c
-.byte   $90,$ab                         ; 90 ab        $2ac6 - BCC L_2A73
-.byte   $4c,$3f,$2a                     ; 4c 3f 2a     $2ac8 - JMP D_2A3F
+        lda     ENDCHR                  ; a5 08        $2ac2 - Get frame counter
+        cmp     #$3c                    ; c9 3c        $2ac4 - Check if >= 60
+        bcc     L_2A73                  ; 90 ab        $2ac6 - Not yet, return
+        jmp     D_2A3F                  ; 4c 3f 2a     $2ac8 - Spawn special items
 
-; Data at $2ACB-$2AD0 (6 bytes)
-.byte   $a5, $c4, $c9, $c8, $f0, $28    ; $2acb
+; Code at $2ACB-$2AD0 (6 bytes)
+D_2ACB:
+        lda     ZP_C4                   ; a5 c4        $2acb - Get Y position
+        cmp     #$c8                    ; c9 c8        $2acd - Check Y threshold
+        beq     L_2AF9                  ; f0 28        $2acf - At threshold, branch
 
 ; Initialize super bonus sprite positions
         lda     #$80                    ; a9 80        $2ad1 - X position $80 (128)
@@ -154,6 +155,7 @@ L_2ADF:
         tya                             ; 98           $2ae4 - Get loop counter
         sta     D_8522,y                ; 99 22 85     $2ae5 - Store index
         lda     #$00                    ; a9 00        $2ae8
+D_2AE9 := * - 1                         ; SMC: operand byte
         sta     D_854A,y                ; 99 4a 85     $2aea - Clear item timer
         lda     a:ZP_C4,y               ; b9 c4 00     $2aed - Get Y position
         clc                             ; 18           $2af0
@@ -162,6 +164,7 @@ L_2ADF:
         dey                             ; 88           $2af6
         bpl     L_2ADF                  ; 10 e6        $2af7 - Loop for all items
 
+L_2AF9:
         ldy     #$01                    ; a0 01        $2af9 - Check both players
 
 ; Check player collision with super bonus

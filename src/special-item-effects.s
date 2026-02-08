@@ -24,81 +24,81 @@
 ; Indexed by special item type (0-34)
 ; Used at level-setup.s:365 - lda D_2D65,y
 D_2D65:
-        .byte   <final_routine          ; Entry 0:  $7FF1
-        .byte   $8A                     ; Entry 1:  $348A
-        .byte   $95                     ; Entry 2:  $3495
-        .byte   $AB                     ; Entry 3:  $2DAB -> D_2DAB
-        .byte   $B2                     ; Entry 4:  $2DB2 -> D_2DB2
-        .byte   $CD                     ; Entry 5:  $2DCD
-        .byte   <D_A64D                 ; Entry 6:  $A64D
-        .byte   <D_A653                 ; Entry 7:  $A653
-        .byte   $D7                     ; Entry 8:  $2DD7
-        .byte   $BE                     ; Entry 9:  $2DBE
-        .byte   $C7                     ; Entry 10: $2DC7
-        .byte   $CC                     ; Entry 11: $2ECC
-        .byte   $5F                     ; Entry 12: $2F5F
-        .byte   $62                     ; Entry 13: $2F62
-        .byte   $65                     ; Entry 14: $2F65
-        .byte   $68                     ; Entry 15: $2F68
-        .byte   $7D                     ; Entry 16: $2F7D
-        .byte   $83                     ; Entry 17: $2F83
-        .byte   $89                     ; Entry 18: $2F89
-        .byte   $20                     ; Entry 19: $8D20
-        .byte   <D_7FA4                 ; Entry 20: $7FA4
-        .byte   $8D                     ; Entry 21: $988D
-        .byte   <D_7FA7                 ; Entry 22: $7FA7
-        .byte   $98                     ; Entry 23: $A098
-        .byte   $A0                     ; Entry 24: $02A0
-        .byte   $FA                     ; Entry 25: $0AFA
-        .byte   $02                     ; Entry 26: $A702
-        .byte   $0A                     ; Entry 27: $B00A
-        .byte   $A7                     ; Entry 28: $20A7
-        .byte   $B0                     ; Entry 29: $20B0
-        .byte   $20                     ; Entry 30: $2120
-        .byte   $20                     ; Entry 31: $3720
-        .byte   $21                     ; Entry 32: $3C21
-        .byte   <D_7C37                 ; Entry 33: $7C37
-        .byte   <D_7C3C                 ; Entry 34: $7C3C
+        .byte   <final_routine          ; Entry 0:  final_routine
+        .byte   <D_348A                 ; Entry 1:  D_348A
+        .byte   <D_3495                 ; Entry 2:  D_3495
+        .byte   <D_2DAB                 ; Entry 3:  D_2DAB
+        .byte   <D_2DB2                 ; Entry 4:  D_2DB2
+        .byte   <D_2DCD                 ; Entry 5:  D_2DCD
+        .byte   <D_A64D                 ; Entry 6:  D_A64D
+        .byte   <D_A653                 ; Entry 7:  D_A653
+        .byte   <D_2DD7                 ; Entry 8:  D_2DD7
+        .byte   <D_2DBE                 ; Entry 9:  D_2DBE
+        .byte   <D_2DC7                 ; Entry 10: D_2DC7
+        .byte   <D_2ECC                 ; Entry 11: D_2ECC
+        .byte   <D_2F5F                 ; Entry 12: D_2F5F
+        .byte   <D_2F62                 ; Entry 13: D_2F62
+        .byte   <D_2F65                 ; Entry 14: D_2F65
+        .byte   <D_2F68                 ; Entry 15: D_2F68
+        .byte   <D_2F7D                 ; Entry 16: D_2F7D
+        .byte   <D_2F83                 ; Entry 17: D_2F83
+        .byte   <D_2F89                 ; Entry 18: D_2F89
+        .byte   <D_3620                 ; Entry 19: D_3620
+        .byte   <D_7FA4                 ; Entry 20: D_7FA4
+        .byte   <D_348D                 ; Entry 21: D_348D
+        .byte   <D_7FA7                 ; Entry 22: D_7FA7
+        .byte   <D_3498                 ; Entry 23: D_3498
+        .byte   <D_34A0                 ; Entry 24: D_34A0
+        .byte   <D_34FA                 ; Entry 25: D_34FA
+        .byte   <D_3502                 ; Entry 26: D_3502
+        .byte   <D_350A                 ; Entry 27: D_350A
+        .byte   <D_35A7                 ; Entry 28: D_35A7
+        .byte   <D_35B0                 ; Entry 29: D_35B0
+        .byte   <D_3620                 ; Entry 30: D_3620
+        .byte   <D_3620                 ; Entry 31: D_3620
+        .byte   <D_3621                 ; Entry 32: D_3621
+        .byte   <D_7C37                 ; Entry 33: D_7C37
+        .byte   <D_7C3C                 ; Entry 34: D_7C3C
 
 ; --- Special effect routine address table (high bytes) ---
 ; Indexed by special item type (0-34)
 ; Used at level-setup.s:367 - lda D_2D88,y
 D_2D88:
-        .byte   >final_routine          ; Entry 0:  $7FF1
-        .byte   $34                     ; Entry 1:  $348A
-        .byte   $34                     ; Entry 2:  $3495
-        .byte   $2D                     ; Entry 3:  $2DAB -> D_2DAB
-        .byte   $2D                     ; Entry 4:  $2DB2 -> D_2DB2
-        .byte   $2D                     ; Entry 5:  $2DCD
-        .byte   >D_A64D                 ; Entry 6:  $A64D
-        .byte   >D_A653                 ; Entry 7:  $A653
-        .byte   $2D                     ; Entry 8:  $2DD7
-        .byte   $2D                     ; Entry 9:  $2DBE
-        .byte   $2D                     ; Entry 10: $2DC7
-        .byte   $2E                     ; Entry 11: $2ECC
-        .byte   $2F                     ; Entry 12: $2F5F
-        .byte   $2F                     ; Entry 13: $2F62
-        .byte   $2F                     ; Entry 14: $2F65
-        .byte   $2F                     ; Entry 15: $2F68
-        .byte   $2F                     ; Entry 16: $2F7D
-        .byte   $2F                     ; Entry 17: $2F83
-        .byte   $2F                     ; Entry 18: $2F89
-        .byte   $36                     ; Entry 19: $3620
-        .byte   >D_7FA4                 ; Entry 20: $7FA4
-        .byte   $34                     ; Entry 21: $348D
-        .byte   >D_7FA7                 ; Entry 22: $7FA7
-        .byte   $34                     ; Entry 23: $3498
-        .byte   $34                     ; Entry 24: $34A0
-        .byte   $34                     ; Entry 25: $34FA
-        .byte   $35                     ; Entry 26: $3502
-        .byte   $35                     ; Entry 27: $350A
-        .byte   $35                     ; Entry 28: $35A7
-        .byte   $35                     ; Entry 29: $35B0
-        .byte   $36                     ; Entry 30: $3620
-        .byte   $36                     ; Entry 31: $3620
-        .byte   $36                     ; Entry 32: $3621
-        .byte   >D_7C37                 ; Entry 33: $7C37
-        .byte   >D_7C3C                 ; Entry 34: $7C3C
+        .byte   >final_routine          ; Entry 0:  final_routine
+        .byte   >D_348A                 ; Entry 1:  D_348A
+        .byte   >D_3495                 ; Entry 2:  D_3495
+        .byte   >D_2DAB                 ; Entry 3:  D_2DAB
+        .byte   >D_2DB2                 ; Entry 4:  D_2DB2
+        .byte   >D_2DCD                 ; Entry 5:  D_2DCD
+        .byte   >D_A64D                 ; Entry 6:  D_A64D
+        .byte   >D_A653                 ; Entry 7:  D_A653
+        .byte   >D_2DD7                 ; Entry 8:  D_2DD7
+        .byte   >D_2DBE                 ; Entry 9:  D_2DBE
+        .byte   >D_2DC7                 ; Entry 10: D_2DC7
+        .byte   >D_2ECC                 ; Entry 11: D_2ECC
+        .byte   >D_2F5F                 ; Entry 12: D_2F5F
+        .byte   >D_2F62                 ; Entry 13: D_2F62
+        .byte   >D_2F65                 ; Entry 14: D_2F65
+        .byte   >D_2F68                 ; Entry 15: D_2F68
+        .byte   >D_2F7D                 ; Entry 16: D_2F7D
+        .byte   >D_2F83                 ; Entry 17: D_2F83
+        .byte   >D_2F89                 ; Entry 18: D_2F89
+        .byte   >D_3620                 ; Entry 19: D_3620
+        .byte   >D_7FA4                 ; Entry 20: D_7FA4
+        .byte   >D_348D                 ; Entry 21: D_348D
+        .byte   >D_7FA7                 ; Entry 22: D_7FA7
+        .byte   >D_3498                 ; Entry 23: D_3498
+        .byte   >D_34A0                 ; Entry 24: D_34A0
+        .byte   >D_34FA                 ; Entry 25: D_34FA
+        .byte   >D_3502                 ; Entry 26: D_3502
+        .byte   >D_350A                 ; Entry 27: D_350A
+        .byte   >D_35A7                 ; Entry 28: D_35A7
+        .byte   >D_35B0                 ; Entry 29: D_35B0
+        .byte   >D_3620                 ; Entry 30: D_3620
+        .byte   >D_3620                 ; Entry 31: D_3620
+        .byte   >D_3621                 ; Entry 32: D_3621
+        .byte   >D_7C37                 ; Entry 33: D_7C37
+        .byte   >D_7C3C                 ; Entry 34: D_7C3C
 
 ; ==============================================================================
 ; SPECIAL ITEM EFFECT HANDLERS
@@ -131,8 +131,10 @@ D_2DBE:
         jsr     D_2F5F                  ; Call effect 1
         jsr     D_2F62                  ; Call effect 2
         jsr     D_2F65                  ; Call effect 3
+D_2DC7:
         jsr     D_2DAB                  ; Call set item type
         jsr     D_2DB2                  ; Call set effect
+D_2DCD:
         lda     #$FF                    ; Flag value
         sta     D_A781,x                ; Store additional flag
 

@@ -55,6 +55,7 @@
 ;-------------------------------------------------------------------------------
 D_348A:
     ldy  #$10                   ; Y parameter = $10
+D_348D = * + 1                  ; BIT trick: entry here reads A0 20 = LDY #$20
     bit  D_20A0                 ; Test bits (dummy instruction, affects flags)
     lda  #$1B                   ; Bonus type $1B
     ldx  #$00                   ; Stage index 0
@@ -66,6 +67,7 @@ D_348A:
 ;-------------------------------------------------------------------------------
 D_3495:
     ldy  #$20                   ; Y parameter = $20
+D_3498 = * + 1                  ; BIT trick: entry here reads A0 30 = LDY #$30
     bit  D_30A0                 ; Test bits (dummy instruction, affects flags)
     lda  #$18                   ; Bonus type $18
     ldx  #$01                   ; Stage index 1
@@ -134,8 +136,8 @@ L_34E8:
     sty  D_5A7F                 ; Store countdown at D_5A7F
     lda  #$16                   ; Timer value 22
     sta  D_5ABF                 ; Store countdown at D_5ABF
-    iny                         ; Y = $19
-    jsr  D_05AD                 ; Call setup routine with Y=$19
+    iny                         ; Y = $19 (song_bonus_round - music_song_table)
+    jsr  D_05AD                 ; Start bonus round music
     rts                         ; Return
 
 ;-------------------------------------------------------------------------------
@@ -324,6 +326,7 @@ L_3593:
     dey                         ; Next byte (counting down)
     bpl  L_3576                 ; Continue for all 32 bytes
     
+D_35A7:
     rts                         ; Return
 
 ;-------------------------------------------------------------------------------

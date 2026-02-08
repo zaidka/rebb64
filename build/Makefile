@@ -2,10 +2,12 @@
 # ========================================
 #
 # Usage:
-#   make          - Build the game
-#   make clean    - Remove build artifacts
-#   make verify   - Build and verify against original
-#   make release  - Build runnable PRG (requires tscrunch)
+#   make                                  - Build the game
+#   make clean                            - Remove build artifacts
+#   make verify                           - Build and verify against original
+#   make release                          - Build runnable PRG (requires tscrunch)
+#   make sid                              - Build standalone SID file
+#   make SOUND_SRC=my-sound.s             - Build with a different sound source
 
 # Tools
 CA65 = ca65
@@ -20,6 +22,12 @@ DATA_DIR = ../data
 # Config
 CONFIG = c64-prg.cfg
 
+# Sound source selection
+# Change this to use a different conforming sound source.
+# The source must conform to the API contract documented in sid-wrapper.s.
+# Note: make verify only passes with the original sound.s.
+SOUND_SRC = sound.s
+
 # Output
 OUTPUT = rebb64-raw.prg
 RELEASE = rebb64.prg
@@ -32,7 +40,14 @@ REFERENCE_SHA256 = fdba2390782653ba2533b2d87c44c8f0480ab18968a2c0ccc0cef8300fcee
 LEVEL_BINS = level-bitmaps.bin level-colors.bin level-flags.bin \
              enemy-spawns.bin item-positions.bin physics-flags.bin
 
+# Generated include file that selects the active sound source.
+# Used by both master.s (game build) and sid-wrapper.s (SID build).
+SOUND_INC = sound-select.inc
+
 all: $(OUTPUT)
+
+$(SOUND_INC):
+	@echo '.include "$(SOUND_SRC)"' > $@
 
 # Level data conversion (levels.txt -> binary files)
 $(LEVEL_BINS): $(DATA_DIR)/levels.txt convert-levels.py
@@ -109,9 +124,9 @@ grumple-gromit.bin: $(DATA_DIR)/grumple-gromit.tga $(DATA_DIR)/dead-bytes.txt co
 loadaddr.o: $(SRC_DIR)/loadaddr.s
 	$(CA65) --cpu 6502 -o $@ $<
 
-# Assemble main source
-master.o: $(SRC_DIR)/master.s hud-font.bin sidebars.bin level-tiles.bin sprites-game.bin zone-data.bin charset.bin bubble-masks.bin software-sprites.bin bonus-sprites.bin diamond-sprite.bin digit-font.bin bubble-dragon-in-bubble.bin grumple-gromit.bin $(LEVEL_BINS)
-	$(CA65) --cpu 6502 -I $(SRC_DIR) -o $@ $<
+# Assemble main source (depends on sound-select.inc and the selected sound source)
+master.o: $(SRC_DIR)/master.s $(SOUND_INC) $(SRC_DIR)/$(SOUND_SRC) hud-font.bin sidebars.bin level-tiles.bin sprites-game.bin zone-data.bin charset.bin bubble-masks.bin software-sprites.bin bonus-sprites.bin diamond-sprite.bin digit-font.bin bubble-dragon-in-bubble.bin grumple-gromit.bin $(LEVEL_BINS)
+	$(CA65) --cpu 6502 -I $(SRC_DIR) -I . -o $@ $<
 
 # Link (generates label file for release target)
 $(OUTPUT): loadaddr.o master.o $(CONFIG)
@@ -122,6 +137,10 @@ verify: $(OUTPUT)
 	@echo "Verifying SHA256 hash..."
 	@echo "$(REFERENCE_SHA256)  $(OUTPUT)" | sha256sum -c - && echo "SUCCESS: Hash matches original!"
 
+# Build standalone SID file from the selected sound source
+sid: $(SRC_DIR)/sid-wrapper.s $(SRC_DIR)/$(SOUND_SRC) sid.cfg build-sid.py
+	$(PYTHON) build-sid.py --sound-src $(SOUND_SRC) rebb64.sid
+
 # Create runnable PRG with TSCrunch
 # Entry address (game_entry) is read directly from the VICE label file.
 release: $(OUTPUT)
@@ -129,6 +148,6 @@ release: $(OUTPUT)
 
 # Clean build artifacts
 clean:
-	rm -f loadaddr.o master.o $(OUTPUT) $(RELEASE) $(LBLFILE) *.bin
+	rm -f loadaddr.o master.o $(OUTPUT) $(RELEASE) $(LBLFILE) rebb64.sid $(SOUND_INC) *.bin
 
-.PHONY: all clean verify release
+.PHONY: all clean verify release sid
