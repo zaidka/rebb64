@@ -2,12 +2,13 @@
 # ========================================
 #
 # Usage:
-#   make                                  - Build the game
+#   make                                  - Build the game (original, verifiable)
 #   make clean                            - Remove build artifacts
 #   make verify                           - Build and verify against original
 #   make release                          - Build runnable PRG (requires tscrunch)
 #   make sid                              - Build standalone SID file
 #   make SOUND_SRC=my-sound.s             - Build with a different sound source
+#   make COMPRESS_LEVELS=1                - Build with per-level bitmap compression
 
 # Tools
 CA65 = ca65
@@ -28,6 +29,13 @@ CONFIG = c64-prg.cfg
 # Note: make verify only passes with the original sound.s.
 SOUND_SRC = sound.s
 
+# Level bitmap compression (optional)
+# Set COMPRESS_LEVELS=1 to enable per-level bitmap compression.
+# When enabled, level bitmaps are compressed with dictionary + zero-run
+# encoding, freeing ~1244 bytes in the I/O shadow region.
+# Default (unset): original uncompressed bitmaps, binary-identical output.
+#COMPRESS_LEVELS ?= 1
+
 # Output
 OUTPUT = rebb64-raw.prg
 RELEASE = rebb64.prg
@@ -36,9 +44,26 @@ LBLFILE = rebb64.lbl
 # SHA256 hash of original Bubble Bobble C64 PRG (decompressed)
 REFERENCE_SHA256 = fdba2390782653ba2533b2d87c44c8f0480ab18968a2c0ccc0cef8300fcee7b6
 
-# Generated level data files
-LEVEL_BINS = level-bitmaps.bin level-colors.bin level-flags.bin \
-             enemy-spawns.bin item-positions.bin physics-flags.bin
+# Generated level data files (base set, always needed)
+LEVEL_BINS_BASE = level-bitmaps.bin level-colors.bin level-flags.bin \
+                  enemy-spawns.bin item-positions.bin physics-flags.bin
+
+# Compressed level data files (only needed when COMPRESS_LEVELS is set)
+LEVEL_BINS_COMPRESSED = level-bitmaps-compressed.bin level-bitmap-offsets.bin \
+                        bitmap-decode-table.bin bitmap-dict-pairs.bin
+
+ifdef COMPRESS_LEVELS
+LEVEL_BINS = $(LEVEL_BINS_BASE) $(LEVEL_BINS_COMPRESSED)
+else
+LEVEL_BINS = $(LEVEL_BINS_BASE)
+endif
+
+# Assembler flags: pass -D COMPRESS_LEVELS=1 when compression is enabled
+ifdef COMPRESS_LEVELS
+CA65_DEFS = -D COMPRESS_LEVELS=1
+else
+CA65_DEFS =
+endif
 
 # Generated include file that selects the active sound source.
 # Used by both master.s (game build) and sid-wrapper.s (SID build).
@@ -126,7 +151,7 @@ loadaddr.o: $(SRC_DIR)/loadaddr.s
 
 # Assemble main source (depends on sound-select.inc and the selected sound source)
 master.o: $(SRC_DIR)/master.s $(SOUND_INC) $(SRC_DIR)/$(SOUND_SRC) hud-font.bin sidebars.bin level-tiles.bin sprites-game.bin zone-data.bin charset.bin bubble-masks.bin software-sprites.bin bonus-sprites.bin diamond-sprite.bin digit-font.bin bubble-dragon-in-bubble.bin grumple-gromit.bin $(LEVEL_BINS)
-	$(CA65) --cpu 6502 -I $(SRC_DIR) -I . -o $@ $<
+	$(CA65) --cpu 6502 $(CA65_DEFS) -I $(SRC_DIR) -I . -o $@ $<
 
 # Link (generates label file for release target)
 $(OUTPUT): loadaddr.o master.o $(CONFIG)

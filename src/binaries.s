@@ -377,16 +377,75 @@ level_tiles:
 physics_flags:
         .incbin "../build/physics-flags.bin"
 
+.ifdef COMPRESS_LEVELS
+;-------------------------------------------------------------------------------
+; Level Bitmap Deltas (100 bytes = 100 x 1-byte)
+;-------------------------------------------------------------------------------
+; Per-level compressed sizes.  The decompressor accumulates a running sum
+; of deltas[0..level-1] to find the offset into level_bitmaps_compressed.
+; Generated from data/levels.txt by build/convert-levels.py
+;-------------------------------------------------------------------------------
+        .segment "LEVEL_BITMAPS"
+level_bitmap_deltas:
+        .incbin "../build/level-bitmap-offsets.bin"
+
+;-------------------------------------------------------------------------------
+; Level Bitmaps - Compressed (variable size, ~4600 bytes)
+;-------------------------------------------------------------------------------
+; Platform layout bitmaps for all 100 levels, individually compressed
+; with zero-run + dictionary encoding (2-byte pairs and 3-byte triples).
+; Generated from data/levels.txt by build/convert-levels.py
+;-------------------------------------------------------------------------------
+level_bitmaps_compressed:
+        .incbin "../build/level-bitmaps-compressed.bin"
+
+;-------------------------------------------------------------------------------
+; Bitmap Decode Table (256 bytes)
+;-------------------------------------------------------------------------------
+; Lookup table for the level bitmap decompressor.
+; For each byte value 0-255:
+;   $00          = literal (copy source byte to output as-is)
+;   $01          = zero-run escape (next byte = run length - 2)
+;   $02..THR-1   = 2-byte dictionary pair (index = value - 2)
+;   THR+         = 3-byte dictionary triple (index = value - THR)
+; THR (threshold) is stored as the last byte of bitmap-dict-pairs.bin.
+; Generated from data/levels.txt by build/convert-levels.py
+;-------------------------------------------------------------------------------
+        .segment "BITMAP_DECODE_TABLE"
+bitmap_decode_table:
+        .incbin "../build/bitmap-decode-table.bin"
+
+;-------------------------------------------------------------------------------
+; Bitmap Dictionary Entries + Threshold
+;-------------------------------------------------------------------------------
+; [N_PAIRS x 2 bytes] [N_TRIPLES x 3 bytes] [threshold byte]
+; Pairs are indexed by (action - 2) * 2.
+; Triples are indexed by pairs_size + (action - threshold) * 3.
+; The threshold byte at the end encodes the pair/triple boundary.
+; Generated from data/levels.txt by build/convert-levels.py
+;-------------------------------------------------------------------------------
+        .segment "BITMAP_DICT_PAIRS"
+bitmap_dict_entries:
+        .incbin "../build/bitmap-dict-pairs.bin"
+bitmap_dict_entries_end:
+
+.else
 ;-------------------------------------------------------------------------------
 ; Level Bitmaps ($C5F2-$DFFF, 6670 bytes)
 ;-------------------------------------------------------------------------------
-; Platform layout bitmaps for all 100 levels
+; Platform layout bitmaps for all 100 levels (uncompressed)
 ; Each level uses 46 bytes (symmetric) or 92 bytes (asymmetric)
 ; Generated from data/levels.txt by build/convert-levels.py
 ;-------------------------------------------------------------------------------
         .segment "LEVEL_BITMAPS"
 level_bitmaps:
         .incbin "../build/level-bitmaps.bin"
+
+; Empty segment declarations to satisfy the linker config.
+; These segments only contain data in the compressed build.
+        .segment "BITMAP_DECODE_TABLE"
+        .segment "BITMAP_DICT_PAIRS"
+.endif
 
 ;-------------------------------------------------------------------------------
 ; HUD Font ($FE90-$FF2F, 160 bytes)

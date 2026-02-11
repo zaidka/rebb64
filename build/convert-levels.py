@@ -50,6 +50,7 @@ Any deviation from this format is an error.
 import sys
 import os
 import re
+import struct
 
 
 class LevelParseError(Exception):
@@ -628,11 +629,345 @@ def convert_physics_flags(levels: list[dict]) -> bytes:
     return bytes([level["physics"] for level in levels])
 
 
+def compress_level(
+    level_bitmap: bytes,
+    esc_zero: int,
+    pair_to_code: dict[tuple[int, int], int],
+    triple_to_code: dict[tuple[int, int, int], int],
+) -> bytes:
+    """
+    Compress a single level's bitmap using zero-run and dictionary encoding.
+
+    Encoding (using byte values that never appear in uncompressed data):
+      - ESC_ZERO, count-2   → run of (count+2) zero bytes  [2..257 zeros]
+      - dict_code           → expand to 2-byte pair or 3-byte triple
+      - anything else       → literal byte
+
+    Priority order: zero runs > triples > pairs > literal.
+    Dictionary entries are matched greedily at any position.  After a zero
+    run leaves a lone trailing zero, the encoder tries to match it as the
+    first byte of a triple or pair.
+    """
+    out = bytearray()
+    i = 0
+    while i < len(level_bitmap):
+        val = level_bitmap[i]
+
+        # 1. Zero run (highest priority)
+        if val == 0x00:
+            run = 1
+            while i + run < len(level_bitmap) and level_bitmap[i + run] == 0x00:
+                run += 1
+            if run >= 2:
+                while run >= 2:
+                    chunk = min(run, 257)
+                    out.append(esc_zero)
+                    out.append(chunk - 2)
+                    run -= chunk
+                    i += chunk
+                if run == 1:
+                    # Lone trailing zero: try triple then pair starting with 0x00
+                    if i + 2 < len(level_bitmap):
+                        triple = (0x00, level_bitmap[i + 1], level_bitmap[i + 2])
+                        if triple in triple_to_code:
+                            out.append(triple_to_code[triple])
+                            i += 3
+                            continue
+                    if i + 1 < len(level_bitmap):
+                        pair = (0x00, level_bitmap[i + 1])
+                        if pair in pair_to_code:
+                            out.append(pair_to_code[pair])
+                            i += 2
+                            continue
+                    out.append(0x00)
+                    i += 1
+                continue
+
+        # 2. Dictionary triple (3 bytes → 1 byte)
+        if i + 2 < len(level_bitmap):
+            triple = (level_bitmap[i], level_bitmap[i + 1], level_bitmap[i + 2])
+            if triple in triple_to_code:
+                out.append(triple_to_code[triple])
+                i += 3
+                continue
+
+        # 3. Dictionary pair (2 bytes → 1 byte)
+        if i + 1 < len(level_bitmap):
+            pair = (level_bitmap[i], level_bitmap[i + 1])
+            if pair in pair_to_code:
+                out.append(pair_to_code[pair])
+                i += 2
+                continue
+
+        # 4. Literal
+        out.append(val)
+        i += 1
+
+    return bytes(out)
+
+
+# 36 byte values that never appear in any level bitmap data.
+# Verified by scanning all 6670 bytes of uncompressed bitmap output.
+# Used as special codes in the compressed stream.
+UNUSED_BYTES = [
+    0x16,
+    0x1A,
+    0x1B,
+    0x2E,
+    0x34,
+    0x46,
+    0x4B,
+    0x4D,
+    0x4E,
+    0x51,
+    0x5A,
+    0x62,
+    0x63,
+    0x65,
+    0x6A,
+    0x75,
+    0x76,
+    0x77,
+    0x7B,
+    0x8B,
+    0x91,
+    0x94,
+    0x95,
+    0x96,
+    0x97,
+    0x9D,
+    0xA3,
+    0xA6,
+    0xB2,
+    0xB3,
+    0xB9,
+    0xCB,
+    0xD3,
+    0xD6,
+    0xE9,
+    0xF6,
+]
+
+ESC_ZERO = UNUSED_BYTES[0]  # Zero-run escape: ESC_ZERO, count-2
+DICT_CODES = UNUSED_BYTES[1:]  # 35 dictionary codes -> 2-byte pairs
+N_DICT = len(DICT_CODES)  # 35
+
+
+def _count_residuals(
+    raw_bitmaps: list[bytes],
+    pair_to_code: dict[tuple[int, int], int],
+    triple_to_code: dict[tuple[int, int, int], int],
+) -> tuple["Counter[tuple[int, int]]", "Counter[tuple[int, int, int]]"]:
+    """
+    Simulate greedy compression on each bitmap and count 2-byte pairs and
+    3-byte triples that remain as literals.  This tells us which entry to
+    add next to the dictionary for the best marginal improvement.
+    """
+    from collections import Counter
+
+    pair_residual: Counter[tuple[int, int]] = Counter()
+    triple_residual: Counter[tuple[int, int, int]] = Counter()
+
+    for bmp in raw_bitmaps:
+        i = 0
+        while i < len(bmp):
+            val = bmp[i]
+            # Zero run
+            if val == 0x00:
+                run = 1
+                while i + run < len(bmp) and bmp[i + run] == 0x00:
+                    run += 1
+                if run >= 2:
+                    consumed = 0
+                    while run >= 2:
+                        chunk = min(run, 257)
+                        run -= chunk
+                        consumed += chunk
+                    i += consumed
+                    if run == 1:
+                        # Lone trailing zero — try triple then pair
+                        if i + 2 < len(bmp):
+                            triple = (0x00, bmp[i + 1], bmp[i + 2])
+                            if triple in triple_to_code:
+                                i += 3
+                                continue
+                        if i + 1 < len(bmp):
+                            pair = (0x00, bmp[i + 1])
+                            if pair in pair_to_code:
+                                i += 2
+                                continue
+                            # Count residuals for the lone zero position
+                            pair_residual[pair] += 1
+                            if i + 2 < len(bmp):
+                                triple_residual[(0x00, bmp[i + 1], bmp[i + 2])] += 1
+                        i += 1
+                    continue
+            # Dict triple
+            if i + 2 < len(bmp):
+                triple = (bmp[i], bmp[i + 1], bmp[i + 2])
+                if triple in triple_to_code:
+                    i += 3
+                    continue
+            # Dict pair
+            if i + 1 < len(bmp):
+                pair = (bmp[i], bmp[i + 1])
+                if pair in pair_to_code:
+                    i += 2
+                    continue
+            # Literal — count residual pairs and triples starting here
+            if i + 2 < len(bmp):
+                triple = (val, bmp[i + 1], bmp[i + 2])
+                if triple not in triple_to_code:
+                    triple_residual[triple] += 1
+            if i + 1 < len(bmp):
+                pair = (val, bmp[i + 1])
+                if pair not in pair_to_code:
+                    pair_residual[pair] += 1
+            i += 1
+
+    return pair_residual, triple_residual
+
+
+def compress_bitmaps(levels: list[dict]) -> tuple[bytes, bytes, bytes, bytes]:
+    """
+    Compress each level's bitmap using dictionary + zero-run encoding.
+
+    Dictionary entries (2-byte pairs and 3-byte triples) are selected
+    iteratively: at each round we simulate the greedy compressor on all
+    bitmaps, count which residual pair and triple are most frequent, and
+    add whichever gives the best marginal byte savings.
+
+    Decode table format (256 bytes, one entry per possible byte value):
+      $00            = literal (copy source byte to output as-is)
+      $01            = zero-run escape (next byte = run length - 2)
+      $02..THR-1     = 2-byte dictionary pair (pair index = value - 2)
+      THR..THR+N3-1  = 3-byte dictionary triple (triple index = value - THR)
+    where THR = 2 + N_PAIRS is the threshold between pairs and triples.
+
+    The dict_entries blob stores pairs first (N_PAIRS x 2 bytes), then
+    triples (N_TRIPLES x 3 bytes), contiguously.
+
+    Returns:
+        (compressed_data, offset_table, decode_table, dict_entries)
+        - compressed_data: All compressed level bitmaps concatenated
+        - offset_table: 100 x 1-byte delta sizes (each level's compressed size)
+        - decode_table: 256-byte lookup table for the 6502 decompressor
+        - dict_entries: pairs (N2 x 2 bytes) + triples (N3 x 3 bytes)
+    """
+    # First pass: extract all uncompressed bitmaps
+    raw_bitmaps = []
+    for level in levels:
+        symmetric = is_symmetric(level["bitmap_rows"])
+        if symmetric:
+            raw_bitmaps.append(bytes(compress_to_symmetric(level["bitmap_rows"])))
+        else:
+            raw_bitmaps.append(bytes(expand_to_asymmetric(level["bitmap_rows"])))
+
+    # Iterative hybrid selection: at each round, pick whichever entry type
+    # (pair or triple) gives the best marginal improvement.
+    # A pair saves (count - 1) bytes net: count occurrences each save 1 byte,
+    #   minus 2 bytes for the table entry itself.
+    # A triple saves (count * 2 - 1) bytes net: count occurrences each save
+    #   2 bytes, minus 3 bytes for the table entry itself.
+    pair_to_code: dict[tuple[int, int], int] = {}
+    triple_to_code: dict[tuple[int, int, int], int] = {}
+    selected_pairs: list[tuple[int, int]] = []
+    selected_triples: list[tuple[int, int, int]] = []
+
+    for round_num in range(N_DICT):
+        pair_res, triple_res = _count_residuals(
+            raw_bitmaps, pair_to_code, triple_to_code
+        )
+
+        best_pair_val = 0
+        best_pair = None
+        if pair_res:
+            bp, bp_count = pair_res.most_common(1)[0]
+            best_pair_val = bp_count  # each hit saves 1 byte (2 -> 1)
+            best_pair = bp
+
+        best_triple_val = 0
+        best_triple = None
+        if triple_res:
+            bt, bt_count = triple_res.most_common(1)[0]
+            best_triple_val = bt_count * 2  # each hit saves 2 bytes (3 -> 1)
+            best_triple = bt
+
+        if best_pair_val <= 1 and best_triple_val <= 1:
+            break  # Not worth adding
+
+        if best_triple_val > best_pair_val and best_triple is not None:
+            selected_triples.append(best_triple)
+            triple_to_code[best_triple] = DICT_CODES[round_num]
+        elif best_pair is not None:
+            selected_pairs.append(best_pair)
+            pair_to_code[best_pair] = DICT_CODES[round_num]
+        else:
+            break
+
+    n_pairs = len(selected_pairs)
+    n_triples = len(selected_triples)
+
+    # Second pass: compress each level with the final dictionary
+    compressed_chunks = []
+    chunk_sizes = []
+
+    for bmp in raw_bitmaps:
+        compressed = compress_level(bmp, ESC_ZERO, pair_to_code, triple_to_code)
+        compressed_chunks.append(compressed)
+        chunk_sizes.append(len(compressed))
+
+    compressed_data = b"".join(compressed_chunks)
+
+    # Build offset table: 100 x 1-byte delta (each entry = compressed size
+    # of that level). The decompressor accumulates a running offset.
+    assert all(s <= 255 for s in chunk_sizes), (
+        f"Level compressed size exceeds 255: {max(chunk_sizes)}"
+    )
+    offset_table = bytes(chunk_sizes)
+
+    # Build 256-byte decode table.
+    # Pairs get action codes $02..$02+n_pairs-1.
+    # Triples get action codes THR..THR+n_triples-1 where THR = $02+n_pairs.
+    threshold = 2 + n_pairs  # first triple action code
+
+    decode_table = bytearray(256)
+    decode_table[ESC_ZERO] = 0x01
+    for i, pair in enumerate(selected_pairs):
+        code = pair_to_code[pair]
+        decode_table[code] = 2 + i
+    for i, triple in enumerate(selected_triples):
+        code = triple_to_code[triple]
+        decode_table[code] = threshold + i
+
+    # Build dictionary entries blob: pairs first, then triples, then metadata.
+    # The decompressor uses the threshold to know which section to index.
+    # Layout: [N2 x 2-byte pairs] [N3 x 3-byte triples] [threshold byte]
+    # The threshold byte at the end tells the 6502 decompressor the boundary
+    # between pair and triple action codes.
+    dict_entries = bytearray()
+    for pair in selected_pairs:
+        dict_entries.append(pair[0])
+        dict_entries.append(pair[1])
+    for triple in selected_triples:
+        dict_entries.append(triple[0])
+        dict_entries.append(triple[1])
+        dict_entries.append(triple[2])
+    dict_entries.append(threshold)  # metadata: pair/triple boundary
+
+    return compressed_data, offset_table, bytes(decode_table), bytes(dict_entries)
+
+
 def main():
-    if len(sys.argv) != 8:
+    # Support two modes:
+    #   7 output args: uncompressed only (original build)
+    #  11 output args: uncompressed + compressed (compression build)
+    if len(sys.argv) not in (8, 12):
         print(
             f"Usage: {sys.argv[0]} <levels.txt> <bitmaps.bin> <colors.bin> <flags.bin> "
-            f"<enemy-spawns.bin> <item-positions.bin> <physics-flags.bin>"
+            f"<enemy-spawns.bin> <item-positions.bin> <physics-flags.bin>\n"
+            f"       [{sys.argv[0]} ... <bitmaps-compressed.bin> <bitmap-offsets.bin> "
+            f"<decode-table.bin> <dict-pairs.bin>]"
         )
         sys.exit(1)
 
@@ -643,6 +978,13 @@ def main():
     enemy_spawns_output = sys.argv[5]
     item_positions_output = sys.argv[6]
     physics_flags_output = sys.argv[7]
+
+    do_compress = len(sys.argv) == 12
+    if do_compress:
+        compressed_output = sys.argv[8]
+        offsets_output = sys.argv[9]
+        decode_table_output = sys.argv[10]
+        dict_pairs_output = sys.argv[11]
 
     if not os.path.exists(input_file):
         print(f"Error: Input file '{input_file}' not found")
@@ -657,7 +999,7 @@ def main():
         item_positions_data = convert_item_positions(levels)
         physics_flags_data = convert_physics_flags(levels)
 
-        # Write all output files
+        # Write base output files
         with open(bitmap_output, "wb") as f:
             f.write(bitmap_data)
 
@@ -676,6 +1018,24 @@ def main():
         with open(physics_flags_output, "wb") as f:
             f.write(physics_flags_data)
 
+        # Generate and write compressed bitmap data (optional)
+        if do_compress:
+            compressed_data, offset_table, decode_table, dict_entries = (
+                compress_bitmaps(levels)
+            )
+
+            with open(compressed_output, "wb") as f:
+                f.write(compressed_data)
+
+            with open(offsets_output, "wb") as f:
+                f.write(offset_table)
+
+            with open(decode_table_output, "wb") as f:
+                f.write(decode_table)
+
+            with open(dict_pairs_output, "wb") as f:
+                f.write(dict_entries)
+
         # Count statistics
         sym_count = sum(1 for b in flags_data if b & 0x80)
         asym_count = 100 - sym_count
@@ -683,7 +1043,18 @@ def main():
 
         print(f"Converted 100 levels successfully")
         print(f"  Symmetric: {sym_count}, Asymmetric: {asym_count}")
-        print(f"  Bitmap data: {len(bitmap_data)} bytes")
+        if do_compress:
+            total_overhead = len(offset_table) + len(decode_table) + len(dict_entries)
+            print(f"  Bitmap data: {len(bitmap_data)} bytes (uncompressed)")
+            print(f"  Bitmap data: {len(compressed_data)} bytes (compressed)")
+            print(f"  Bitmap offsets: {len(offset_table)} bytes (100 x 1-byte deltas)")
+            print(f"  Decode table: {len(decode_table)} bytes")
+            print(f"  Dict entries: {len(dict_entries)} bytes")
+            print(
+                f"  Bitmap savings: {len(bitmap_data) - len(compressed_data) - total_overhead} bytes"
+            )
+        else:
+            print(f"  Bitmap data: {len(bitmap_data)} bytes")
         print(f"  Colors data: {len(colors_data)} bytes")
         print(f"  Flags data: {len(flags_data)} bytes")
         print(

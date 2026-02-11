@@ -617,37 +617,65 @@ L_E297:
         rts
 
 ; ============================================================================
-; ROUTINE: init_level_renderer ($E299)
+; ROUTINE: init_level_renderer
 ; ============================================================================
-; Initializes the level rendering system
-; Sets up color RAM and data tables based on level flags
+; Initializes the level rendering system.
+; Reads the current level's bitmap data, sets up symmetry mirroring,
+; physics flags, and border walls.
 ;
 ; INPUT:
-;   X - Level index
+;   X - Level index (0-99)
 ;
 ; USES:
 ;   $01 - Memory banking ($30 = RAM under I/O)
 ;   $3C - Level counter save
 ;   $3D,$3E - Bit manipulation temporaries
-;   $40,$41 - Data pointer ($C5F2 - bitmaps base address)
+;   $40,$41 - Data pointer (source bitmap or decompressed scratch buffer)
 ; ============================================================================
 D_E299:
 init_level_renderer:
         stx     $3C                 ; Save level index
-        
-        ; Bank in RAM under I/O area
+
+.ifdef COMPRESS_LEVELS
+        ; --- Compressed path ---
+        ; Bank in all-RAM ($01=$30) for the entire routine.  Needed because:
+        ;   - The decompressor + data live in the I/O shadow ($D000-$DFFF)
+        ;   - The decompression buffer is in the I/O shadow gap (DECOMP_BUFFER)
+        ;   - The copy/mirror loop reads the buffer via ($40),y
+        ; $01=$30 is kept until the routine's shared exit, matching the
+        ; original path which also runs entirely with $01=$30.
+        ; The IRQ handler saves/restores $01, so no SEI is needed.
+        lda     #$30
+        sta     R6510               ; $01 = all RAM visible
+
+        ; Decompress level bitmap into the I/O shadow gap.
+        jsr     decompress_level_bitmap
+
+        ; Reset $40/$41 to start of decompressed data.
+        ; The decompressor advanced $40; the copy/mirror code
+        ; below reads from ($40),y and expects it at the buffer start.
+        ; ($41 is unchanged — the buffer never crosses a page boundary.)
+        lda     #<DECOMP_BUFFER
+        sta     $40
+        lda     #>DECOMP_BUFFER
+        sta     $41
+
+        ldx     $3C                 ; Restore level index
+.else
+        ; --- Original uncompressed path ---
+        ; Bank in RAM under I/O to access level bitmaps at $C5F2+
         lda     #$30
         sta     R6510               ; $01 = CPU port
-        
+
         ; Set up data pointer to level bitmaps
         lda     #<level_bitmaps
         sta     $40
         lda     #>level_bitmaps
         sta     $41
-        
+
         cpx     #$00
         beq     L_E2C3              ; Skip if level 0
-        
+
         ; Calculate offset based on previous levels
         ldx     #$00
 L_E2AD:
@@ -665,70 +693,71 @@ L_E2BE:
         inx
         cpx     $3C                 ; Reached target level?
         bne     L_E2AD
-        
+.endif
+
 L_E2C3:
-        ; Get data table index based on level flags
         ldy     #$00
         lda     level_flags,x       ; Get symmetry flag (bit 7)
         bpl     L_E2CB              ; Branch if symmetric (bit 7 clear)
-        iny                         ; Y = 1 for special levels
-        
+        iny                         ; Y = 1 for asymmetric levels
+
 L_E2CB:
-        ; Set up self-modifying code addresses
-        lda     D_E36A,y            ; Get low byte
+        ; Set up self-modifying code addresses for copy/mirror
+        lda     D_E36A,y            ; Get low byte of routine
         sta     D_E30C              ; Store in JSR target
-        lda     D_E36C,y            ; Get high byte  
+        lda     D_E36C,y            ; Get high byte
         sta     D_E30D
-        
-        ; Get hole metadata (holes in lower nibble, bubble currents in upper nibble)
+
+        ; --- Physics flags processing ---
         lda     physics_flags,x
         sta     $3D
-        
+
         ; Process two chunks (at X=0 and X=96)
         ldx     #$00
         jsr     L_E34E
         ldx     #$60
         jsr     L_E34E
-        
+
         ; Extract and store color bits
         lda     $3D
         and     #$03                ; Low 2 bits
         sta     $3E
         lsr     $3D                 ; Shift down
         lsr     $3D
-        
-        ; Update color RAM at $8B03
+
+        ; Update hole bits at $8B03
         lda     D_8B03
         and     #$FC                ; Clear low 2 bits
         ora     $3E                 ; Set new bits
         sta     D_8B03
-        
-        ; Update color RAM at $8B63
+
+        ; Update hole bits at $8B63
         lda     D_8B63
         and     #$FC
         ora     $3D
         sta     D_8B63
-        
-        ; Copy data from source to $8B00 area
+
+        ; --- Copy/mirror decompressed bitmap to $8B04 ---
         ldx     #$00
         ldy     #$00
 L_E308:
         jsr     L_E31F
-        
+
         ; Self-modifying JSR target (set at L_E2CB)
-        ; D_E30C and D_E30D are the operand bytes of this JSR
 D_E30C  = * + 1                     ; Low byte of JSR operand
 D_E30D  = * + 2                     ; High byte of JSR operand
         jsr     L_E32A              ; Default target (modified at runtime)
-        
-        ; Set high bits of data
+
+        ; Set border wall bits (high bits of first byte in each row)
         lda     D_8B00,x
         ora     #$C0                ; Set bits 7 and 6
         sta     D_8B00,x
         cpx     #$5C                ; 92 bytes processed?
         bne     L_E308
-        
-        ; Restore normal memory banking
+
+        ; Restore normal memory banking. Both paths run with $01=$30:
+        ; - Original path: reads level bitmaps from I/O shadow ($D000+)
+        ; - Compressed path: reads decompressed data from I/O gap (DECOMP_BUFFER)
         lda     #$35
         sta     R6510
         rts
@@ -847,6 +876,216 @@ L_E397:
         inx
         bne     L_E397
         rts
+
+.ifdef COMPRESS_LEVELS
+; ============================================================================
+; Level Bitmap Decompressor (in CODE_DECOMPRESSOR segment)
+; ============================================================================
+; Custom dictionary + zero-run decompressor for level bitmap data.
+; Lives in CODE_DECOMPRESSOR, in the gap between bitmap tables and $E000.
+; This address range ($D000-$DFFF) overlaps C64 I/O registers, so the
+; decompressor is only callable with $01=$30 (all-RAM banking).
+; init_level_renderer sets this before JSR decompress_level_bitmap.
+;
+; Compression format (see build/convert-levels.py for encoder):
+;   Uses 36 byte values that never appear in uncompressed bitmap data.
+;   A 256-byte decode table maps each source byte to an action code:
+;     $00          = literal byte (copy source byte to output)
+;     $01          = zero-run escape (next byte = run_length - 2)
+;     $02..THR-1   = 2-byte dictionary pair (index = action - 2)
+;     THR+         = 3-byte dictionary triple (index = action - THR)
+;   THR is stored as the last byte of the dict entries blob.
+;
+; Dict entries blob layout:
+;   [N_PAIRS x 2 bytes] [N_TRIPLES x 3 bytes] [threshold byte]
+;
+; Offset table: 100 x 1-byte deltas (each = compressed size of that level).
+;   The source pointer is found by summing deltas[0..level-1].
+; ============================================================================
+
+.segment "CODE_DECOMPRESSOR"
+
+; --- Decompress level bitmap ---
+; INPUT:  $3C = level index
+; OUTPUT: $40 advanced past decompressed data (caller must reset)
+;         $41 unchanged (high byte of DECOMP_BUFFER)
+;
+; Zero-page usage (preserves $3C; does NOT preserve $02):
+;   $3D/$3E = source pointer (compressed data)
+;   $3F = bytes remaining to decompress
+;   $40/$41 = destination pointer (DECOMP_BUFFER; high byte never changes)
+;   Y = always 0 (for indirect indexed addressing)
+;
+; Size-optimized vs. original:
+;   - Uses SMC for triple index*3 (avoids ZP_02 scratch + save/restore)
+;   - Omits $41 page-cross check in @store_out (asserted at build time)
+decompress_level_bitmap:
+        ; --- Patch threshold constants via SMC ---
+        ; The threshold byte (pair/triple boundary) is the last byte of
+        ; the dict entries blob.  Load it once and patch the CMP and SBC
+        ; immediate operands in the decompression loop.
+        lda     bitmap_dict_entries_end - 1  ; threshold
+        sta     @smc_cmp_thr + 1    ; patch CMP #threshold
+        sta     @smc_sbc_thr + 1    ; patch SBC #threshold
+        ; pairs_size = (threshold - 2) * 2
+        sec
+        sbc     #$02                ; A = n_pairs
+        asl     a                   ; A = n_pairs * 2 = pairs_size
+        sta     @smc_adc_psz + 1    ; patch ADC #pairs_size
+
+        ; --- Accumulate 1-byte deltas to find compressed data offset ---
+        ; source_ptr = level_bitmaps_compressed + sum(deltas[0..level-1])
+        lda     #<level_bitmaps_compressed
+        sta     $3D
+        lda     #>level_bitmaps_compressed
+        sta     $3E
+        ldx     $3C                 ; Level index
+        beq     @offset_done        ; Level 0: offset = 0
+        ldy     #$00                ; Delta table index
+        clc
+@offset_loop:
+        lda     level_bitmap_deltas,y
+        adc     $3D
+        sta     $3D
+        bcc     :+
+        inc     $3E
+        clc
+:       iny
+        dex
+        bne     @offset_loop
+
+@offset_done:
+        ; Set destination pointer to I/O shadow gap buffer.
+        ; Only the low byte changes during decompression; the high byte
+        ; is constant because the 92-byte buffer never crosses a page
+        ; (verified by .assert below).
+        lda     #<DECOMP_BUFFER
+        sta     $40
+        lda     #>DECOMP_BUFFER
+        sta     $41
+
+        ; Determine decompressed size from level flags
+        ldx     $3C
+        lda     level_flags,x
+        and     #$80                ; Bit 7: 1=symmetric (46 bytes), 0=asymmetric (92 bytes)
+        bne     @symmetric
+        lda     #92                 ; Asymmetric: full 92 bytes
+        bne     @have_size          ; always taken
+@symmetric:
+        lda     #46                 ; Symmetric: left half only
+@have_size:
+        sta     $3F                 ; $3F = bytes remaining
+        ldy     #$00                ; Y stays 0 throughout
+
+        ; --- Main decompression loop ---
+@loop:
+        lda     ($3D),y             ; Read compressed byte
+        tax                         ; X = raw byte (preserve for literal)
+        inc     $3D                 ; Advance source pointer
+        bne     :+
+        inc     $3E
+:
+        ; Look up action in decode table
+        lda     bitmap_decode_table,x   ; A = action code
+        beq     @literal            ; $00 = literal (raw byte still in X)
+        cmp     #$02
+        bcc     @zero_run           ; $01 = zero-run escape
+                                    ; $02+ = dictionary entry (fall through)
+
+        ; --- Dictionary entry: pair ($02..THR-1) or triple (THR+) ---
+@smc_cmp_thr:
+        cmp     #$00                ; SMC: patched to threshold
+        bcs     @dict_triple
+
+        ; --- 2-byte pair: index = (action - 2), byte offset = index * 2 ---
+        sec
+        sbc     #$02                ; A = pair index
+        asl     a                   ; A = index * 2
+        tax
+        lda     bitmap_dict_entries,x
+        jsr     @store_out
+        lda     bitmap_dict_entries + 1,x
+        jsr     @store_out
+        bne     @loop
+        beq     @done               ; always taken ($3F = 0)
+
+        ; --- 3-byte triple: index = (action - THR) ---
+        ; byte offset = pairs_size + index * 3
+        ; index * 3 computed via SMC to avoid needing ZP scratch
+@dict_triple:
+@smc_sbc_thr:
+        sbc     #$00                ; SMC: patched to threshold (C=1 from BCS)
+        sta     @smc_idx + 1        ; SMC: stash triple index for *3 calc
+        asl     a                   ; A = index * 2
+        clc
+@smc_idx:
+        adc     #$00                ; SMC: + index = index * 3
+@smc_adc_psz:
+        adc     #$00                ; SMC: + pairs_size (C=0: idx*3 < 128)
+        tax
+        lda     bitmap_dict_entries,x
+        jsr     @store_out
+        lda     bitmap_dict_entries + 1,x
+        jsr     @store_out
+        lda     bitmap_dict_entries + 2,x
+        jsr     @store_out
+        bne     @loop
+        beq     @done               ; always taken ($3F = 0)
+
+        ; --- Zero-run: next source byte = count - 2 ---
+@zero_run:
+        lda     ($3D),y             ; Read count - 2
+        inc     $3D                 ; Advance source pointer
+        bne     :+
+        inc     $3E
+:       clc
+        adc     #$02
+        tax                         ; X = zero count
+        lda     #$00                ; Fill value = 0
+@fill_loop:
+        jsr     @store_out
+        dex
+        bne     @fill_loop
+        lda     $3F                 ; DEX clobbers Z, must re-check
+        bne     @loop
+        beq     @done               ; always taken ($3F = 0)
+
+        ; --- Literal: raw byte is in X ---
+@literal:
+        txa                         ; A = raw source byte
+        jsr     @store_out
+        bne     @loop
+
+        ; --- Decompression complete ---
+@done:
+        rts
+
+        ; --- Helper: write A to ($40),y and advance dest pointer ---
+        ; Note: $41 (high byte) is never incremented — the 92-byte buffer
+        ; is asserted not to cross a page boundary (see .assert below).
+@store_out:
+        sta     ($40),y
+        inc     $40
+        dec     $3F
+        rts
+
+; --- Temporary decompression buffer (92 bytes) ---
+; Sits in the I/O shadow gap after the decompressor code.
+; Only accessible with $01=$30 (all-RAM banking).
+; Previously used the cassette buffer at $033C, but that overlaps the
+; D_0300 multiplication lookup table which the game needs intact.
+DECOMP_BUFFER:
+        .res    92, $00
+
+; Build-time safety check: the 92-byte decompression buffer must not
+; cross a 256-byte page boundary, because @store_out omits inc $41.
+.assert (>DECOMP_BUFFER) = (>(DECOMP_BUFFER + 91)), error, "DECOMP_BUFFER crosses a page boundary — @store_out needs inc $41"
+
+.else
+; Empty segment declaration to satisfy the linker config.
+; CODE_DECOMPRESSOR only contains code in the compressed build.
+        .segment "CODE_DECOMPRESSOR"
+.endif ; COMPRESS_LEVELS
 
 ; ============================================================================
 ; End of bb-level-renderer.s
