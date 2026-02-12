@@ -789,7 +789,7 @@ musichandlers_end:                      ; End of SOUND_LO ($7440)
 ; title_voice2_pattern_* (inline SCREEN_BUFFER).
 ; ============================================================================
 
-        .segment "SCREEN_BUFFER"
+        .segment "TMP_SCREEN_BACKUP"
 
 ; --- Voice 0: Title screen music ($8B00) ---
 title_music_voice0:

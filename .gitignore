@@ -4,6 +4,10 @@ build/*.bin
 build/*.prg
 build/*.lst
 build/*.map
+build/*.sid
+build/*.lbl
+build/*.dbg
+build/sound-select.inc
 src/*.o
 
 # Editor backups

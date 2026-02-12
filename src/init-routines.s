@@ -25,7 +25,7 @@
 ; - Configures CIA chip
 ;-------------------------------------------------------------------------------
 
-.segment "CHARSET_B"
+.segment "VIC_CHARSET_B"
 
 D_4800:
         sei                                         ; $4800 - Disable interrupts

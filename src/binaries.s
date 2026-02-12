@@ -21,7 +21,7 @@
 ; to be reused as work RAM while preserving the charset for double-buffering.
 ; Work buffer equates (D_4050, D_4080, etc.) are defined in master.s.
 ;-------------------------------------------------------------------------------
-        .segment "CHARSET"
+        .segment "VIC_CHARSET"
 charset:
         .incbin "../build/charset.bin", 0, $400
 
@@ -31,7 +31,7 @@ charset:
 ; screen display. Not backed up to charset B (title screen uses single charset).
 ; At runtime this memory is reused as work RAM (enemy template data).
 ;-------------------------------------------------------------------------------
-        .segment "CHARSET_EXT"
+        .segment "TMP_CHARSET_EXT"
 charset_ext:
         .incbin "../build/charset.bin", $400
 
@@ -61,7 +61,7 @@ charset_ext:
 ; Note: Byte 63 of each sprite (the padding byte) is used as game state
 ; variables during gameplay. The initial values are set in the TGA file.
 ;-------------------------------------------------------------------------------
-        .segment "SPRITES_GAME"
+        .segment "VIC_SPRITES_GAME"
 sprites_game:
         .incbin "../build/sprites-game.bin"               ; 97 sprites (6208 bytes)
 
@@ -101,7 +101,7 @@ D_5C3F      = sprites_game + 16*64 + 63 ; Game state flag (sprite 16, byte 63)
 ; Source: data/bubble-dragon-in-bubble.tga (8 sprites, 512 bytes)
 ;         data/grumple-gromit.tga left+bubble (18 sprites, 1152 bytes)
 ;-------------------------------------------------------------------------------
-        .segment "LEVELS2_SPR1"
+        .segment "VIC_LEVELS2_SPR1"
 sprite_data_7440:
         .incbin "../build/bubble-dragon-in-bubble.bin"
         .incbin "../build/grumple-gromit.bin", 0, 1152
@@ -117,7 +117,7 @@ sprite_data_7440:
 ; 9 multicolor sprites = 576 bytes
 ; Source: data/grumple-gromit.tga right (9 sprites at offset 1152)
 ;-------------------------------------------------------------------------------
-        .segment "LEVELS2_SPR2"
+        .segment "VIC_LEVELS2_SPR2"
 sprite_data_7C40:
         .incbin "../build/grumple-gromit.bin", 1152, 576
 
@@ -379,25 +379,38 @@ physics_flags:
 
 .ifdef COMPRESS_LEVELS
 ;-------------------------------------------------------------------------------
-; Level Bitmap Deltas (100 bytes = 100 x 1-byte)
+; Level Bitmap Deltas + Compressed Bitmaps (split across PRG_MID/IO_SHADOW)
 ;-------------------------------------------------------------------------------
 ; Per-level compressed sizes.  The decompressor accumulates a running sum
 ; of deltas[0..level-1] to find the offset into level_bitmaps_compressed.
+;
+; Split at I/O shadow boundary ($D000):
+;   IO_LEVEL_BITMAPS:    deltas (100 bytes) + first part of compressed bitmaps
+;   IO_LEVEL_BITMAPS_HI: remaining compressed bitmaps
+;
+; COMPRESSED_SPLIT is calculated to ensure IO_LEVEL_BITMAPS ends exactly at $D000,
+; making the two segments contiguous. The decompressor reads across both segments
+; sequentially, so they MUST be contiguous in memory.
+;
+; If IO_LEVEL_BITMAPS moves (due to changes in preceding segments), update $C5F2.
+; See c64-prg.cfg for segment layout.
 ; Generated from data/levels.txt by build/convert-levels.py
 ;-------------------------------------------------------------------------------
-        .segment "LEVEL_BITMAPS"
+COMPRESSED_SPLIT = $D000 - $C5F2 - 100  ; bytes of compressed data before I/O shadow
+
+        .segment "IO_LEVEL_BITMAPS"
 level_bitmap_deltas:
         .incbin "../build/level-bitmap-offsets.bin"
-
-;-------------------------------------------------------------------------------
-; Level Bitmaps - Compressed (variable size, ~4600 bytes)
-;-------------------------------------------------------------------------------
-; Platform layout bitmaps for all 100 levels, individually compressed
-; with zero-run + dictionary encoding (2-byte pairs and 3-byte triples).
-; Generated from data/levels.txt by build/convert-levels.py
-;-------------------------------------------------------------------------------
 level_bitmaps_compressed:
-        .incbin "../build/level-bitmaps-compressed.bin"
+        .incbin "../build/level-bitmaps-compressed.bin", 0, COMPRESSED_SPLIT
+level_bitmaps_compressed_end:
+
+        .segment "IO_LEVEL_BITMAPS_HI"
+level_bitmaps_compressed_hi:
+        .incbin "../build/level-bitmaps-compressed.bin", COMPRESSED_SPLIT
+
+; Verify the two bitmap segments are contiguous (decompressor expects this)
+.assert level_bitmaps_compressed_end = level_bitmaps_compressed_hi, error, "IO_LEVEL_BITMAPS and IO_LEVEL_BITMAPS_HI must be contiguous"
 
 ;-------------------------------------------------------------------------------
 ; Bitmap Decode Table (256 bytes)
@@ -411,7 +424,7 @@ level_bitmaps_compressed:
 ; THR (threshold) is stored as the last byte of bitmap-dict-pairs.bin.
 ; Generated from data/levels.txt by build/convert-levels.py
 ;-------------------------------------------------------------------------------
-        .segment "BITMAP_DECODE_TABLE"
+        .segment "IO_BITMAP_DECODE_TABLE"
 bitmap_decode_table:
         .incbin "../build/bitmap-decode-table.bin"
 
@@ -424,7 +437,7 @@ bitmap_decode_table:
 ; The threshold byte at the end encodes the pair/triple boundary.
 ; Generated from data/levels.txt by build/convert-levels.py
 ;-------------------------------------------------------------------------------
-        .segment "BITMAP_DICT_PAIRS"
+        .segment "IO_BITMAP_DICT_PAIRS"
 bitmap_dict_entries:
         .incbin "../build/bitmap-dict-pairs.bin"
 bitmap_dict_entries_end:
@@ -436,15 +449,29 @@ bitmap_dict_entries_end:
 ; Platform layout bitmaps for all 100 levels (uncompressed)
 ; Each level uses 46 bytes (symmetric) or 92 bytes (asymmetric)
 ; Generated from data/levels.txt by build/convert-levels.py
+;
+; Split at I/O shadow boundary ($D000):
+;   IO_LEVEL_BITMAPS:    $C5F2-$CFFF (2574 bytes) - in PRG_MID
+;   IO_LEVEL_BITMAPS_HI: $D000-$DFFF (4096 bytes) - in IO_SHADOW
 ;-------------------------------------------------------------------------------
-        .segment "LEVEL_BITMAPS"
+LEVEL_BITMAPS_SPLIT = $D000 - $C5F2     ; 2574 bytes before I/O shadow
+
+        .segment "IO_LEVEL_BITMAPS"
 level_bitmaps:
-        .incbin "../build/level-bitmaps.bin"
+        .incbin "../build/level-bitmaps.bin", 0, LEVEL_BITMAPS_SPLIT
+level_bitmaps_end:
+
+        .segment "IO_LEVEL_BITMAPS_HI"
+level_bitmaps_hi:
+        .incbin "../build/level-bitmaps.bin", LEVEL_BITMAPS_SPLIT
+
+; Verify the two bitmap segments are contiguous
+.assert level_bitmaps_end = level_bitmaps_hi, error, "IO_LEVEL_BITMAPS and IO_LEVEL_BITMAPS_HI must be contiguous"
 
 ; Empty segment declarations to satisfy the linker config.
 ; These segments only contain data in the compressed build.
-        .segment "BITMAP_DECODE_TABLE"
-        .segment "BITMAP_DICT_PAIRS"
+        .segment "IO_BITMAP_DECODE_TABLE"
+        .segment "IO_BITMAP_DICT_PAIRS"
 .endif
 
 ;-------------------------------------------------------------------------------

@@ -363,11 +363,11 @@ bubble_anim_masks:
 ; ============================================================================
 ; Region 3: Screen Backup Buffer ($8B00-$8EFF)
 ; ============================================================================
-; Title screen music ($8B00-$8DDF) is now in sound.s (SCREEN_BUFFER segment).
+; Title screen music ($8B00-$8DDF) is now in sound.s (TMP_SCREEN_BACKUP segment).
 ; Post-music padding and screen buffer data remain here.
 ; ============================================================================
 
-        .segment "SCREEN_BUFFER"
+        .segment "TMP_SCREEN_BACKUP"
 
 ; --- Post-music padding ($8DE0) ---
         .byte   $03, $0f, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00  ; $8DE0

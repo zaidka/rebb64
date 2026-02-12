@@ -903,7 +903,7 @@ L_E397:
 ;   The source pointer is found by summing deltas[0..level-1].
 ; ============================================================================
 
-.segment "CODE_DECOMPRESSOR"
+.segment "IO_CODE_DECOMPRESSOR"
 
 ; --- Decompress level bitmap ---
 ; INPUT:  $3C = level index
@@ -1084,7 +1084,7 @@ DECOMP_BUFFER:
 .else
 ; Empty segment declaration to satisfy the linker config.
 ; CODE_DECOMPRESSOR only contains code in the compressed build.
-        .segment "CODE_DECOMPRESSOR"
+        .segment "IO_CODE_DECOMPRESSOR"
 .endif ; COMPRESS_LEVELS
 
 ; ============================================================================

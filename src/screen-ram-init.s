@@ -1,8 +1,8 @@
 ;===============================================================================
-; screen-ram-init.s - Screen RAM initialization data (SCREEN_RAM segment)
+; screen-ram-init.s - Screen RAM initialization data (VIC_SCREEN_RAM segment)
 ;===============================================================================
 ; Original address range: $5000-$57FF (2048 bytes)
-; Segment: SCREEN_RAM (VIC-fixed at __VIC_SCREEN_A__)
+; Segment: VIC_SCREEN_RAM (VIC-fixed at __VIC_SCREEN_A__)
 ;
 ; VIC screen RAM and color RAM buffers. These addresses are hardware-fixed:
 ; the VIC chip reads screen data based on bank selection and $D018.
@@ -23,7 +23,7 @@
 ; are the original game binary contents, preserved for hash verification.
 ;===============================================================================
 
-.segment "SCREEN_RAM"
+.segment "VIC_SCREEN_RAM"
 
 
 ; --- $5000-$50FF: Screen page 0 ---

@@ -2,13 +2,13 @@
 ; work-ram-init.s - Work RAM initialization data
 ;===============================================================================
 ; Original address range: $4C00-$4FFF (1024 bytes)
-; Segment: WORK_RAM (relocatable)
+; Segment: TMP_WORK_BUFFERS (runtime temporary region)
 ;
 ; This region contains lookup tables and work buffers used during gameplay.
 ; All addresses are software-only (not read by VIC hardware) and can relocate.
 ;
 ; Note: The first 256 bytes of the original work RAM area ($4B00-$4BFF) are
-; now part of the CHARSET_B segment (in loader.s), since they occupy VIC
+; now part of the VIC_CHARSET_B segment (in loader.s), since they occupy VIC
 ; charset B hardware space and get overwritten during init.
 ;
 ; Memory layout:
@@ -22,7 +22,7 @@
 ; are the original game binary contents, preserved for hash verification.
 ;===============================================================================
 
-.segment "WORK_RAM"
+.segment "TMP_WORK_BUFFERS"
 
 ; --- $4C00-$4DFF: Character bitmap work buffers ---
 ; Used for HUD and item graphics compositing during gameplay.

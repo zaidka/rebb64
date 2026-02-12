@@ -23,7 +23,7 @@
 ;   Y = Destination address high
 ;-------------------------------------------------------------------------------
 
-.segment "CHARSET_B"
+.segment "VIC_CHARSET_B"
 
 D_4900:
         sei                                         ; $4900 - Disable interrupts

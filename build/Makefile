@@ -153,9 +153,12 @@ loadaddr.o: $(SRC_DIR)/loadaddr.s
 master.o: $(SRC_DIR)/master.s $(SOUND_INC) $(SRC_DIR)/$(SOUND_SRC) hud-font.bin sidebars.bin level-tiles.bin sprites-game.bin zone-data.bin charset.bin bubble-masks.bin software-sprites.bin bonus-sprites.bin diamond-sprite.bin digit-font.bin bubble-dragon-in-bubble.bin grumple-gromit.bin $(LEVEL_BINS)
 	$(CA65) --cpu 6502 $(CA65_DEFS) -I $(SRC_DIR) -I . -o $@ $<
 
-# Link (generates label file for release target)
+# Link (generates label file and debug info for release target)
+DBGFILE = rebb64.dbg
+
 $(OUTPUT): loadaddr.o master.o $(CONFIG)
-	$(LD65) -C $(CONFIG) -Ln $(LBLFILE) -o $@ loadaddr.o master.o
+	$(LD65) -C $(CONFIG) -Ln $(LBLFILE) --dbgfile $(DBGFILE) -o $@ loadaddr.o master.o
+	@$(PYTHON) check-gaps.py $(DBGFILE)
 
 # Verify against original hash
 verify: $(OUTPUT)
@@ -173,6 +176,6 @@ release: $(OUTPUT)
 
 # Clean build artifacts
 clean:
-	rm -f loadaddr.o master.o $(OUTPUT) $(RELEASE) $(LBLFILE) rebb64.sid $(SOUND_INC) *.bin
+	rm -f loadaddr.o master.o $(OUTPUT) $(RELEASE) $(LBLFILE) $(DBGFILE) rebb64.sid $(SOUND_INC) *.bin
 
 .PHONY: all clean verify release sid
