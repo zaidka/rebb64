@@ -17,7 +17,7 @@
 ; Conditional sprite data writer
 ; Checks flags and writes space character if conditions are met
 
-.segment "CODE"
+.segment "CODE_ENTITY_TBLS"
 
 D_3FB0:
         bne     L_3FBD                              ; $3FB0 - Exit if not zero

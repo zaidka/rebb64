@@ -15,7 +15,7 @@
 ; 3. Ensures byte-perfect accuracy
 ; ==============================================================================
 
-.segment "CODE"
+.segment "CODE_ITEMS"
 
 ; Position update code for super bonus items ($2A18-$2A27)
 D_2A18:

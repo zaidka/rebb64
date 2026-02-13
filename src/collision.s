@@ -11,6 +11,8 @@
 ; Called every frame by main game loop.
 ; ============================================================================
 
+.segment "CODE_GAMELOOP"
+
 ; ============================================================================
 ; CHECK_PLAYER_ENEMY_COLLISION ($0AAB)
 ; ============================================================================
@@ -303,7 +305,7 @@ L_0BE8:
 ; ENEMY_SPAWN_HANDLER ($0BED)
 ; ============================================================================
 
-.segment "CODE"
+.segment "CODE_GAMELOOP"
 ; Handles spawning new enemies into the level.
 ; Uses self-modifying code for spawn timer countdown.
 ;

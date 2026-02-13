@@ -5,7 +5,7 @@
 ; -----------------------------------------------------------------------------
 
 ; External references
-.segment "CODE"
+.segment "CODE_ITEMS"
 
 L1E6C           := D_1E6C
 L2162           := D_2162

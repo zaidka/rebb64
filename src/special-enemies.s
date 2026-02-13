@@ -9,6 +9,8 @@
 ; Called from enemy_ai_update in bb-enemy-ai.s
 ; ============================================================================
 
+.segment "CODE_ENEMY"
+
 ; ============================================================================
 ; BARON VON BLUBBA HANDLER ($10D3)
 ; ============================================================================
@@ -416,7 +418,7 @@ L12F6:
 ; Enemy that falls vertically and checks for collision.
 ; ============================================================================
 
-.segment "CODE"
+.segment "CODE_ENEMY"
 
 L12F9:
         inc     ZP_EE,x                 ; Move down one row

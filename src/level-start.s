@@ -50,7 +50,7 @@
 
 ; Background color effect data - used by color cycling routines
 ; These bytes represent: LDA $1C, EOR #$07, STA $1C, LDA $1E, EOR #$07, STA $1E
-.segment "CODE"
+.segment "CODE_EFFECTS"
 
 D_2F68:
 .byte   $A5,$1C,$49,$07,$85,$1C,$A5,$1E        ; $2F68

@@ -86,7 +86,7 @@
 ; These addresses point to operand bytes within instructions that are modified at runtime.
 ; WARNING: If code changes, these addresses must be updated!
 ;-------------------------------------------------------------------------------
-.segment "CODE"
+.segment "CODE_PLATFORM"
 
 ; D_31B2/D_31B3/D_3200: SMC targets defined below as label+offset
 

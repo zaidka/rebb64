@@ -17,7 +17,7 @@
 ; These appear to be fragments of entity state machine code or jump table data
 ; They are referenced by code in bb-screen-scroll.s
 
-.segment "CODE"
+.segment "CODE_ENTITY_TBLS"
 
 D_3CB2:                                             ; Screen scroll data buffer 1
         lda     PESSION,x                          ; $3CB2 - b5 ca

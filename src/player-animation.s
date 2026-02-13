@@ -18,6 +18,8 @@
 ;       in the original binary, but they appear to be unused padding or dead code.
 ; ============================================================================
 
+.segment "CODE_RENDER"
+
 ; ============================================================================
 ; D_1E6C: Main Player Animation Handler
 ; ============================================================================
@@ -586,4 +588,4 @@ L_2161:
 ; Note: State Handler Jump Table D_1E3A is defined in bb-joystick-input.s
 ; ============================================================================
 
-.segment "CODE"
+.segment "CODE_RENDER"

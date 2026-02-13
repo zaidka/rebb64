@@ -14,7 +14,7 @@
 ; Called from level initialization
 ; Input: A = entity count, ($02) = pointer to spawn data
 ;-------------------------------------------------------------------------------
-.segment "CODE"
+.segment "CODE_LEVEL_DISP"
 
 D_39D2:
         tay                         ; Transfer count to Y

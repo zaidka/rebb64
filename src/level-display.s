@@ -15,7 +15,7 @@
 ; DATA STORAGE ($37C7-$37C8)
 ;===============================================================================
 ; Two-byte storage area used for level completion bonus tracking
-.segment "CODE"
+.segment "CODE_LEVEL_DISP"
 
 D_37C7:
         .byte   $00,$00                                         ; $37C7

@@ -22,7 +22,7 @@
 ; Creates combined sprite+text images displayed during level transitions.
 ; Uses direct ROM access to HUD font at $FE90 (hud_font symbol).
 ;-------------------------------------------------------------------------------
-.segment "CODE"
+.segment "CODE_ENTITY_TBLS"
 
 D_3C01:
         lda     #$13                ; Graphics mode

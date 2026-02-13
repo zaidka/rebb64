@@ -20,6 +20,8 @@
 ;   D_2DD2: Set effect flag and return
 ; ==============================================================================
 
+.segment "CODE_EFFECTS"
+
 ; --- Special effect routine address table (low bytes) ---
 ; Indexed by special item type (0-34)
 ; Used at level-setup.s:365 - lda D_2D65,y
@@ -104,7 +106,7 @@ D_2D88:
 ; SPECIAL ITEM EFFECT HANDLERS
 ; ==============================================================================
 
-.segment "CODE"
+.segment "CODE_EFFECTS"
 
 ; --- Set item type to 3 ($2DAB) ---
 ; Sets basic item properties

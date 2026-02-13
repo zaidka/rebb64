@@ -26,7 +26,7 @@
 ;===============================================================================
 
 ; Data at start of level transition routine
-.segment "CODE"
+.segment "CODE_EFFECTS"
 
 D_2DD7:
 .byte   $e6, $37                ; Level transition data

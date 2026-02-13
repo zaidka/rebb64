@@ -11,6 +11,8 @@
 ; to screen memory each frame to create the animated player characters.
 ; ============================================================================
 
+.segment "CODE_SPRITES"
+
 ; ============================================================================
 ; UPDATE_PLAYER_SPRITES ($1319)
 ; ============================================================================
@@ -170,7 +172,7 @@ next_bubble:
 ; player collision detection.
 ; ============================================================================
 
-.segment "CODE"
+.segment "CODE_SPRITES"
 
 ; External reference: L0D4A ($0D4A) defined in enemy-ai.s
 

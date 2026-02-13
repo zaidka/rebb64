@@ -10,7 +10,7 @@
 ; - Clears entity state when collected
 ; ==============================================================================
 
-.segment "CODE"
+.segment "CODE_ITEMS"
 
 D_29BB:
         dec     D_87A0,x                ; Decrement collision state

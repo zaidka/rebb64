@@ -26,7 +26,7 @@
 ;   Y = loop counter (entities to check against)
 ;   OLDTXT+1 ($3E) = saves entity X index
 
-.segment "CODE"
+.segment "CODE_ENTITY_TBLS"
 
 routine_3D2D:
         ldy     #$11                                ; $3D2D - Check 18 entities (0-17)

@@ -20,7 +20,7 @@
 ;-------------------------------------------------------------------------------
 ; Data Fragment ($3E77-$3E78)
 ;-------------------------------------------------------------------------------
-.segment "CODE"
+.segment "CODE_ENTITY_TBLS"
 
 routine_3E77:                                       ; $3E77 - Sprite Init Routine 1 entry
         .byte   $86,$3F                             ; $3E77 - STX DATLIN (fragment)

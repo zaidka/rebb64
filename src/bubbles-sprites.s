@@ -8,6 +8,8 @@
 ;   - Player/entity sprite positioning
 ; ============================================================================
 
+.segment "CODE_SPRITES"
+
 ; ============================================================================
 ; UPDATE_BUBBLES ($1578)
 ; ============================================================================
@@ -564,7 +566,7 @@ animation_frame_loop:                   ; $17D5 - Loop back point (after initial
 ;   - Sets sprite pointer from D_8520,X (animation frame)
 ; ============================================================================
 
-.segment "CODE"
+.segment "CODE_SPRITES"
 
 update_sprite_positions:
         ldx     #$07                    ; a2 07    - 8 sprites (7 down to 0)

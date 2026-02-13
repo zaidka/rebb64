@@ -88,7 +88,7 @@
 ;-------------------------------------------------------------------------------
 ; Data table for player index offsets
 ;-------------------------------------------------------------------------------
-.segment "CODE"
+.segment "CODE_PLATFORM"
 
 D_32BF:
     .byte $00, $1E              ; Player index multipliers or screen offsets

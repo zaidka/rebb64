@@ -13,7 +13,7 @@ LE9EA           := D_E9EA               ; Random number generator (alias to labe
 ; Iterates through all enemies and handles their behavior
 ; ============================================================================
 
-.segment "CODE"
+.segment "CODE_ENEMY"
 enemy_ai_update:                                        ; $0CF2
 D_0CF2 = enemy_ai_update                                ; Alias for external references
 D_CF2 = enemy_ai_update                                 ; Alias (alternate name)

@@ -14,6 +14,10 @@
 ;
 ; Self-modifying code:
 ; - D_E966 - Low byte of indirect jump address in entity dispatch
+;   CONSTRAINT: The SMC computes the address low byte as (entity_type + $0C),
+;   which assumes game_variables starts at a page boundary ($xx00). The high
+;   byte comes from the assembled instruction and is never modified at runtime.
+;   CODE_VARIABLES must be page-aligned in the linker config.
 ; - D_E972 ($E973) - Contains ADC immediate operand for screen row advancement
 ;===============================================================================
 

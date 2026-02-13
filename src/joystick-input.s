@@ -10,6 +10,8 @@
 ; - Sprite animation and movement
 ; ============================================================================
 
+.segment "CODE_RENDER"
+
 ; ============================================================================
 ; Read joystick ports and initialize player state loop
 ; ============================================================================
@@ -266,7 +268,7 @@ L_1E32:
 ; States 1-23 follow as normal 2-byte entries
 ; ============================================================================
 
-.segment "CODE"
+.segment "CODE_RENDER"
 D_1E3A = * + 1          ; D_1E3A points to the BPL operand byte (State 0 low)
     bpl  L_1E32
 D_1E3B:                 ; D_1E3B is the RTS (State 0 high byte = $60)
